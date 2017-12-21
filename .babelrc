@@ -1,0 +1,7 @@
+{
+  "presets": [
+    "next/babel"
+  ],
+  "ignore": [],
+  "plugins": ["transform-class-properties"]
+}
