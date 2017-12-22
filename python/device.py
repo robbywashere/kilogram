@@ -100,12 +100,21 @@ class IGDevice:
         return getattr(self,method) 
 
 
+
 for line in sys.stdin:
-    input = json.loads(line)
+    stdinput = json.loads(line)
+try:
+    stdinput 
+except NameError:
+  print "--- NO INPUT ---"
+  print json.dumps({ "success": False, "noinput": True });
+else:
+    if stdinput['method'] == "echo":
+        print json.dumps(stdinput)
+    
+    else:
+        myDevice = IGDevice(stdinput['deviceId'])
+        myDevice.device.watcher("NotNow").when(text="Not Now",resourceId="com.instagram.android:id/button_negative").press.back()
+        myDevice.get(input['method'])(**input['args']);
+        print json.dumps({ "success": True })
 
-myDevice = IGDevice(input['deviceId'])
-
-myDevice.device.watcher("NotNow").when(text="Not Now",resourceId="com.instagram.android:id/button_negative").press.back()
-
-myDevice.get(input['method'])(**input['args']);
-print json.dumps({ "success": True })

@@ -1,5 +1,6 @@
 const sequelize = require('sequelize');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
+const { get } = require('lodash');
 
 module.exports = {
   Name: 'Device',
@@ -18,10 +19,20 @@ module.exports = {
     },
   },
   StaticMethods: {
+    setFree: function(adbId) {
+      return this.update({ 
+        idle: true,
+      },{
+        where: { adbId }
+      })  
+    },
     free: function() {
       return this.findAll({ where: { idle: true, online: true }})
     },
-
+    gimmeFreeOne: async function(){
+      const free = await this.free();
+      return get(free,0);
+    },
     register: async function (ids = []){
 
       const exists = (await this.findAll({

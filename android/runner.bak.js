@@ -1,30 +1,18 @@
 const PythonShell = require('python-shell');
 const Promise = require('bluebird');
 const config = require('config');
-const log = require('../lib/logger')
+const { logger } = require('../lib/logger');
 
-async function cmdRunner(did, cmd, args){
-  let d;
-  try {
-    d = new Device(did);
-    await d.cmd(cmd, args)
-  } catch(e) {
-    if (d.childProcess) d.childProcess.kill();
-    d = new Device(did);
-    await d.cmd('clean_slate')
-    return Promise.reject(e);
-  }
-}
 
-class Device {
+class PythonBridge {
 
-  constructor(deviceId, logger = log) {
+  constructor(deviceId, log = logger) {
     this.deviceId = deviceId;
-    this.logger = logger;
+    this.logger = log;
 
     this.shell = new PythonShell('device.py', {
       pythonPath: config.PYTHON_PATH,
-      scriptPath: __dirname + '../python',
+      scriptPath: __dirname + '/../python',
       mode: 'json',
       parser: (output) => {
         try {
@@ -50,7 +38,7 @@ class Device {
           this.lastMsg = message;
         }
         else {
-          this.logger(` Device ID: ${this.deviceId} - ${message}`);
+          this.logger(` PythonBridge ID: ${this.deviceId} - ${message}`);
         }
       });
 
@@ -63,7 +51,7 @@ class Device {
   }
 }
 
-module.exports = { cmdRunner, Device}
+module.exports = {  PythonBridge }
 
 
 /* cmdRunner('6d0b5815','full_dance',{

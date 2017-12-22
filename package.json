@@ -12,6 +12,7 @@
     "lodash": "^4.17.4",
     "passport-minitools": "https://github.com/robbywashere/passport-minitools",
     "pg": "^7.4.0",
+    "python-shell": "^0.4.0",
     "sequelize": "^4.28.6",
     "sequelize-mock": "^0.10.2"
   },
