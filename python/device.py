@@ -13,6 +13,7 @@ class IGDevice:
     def __init__(self, device_id):
         self.device_id = device_id
         self.device = Device(device_id)
+        self.photo_posted = False
 
     def open_ig(self):
         cmd = 'adb -s {} shell monkey -p com.instagram.android -c android.intent.category.LAUNCHER 1'.format(self.device_id)
@@ -54,7 +55,7 @@ class IGDevice:
 
     def dump(self):
         self.device.dump('hierarchy.xml')
-        
+
     def clear_photos(self):
         dirs = ["/storage/emulated/legacy/Pictures/Instagram/*", "/storage/emulated/legacy/DCIM/Camera/*"]
 
@@ -86,6 +87,7 @@ class IGDevice:
         self.device(text='Next').click()
         self.describe(desc)
         myDevice.device(text='Share').click()
+        self.photo_posted = True
 
     def full_dance(self, username,password,localfile,desc = ""):
         myDevice.clean_slate()
@@ -100,21 +102,34 @@ class IGDevice:
         return getattr(self,method) 
 
 
-
 for line in sys.stdin:
     stdinput = json.loads(line)
+
 try:
     stdinput 
 except NameError:
-  print "--- NO INPUT ---"
-  print json.dumps({ "success": False, "noinput": True });
+    print "--- NO INPUT ---"
+    print json.dumps({ "success": False, "error": "noinput" });
+
 else:
+    error = None
     if stdinput['method'] == "echo":
         print json.dumps(stdinput)
-    
     else:
-        myDevice = IGDevice(stdinput['deviceId'])
-        myDevice.device.watcher("NotNow").when(text="Not Now",resourceId="com.instagram.android:id/button_negative").press.back()
-        myDevice.get(input['method'])(**input['args']);
-        print json.dumps({ "success": True })
+        try:
+            myDevice = IGDevice(stdinput['deviceId'])
+            if stdinput['method'] == "raise_except":
+                raise Exception('exception!')
+            myDevice.device.watcher("NotNow").when(text="Not Now",resourceId="com.instagram.android:id/button_negative").press.back()
+            myDevice.get(input['method'])(**input['args']);
+            
+        except:
+            error = str(sys.exc_info()[0])
+
+        photo_posted = myDevice.get('photo_posted')
+        j = { "success": photo_posted, "error": error }
+        print json.dumps(j)
+
+
+
 

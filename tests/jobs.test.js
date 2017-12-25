@@ -9,7 +9,7 @@ const sync = require('../db/sync');
 const { Job, Device } = require('../objects');
 
 beforeEach(async ()=> {
-  return sync(true);
+  return await sync(true);
 });
 
 describe('jobs/', function(){
@@ -21,6 +21,7 @@ describe('jobs/', function(){
           const device = await Device.create({
             idle: true,
             online: true,
+            enabled: true,
             adbId: 'abdid' 
           })
           const job = await Job.create({
@@ -46,12 +47,12 @@ describe('jobs/', function(){
           const result = await jr.exec({ throws: true });
 
           try {
-            assert.deepEqual(result, { noinput: true, success: false })
+            assert.deepEqual(result, { error: "noinput", success: false })
           } catch(e) {
             return done(e);
           }
           done();
-        })()
+        })().catch( (e) => done(e) )
       })
 
       // TODO: MOVE
@@ -61,6 +62,7 @@ describe('jobs/', function(){
           const d = await Device.create({
             idle: true,
             online: true,
+            enabled: true,
             adbId: 'abdid' 
           })
           const j = await Job.create({
@@ -87,6 +89,7 @@ describe('jobs/', function(){
           const device = await Device.create({
             idle: true,
             online: true,
+            enabled: true,
             adbId: 'abdid' 
           })
           const job = await Job.create({
@@ -111,9 +114,83 @@ describe('jobs/', function(){
           }
           done();
 
+        })().catch( (e) => done(e) )
+      })
 
-          //shell.receive(JSON.stringify({ success: true }));
-        })()
+      it ('should gracefully handle exceptions in the python execution returning the Job to initial state', function(done){
+        (async () => {
+
+          const device = await Device.create({
+            idle: true,
+            online: true,
+            enabled: true,
+            adbId: 'abdid' 
+          })
+          const job = await Job.create({
+            cmd: 'raise_except',
+            args: { },
+          })
+          const agent = new Agent();
+          const jr = new JobRunner({ job, device, agent })
+
+          const bridge = agent.connect('adbId');
+
+          const result = await jr.exec({ throws: true });
+
+          try {
+            assert.deepEqual(result, { 
+              success: false,
+              error: "<type 'exceptions.Exception'>"
+            })
+          } catch(e) {
+            return done(e);
+          }
+
+          j = await Job.findById(job.id);
+          assert.equal(j.inprog, false);
+
+          done();
+
+        })().catch( (e) => done(e) )
+      })
+
+
+      it('should set the job to inprog: true', function(done){
+        (async () => {
+
+
+          const device = await Device.create({
+            idle: true,
+            online: true,
+            adbId: 'abdid' 
+          })
+          const job = await Job.create({
+            cmd: 'cmd',
+            args: { },
+          })
+
+
+          const newJob = await Job.getJob();
+
+          const j = await Job.findById(job.id);
+
+          assert.equal(j.id, newJob.id)
+
+          assert.equal(j.inprog, true)
+
+          assert.equal(newJob.inprog,true)
+
+          const agent = new Agent();
+
+          const jr = new JobRunner({ job, device, agent })
+
+          const bridge = agent.connect('adbId');
+
+
+
+          done();
+
+        })().catch( (e) => done(e) )
       })
 
     })

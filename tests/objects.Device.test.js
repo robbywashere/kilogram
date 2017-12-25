@@ -21,6 +21,7 @@ describe('register', function(){
       adbId: 'did',
       online: true,
       idle: true,
+      enabled: true,
     })
 
     await Device.register(['did']) // Doesn't throw an error
@@ -44,13 +45,55 @@ describe('register', function(){
 
 })
 
+describe('enabled and disabled', function(){
+
+
+
+  it(` - should disable and enable a device via the disable and enable method
+       - should return disabled and enabled devices
+  `, async function(){
+  
+    const d = await Device.create({ 
+      online: false,
+      idle: false,
+      adbId: 'did',
+      enabled: false,
+    });
+
+    assert.equal(d.enabled, false);
+
+    await d.enable();
+
+    assert.equal(d.enabled, true);
+
+    assert.deepEqual('did', (await Device.enabled())[0].get('adbId'));
+
+    await d.disable();
+
+    assert.equal(d.enabled, false);
+
+    assert.deepEqual([], (await Device.enabled(['did'])));
+
+    assert.deepEqual('did', (await Device.disabled())[0].get('adbId'));
+  
+  })
+
+
+
+
+
+
+
+});
+
 describe('freeDangling', function(){
 
   it('should `free` devices where online:false, idle:false',async function(){
     await Device.create({ 
       online: false,
       idle: false,
-      adbId: 'did'
+      adbId: 'did',
+      enabled: true,
     })
     await Device.freeDangling(['did']);
     const freed = await Device.findAll({ where: { online: true, idle: true }})
@@ -68,7 +111,8 @@ describe('free', function(){
     await Device.create({ 
       online: true,
       idle: true,
-      adbId: 'freeDevice'
+      adbId: 'freeDevice',
+      enabled: true,
     })
     const freeDevices = await Device.free();
     assert.equal(freeDevices[0].adbId,'freeDevice')
@@ -122,13 +166,15 @@ describe('syncDevices', function(){
     const off = await Device.create({ 
       online: false,
       idle: true,
-      adbId: 'id1'
+      adbId: 'id1',
+      enabled: true,
     })
 
     const on = await Device.create({ 
       online: true,
       idle: false,
-      adbId: 'id2'
+      adbId: 'id2',
+      enabled: true,
     })
 
     await Device.syncOnline(['id1','did']);

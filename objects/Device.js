@@ -2,12 +2,29 @@ const sequelize = require('sequelize');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
 
+function byAbdId(o,ids){
+    o.adbId = {
+      [Op.in]: ids
+    };
+    return o
+}
+function byId(o){
+    o.id = {
+      [Op.in]: ids
+    };
+    return o
+}
 module.exports = {
   Name: 'Device',
   Properties:{
     online: {
       type: BOOLEAN,
       allowNull: false,
+    },
+    enabled: {
+      type: BOOLEAN,
+      defaultValue: false,
+      allowNull: false
     },
     idle: {
       type: BOOLEAN,
@@ -18,6 +35,14 @@ module.exports = {
       type: STRING
     },
   },
+  Methods:{
+    enable: function(){
+      return this.update({ enabled: true })
+    },
+    disable: function(){
+      return this.update({ enabled: false })
+    },
+  },
   StaticMethods: {
     setFree: function(adbId) {
       return this.update({ 
@@ -26,8 +51,12 @@ module.exports = {
         where: { adbId }
       })  
     },
+
+    disabled: function() { return this.findAll({ where: { enabled: false }}) },
+    enabled: function() { return this.findAll({ where: { enabled: true }}) },
+
     free: function() {
-      return this.findAll({ where: { idle: true, online: true }})
+      return this.findAll({ where: { idle: true, online: true, enabled: true }})
     },
     gimmeFreeOne: async function(){
       const free = await this.free();
@@ -49,16 +78,13 @@ module.exports = {
         return this.bulkCreate(newDevices)
       }
       return Promise.resolve();
-      
+
     },
 
     syncOnline: async function (ids = []){
-
-
       await this.update({ online: false },{ where: {
         adbId: { [Op.notIn]: ids  }
       }});
-
       await this.update({ online: true },{ where: {
         adbId: { [Op.in]: ids }
       }});
@@ -67,7 +93,6 @@ module.exports = {
     syncAll: async function( ids = []) {
       await this.register(ids);
       await this.syncOnline(ids);
-    
     },
 
     freeDangling: async function(ids = []){
