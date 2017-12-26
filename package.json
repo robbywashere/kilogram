@@ -6,6 +6,7 @@
   "dependencies": {
     "admin-on-rest": "^1.3.3",
     "aor-epilogue-client": "^0.2.0",
+    "aor-rest-client-router": "^0.1.0",
     "bluebird": "^3.5.1",
     "child-process-promise": "^2.2.1",
     "config": "^1.28.1",
@@ -22,15 +23,18 @@
     "react-dom": "^16.2.0",
     "react-scripts": "^1.0.17",
     "sequelize": "^4.28.6",
-    "sequelize-encrypted": "^1.0.0"
+    "sequelize-encrypted": "^1.0.0",
+    "stream-to-promise": "^2.2.0"
   },
   "scripts": {
-    "dev:tabs":"./scripts/tab npm run minio:up & ./scripts/tab npm run dev & ./scripts/tab npm run crx:start & exit",
+    "dev:tabs": "./scripts/tab npm run minio:up & ./scripts/tab npm run dev & ./scripts/tab npm run crx:start",
     "crx:start": "export PORT=3001 && react-scripts start",
     "crx:build": "react-scripts build",
     "crx:test": "react-scripts test --env=jsdom",
     "crx:eject": "react-scripts eject",
     "minio:up": "minio server \"$HOME/minio-data/\"",
+    "minio:events:up": "mc events add myminio/uploads arn:minio:sqs::1:postgresql --events put",
+    "minio:events:down": "mc events remove myminio/uploads arn:minio:sqs::1:postgresql --force",
     "dev:auto": "NODE_ENV=development && nodemon server.js",
     "dev": "NODE_ENV=development && node server.js",
     "eslint": "eslint",

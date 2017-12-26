@@ -10,7 +10,7 @@ slurpDir((object)=>{
   if (object.Associate) ASSOCS[object.Name] = object.Associate;
 
   let definition = DB
-    .define(object.Name, Object.assign({},object.Properties), { hooks: object.Hooks, scopes: object.Scopes });
+    .define(object.Name, Object.assign({},object.Properties), { tableName: object.TableName,hooks: object.Hooks, scopes: object.Scopes });
 
 
   // Instance Methods

@@ -8,6 +8,8 @@ export const DeviceList = (props) => (
       <TextField source="id" />
       <TextField source="adbId" />
       <BooleanField source="enabled" />
+      <BooleanField source="online" />
+      <BooleanField source="idle" />
       <DateField source="updatedAt" label="Updated at" showTime/>
       <DateField source="createdAt" label="Created at" showTime/>
     </Datagrid>
