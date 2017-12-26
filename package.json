@@ -9,6 +9,7 @@
     "child-process-promise": "^2.2.1",
     "config": "^1.28.1",
     "dotenv": "^4.0.0",
+    "express": "^4.16.2",
     "lodash": "^4.17.4",
     "passport-minitools": "https://github.com/robbywashere/passport-minitools",
     "pg": "^7.4.0",

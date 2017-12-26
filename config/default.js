@@ -11,5 +11,6 @@ require('dotenv').config(); // eslint-disable-line import/no-extraneous-dependen
 
 module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
-  PYTHON_PATH: process.env.PYTHON_PATH || '/usr/bin/local/python'
+  PYTHON_PATH: process.env.PYTHON_PATH || '/usr/bin/local/python',
+  PORT: process.env.PORT || 3000,
 };
