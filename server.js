@@ -3,9 +3,15 @@ const { parse } = require('url');
 const fs = require('fs');
 const config = require('config');
 const { logger } = require('./lib/logger');
+
+const finale = require('finale-rest');
+const DB = require('./db');
+
 const app = express();
 
 const devices = require('./routes/Devices');
+
+const { Device, Job, BotchedJob } = require('./objects');
 
 const syncDb = require('./db/sync');
 
@@ -14,11 +20,26 @@ app.use(require('serve-static')(__dirname + '/public'));
 app.use(require('body-parser').json());
 
 
-app.use('/devices', devices)
+finale.initialize({
+  app,
+  sequelize: DB
+})
 
 
-const port = config.PORT;
-syncDb().then(function(){
+finale.resource({
+  model: Device,
+})
+
+finale.resource({
+  model: Job,
+})
+
+finale.resource({
+  model: BotchedJob,
+})
+
+syncDb(false).then(function(){
+  const port = config.PORT;
   app.listen(port, () => {
     logger(`Listening on ${port}\nhttp://127.0.0.1:${port}`)
   });

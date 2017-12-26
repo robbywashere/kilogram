@@ -86,16 +86,16 @@ describe('enabled and disabled', function(){
 
 });
 
-describe('freeDangling', function(){
+describe('freeDangling by ids', function(){
 
-  it('should `free` devices where online:false, idle:false',async function(){
+  it('should `free` devices where online:false, idle:false given a list of ids',async function(){
     await Device.create({ 
       online: false,
       idle: false,
       adbId: 'did',
       enabled: true,
     })
-    await Device.freeDangling(['did']);
+    await Device.freeDanglingByIds(['did']);
     const freed = await Device.findAll({ where: { online: true, idle: true }})
 
     assert.equal(1,freed.length)

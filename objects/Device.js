@@ -35,6 +35,20 @@ module.exports = {
       type: STRING
     },
   },
+  Scopes: {
+    enabled: { where: { enabled: true } },
+    disabled: { where: { enabled: false } },
+    free: { where: { idle: true, online: true, enabled: true }},
+    dangling: { where: { online: false, idle: false } },
+    zombies: { where: { 
+      online: true, 
+      idle: false,
+      updatedAt: {
+        [Op.lte] : sequelize.fn(`NOW() - INTERVAL '5 minutes' --`) 
+      }
+    }}
+  },
+  ScopeFunctions: true,
   Methods:{
     enable: function(){
       return this.update({ enabled: true })
@@ -44,7 +58,7 @@ module.exports = {
     },
   },
   StaticMethods: {
-    setFree: function(adbId) {
+    setFreeById: function(adbId) {
       return this.update({ 
         idle: true,
       },{
@@ -52,18 +66,11 @@ module.exports = {
       })  
     },
 
-    disabled: function() { return this.findAll({ where: { enabled: false }}) },
-    enabled: function() { return this.findAll({ where: { enabled: true }}) },
-
-    free: function() {
-      return this.findAll({ where: { idle: true, online: true, enabled: true }})
-    },
     gimmeFreeOne: async function(){
       const free = await this.free();
       return get(free,0);
     },
     register: async function (ids = []){
-
       const exists = (await this.findAll({
         where: {
           adbId: {
@@ -77,8 +84,6 @@ module.exports = {
         newDevices = fIds.map(adbId=>({ online: true, idle: true, adbId }))
         return this.bulkCreate(newDevices)
       }
-      return Promise.resolve();
-
     },
 
     syncOnline: async function (ids = []){
@@ -95,7 +100,7 @@ module.exports = {
       await this.syncOnline(ids);
     },
 
-    freeDangling: async function(ids = []){
+    freeDanglingByIds: async function(ids = []){
       await this.update({ online: true, idle: true },{ 
         where: {
           adbId: { [Op.in]: ids },
@@ -103,23 +108,6 @@ module.exports = {
           online: false
         }
       });
-    },
-    dangling: function(){
-      return this.findAll({
-        where: {
-          online: false,
-          idle: false,
-        }
-      });
-    },
-    zombies: function(minutes = 5){
-      return this.findAll({ where: { 
-        online: true, 
-        idle: false,
-        updatedAt: {
-          [Op.lte] : sequelize.fn(`NOW() - INTERVAL '${minutes} minutes' --`) 
-        }
-      }})
     }
   }
 }
