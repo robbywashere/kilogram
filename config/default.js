@@ -10,7 +10,12 @@ if (!fs.existsSync(path.join('..','.env')) && process.env.NODE_ENV === 'developm
 require('dotenv').config(); // eslint-disable-line import/no-extraneous-dependencies
 
 module.exports = {
-  NODE_ENV: process.env.NODE_ENV || 'development',
-  PYTHON_PATH: process.env.PYTHON_PATH || '/usr/bin/local/python',
-  PORT: process.env.PORT || 3000,
+  DB_ENC_KEY: process.env.DB_ENC_KEY,
+  NODE_ENV: process.env.NODE_ENV,
+  PYTHON_PATH: process.env.PYTHON_PATH,
+  PORT: process.env.PORT,
+  MINIO_ENDPOINT: process.env.MINIO_ENDPOINT, 
+  MINIO_PORT: process.env.MINIO_PORT,
+  MINIO_SECURE: process.env.MINIO_SECURE,
+  MINIO_BUCKET: process.env.MINIO_BUCKET,
 };

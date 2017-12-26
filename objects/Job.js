@@ -2,6 +2,9 @@ const sequelize = require('sequelize');
 const SEQ = require('../db');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
+const encryptedField = require('sequelize-encrypted');
+const { DB_ENC_KEY } = require('config');
+const encFields = encryptedField(sequelize, DB_ENC_KEY);
 
 const GetJobQuery =`
   UPDATE 
@@ -27,14 +30,15 @@ const GetJobQuery =`
 module.exports = {
   Name: 'Job',
   Properties:{
+    encrypted: encFields.vault('encrypted'),
     cmd: {
       type: STRING,
       allowNull: false,
     },
-    args: {
+    args: encFields.field('args',{
       type: sequelize.JSON,
       allowNull: false
-    },
+    }),
     outcome: {
       type: sequelize.JSON
     },
