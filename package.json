@@ -24,7 +24,8 @@
     "react-scripts": "^1.0.17",
     "sequelize": "^4.28.6",
     "sequelize-encrypted": "^1.0.0",
-    "stream-to-promise": "^2.2.0"
+    "stream-to-promise": "^2.2.0",
+    "uuid": "^3.1.0"
   },
   "scripts": {
     "dev:tabs": "./scripts/tab npm run minio:up & ./scripts/tab npm run dev & ./scripts/tab npm run crx:start",

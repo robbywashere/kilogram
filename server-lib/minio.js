@@ -3,7 +3,9 @@ const { logger } = require('../lib/logger');
 const config = require('config');
 const { Router } = require('express');
 const router = Router();
+const get = require('lodash/get');
 const Promise = require('bluebird');
+const { Photo } = require('../objects');
 
 
 function newClient(){
@@ -32,7 +34,7 @@ async function createBucket(client, retryCount=1){
       }
     } 
     else if (err.code === 'ECONNREFUSED') {
-      if (retryCount <= 3) { 
+      if (retryCount <= 5) { 
         logger(`Could not connect to MINIO storage\n* Trying again ${retryCount*3} seconds .... Retry #:${retryCount}`) 
         await Promise.delay(retryCount*3*1000);
         return createBucket(client,retryCount+1);
@@ -53,9 +55,33 @@ function newClientAndBucket(){
   return c;
 }
 
+function listenBucketNotify(client){
+  const bucket = config.MINIO_BUCKET;
+  const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*'])
+  listener.on('notification', async function(record) {
+    const key = get(record,'s3.object.key'); 
+    if (key) {
+      try {
+        const url = await client.presignedGetObject(bucket, key);
+        const [ uuid, extension ] = key.split('.');
+        await Photo.update({ uploaded: true, url },{ where: { uuid } });
+      } catch (e) {
+        logger.error(e);
+      }
+    }
+  })
+}
+
 function signedURLRoute(client){
-  return router.get('/signedurl', (req, res, next) => {
-    client.presignedPutObject(config.MINIO_BUCKET, req.query.name, (err, url) => {
+  const bucket = config.MINIO_BUCKET;
+
+  return router.get('/signedurl', async (req, res, next) => {
+    let extension = (req.query.name||'').split('.')[1];
+    if (!['jpg','png','jpeg'].includes(extension)) {
+      extension = 'jpg';
+    }
+    const photo = await Photo.create({ bucket, extension });
+    client.presignedPutObject(config.MINIO_BUCKET, photo.src, 60,(err, url) => {
       if (err) next(err)
       res.end(url)
     })
@@ -64,4 +90,4 @@ function signedURLRoute(client){
 }
 
 
-module.exports = { createBucket, newClient, newClientAndBucket, signedURLRoute };
+module.exports = { createBucket, newClient, listenBucketNotify, newClientAndBucket, signedURLRoute };

@@ -6,7 +6,7 @@ const config = require('config');
 const { logger } = require('./lib/logger');
 const finale = require('finale-rest');
 const DB = require('./db');
-const { signedURLRoute, newClientAndBucket } = require('./server-lib/minio');
+const { signedURLRoute, listenBucketNotify, newClientAndBucket } = require('./server-lib/minio');
 const Promise = require('bluebird');
 const s2p = require('stream-to-promise');
 
@@ -52,6 +52,8 @@ finale.resource({
 
 const mc = newClientAndBucket();
 
+listenBucketNotify(mc);
+
 app.get('/x/objects', async function(req, res, next){
   const bucket = config.MINIO_BUCKET;
   try {
@@ -81,6 +83,10 @@ app.delete('/x/objects/:name', async function(req, res){
 
 
 app.use('/uploads',signedURLRoute(mc))
+
+app.get('/upload', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+})
 
 syncDb(false).then(function(){
   const port = config.PORT;
