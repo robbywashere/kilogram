@@ -4,7 +4,6 @@ module.exports = {
     "password": null,
     "database": "postgres",
     "host": "127.0.0.1",
-    //"logging": console.log,
     "logging": false,
     "dialect": "postgres",
   },

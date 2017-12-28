@@ -57,19 +57,29 @@ function newClientAndBucket(){
 
 function listenBucketNotify(client){
   const bucket = config.MINIO_BUCKET;
-  const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*'])
-  listener.on('notification', async function(record) {
+  const createListener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*'])
+
+  logger.debug('Listening for s3 events ....')
+  createListener.on('notification', async function(record) {
     const key = get(record,'s3.object.key'); 
+    const event =  get(record,'eventName'); //s3:ObjectCreated:Put
+    logger.debug('Caught event: ', key, event);
     if (key) {
       try {
-        const url = await client.presignedGetObject(bucket, key);
         const [ uuid, extension ] = key.split('.');
-        await Photo.update({ uploaded: true, url },{ where: { uuid } });
-      } catch (e) {
+        if (event === "s3:ObjectCreated:Put") {
+          const url = await client.presignedGetObject(bucket, key);
+          const result = await Photo.update({ uploaded: true, url },{ where: { uuid } });
+        } else if (event === "s3:ObjectRemoved:Deleted") {
+          await Photo.update({ deleted: true },{ where: { uuid } });
+        }
+      } catch(e) {
         logger.error(e);
       }
     }
   })
+
+
 }
 
 function signedURLRoute(client){

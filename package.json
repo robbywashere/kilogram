@@ -34,7 +34,7 @@
     "crx:test": "react-scripts test --env=jsdom",
     "crx:eject": "react-scripts eject",
     "minio:up": "minio server \"$HOME/minio-data/\"",
-    "minio:events:up": "mc events add myminio/uploads arn:minio:sqs::1:postgresql --events put",
+    "minio:events:up": "mc events add myminio/uploads arn:minio:sqs::1:postgresql --events put,delete",
     "minio:events:down": "mc events remove myminio/uploads arn:minio:sqs::1:postgresql --force",
     "dev:auto": "NODE_ENV=development && nodemon server.js",
     "dev": "NODE_ENV=development && node server.js",
@@ -44,7 +44,9 @@
     "seeds:down": "node ./db/seeders/_down.js",
     "db:sync": "node ./db/_sync.js",
     "db:up": "node ./db/_up.js",
-    "db:down": "node ./db/_down.js"
+    "db:down": "node ./db/_down.js",
+    "db:mig:down": "node ./db/_migdown.js",
+    "db:mig:up": "node ./db/_migup.js"
   },
   "devDependencies": {
     "babel-eslint": "^8.0.3",

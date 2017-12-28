@@ -5,39 +5,75 @@ const { Pool, Client } = require('pg')
 const config = require('config');
 
 const { logger } = require('../lib/logger');
+const { slurpDir2, slurpFile, forExt } = require('../lib/slurpDir2');
 
+const Promise = require('bluebird');
 const pgConfig = dbConfig[config.NODE_ENV];
-
+const migConfig = JSON.parse(JSON.stringify(pgConfig))
 const dbname = pgConfig.database.toString();
-
 delete pgConfig.database;
 
-function up(){
+
+const MDIR = `${__dirname}/migrations`;
+const slurpUpSql = slurpDir2(MDIR, forExt(".up.sql"))
+const slurpDownSql = slurpDir2(MDIR, forExt(".down.sql"))
+
+async function runMigFiles(pool, migfileArray){
+  for (let [file, msql] of migfileArray) {
+    logger(`DB: ${dbname} - Executing sql file ${file}....`);
+    let res;
+    try {
+      res = await pool.query(msql);
+    } catch(e) {
+      logger.error(file, e, res);
+    }
+  }
+
+}
+
+async function up(){
   const pool = new Pool(pgConfig)
-  pool.query(`CREATE DATABASE ${dbname}`, (err, res) => {
+  let res;
+  try {
+    res = await pool.query(`CREATE DATABASE ${dbname}`)
+    logger(`DB up ${dbname} success!`)
+  } catch(err) {
     if (err && err.code === '42P04') {
       logger(`DB ${dbname} Exists ... `);
     } else if (err) { 
       logger.error(err, res)
-    } else {
-      logger(`DB up ${dbname} success!`)
     }
-    pool.end()
-  })
+  }
+  pool.end();
+  process.exit(0)
 }
 
-function down(){
+async function migDown(){
+  const migPool = new Pool(migConfig)
+  await runMigFiles(migPool, slurpDownSql(f=> [f,slurpFile(f)]))
+  await migPool.end();
+}
+async function migUp(){
+  const migPool = new Pool(migConfig)
+  await runMigFiles(migPool, slurpUpSql(f=> [f,slurpFile(f)]))
+  await migPool.end();
+}
+
+async function down(){
   const pool = new Pool(pgConfig)
-  pool.query(`DROP DATABASE ${dbname}`, (err, res) => {
-    if (err && err.code === '3D000') {
+  let res;
+  try {
+    res = await pool.query(`DROP DATABASE ${dbname}`);
+    logger(`DB down ${dbname} success!`)
+  } catch(err){
+    if (err.code === '3D000') {
       logger(`DB ${dbname} does not exists ... `);
-    } else if (err) {
-      logger.error(err, res)
     } else {
-      logger(`DB down ${dbname} success!`)
-    }
-    pool.end()
-  })
+      logger.error(err, res)
+    }  
+  }
+  pool.end()
+  process.exit(0)
 }
 
-module.exports = { up, down };
+module.exports = { up, down, migUp, migDown };
