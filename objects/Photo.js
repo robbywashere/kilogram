@@ -17,6 +17,10 @@ module.exports = {
         return `${this.get('uuid')}.${this.get('extension')}`
       }
     },
+    deleted: {
+      type: BOOLEAN,
+      defaultValue: false
+    },
     bucket: {
       type: STRING,
       allowNull: false
