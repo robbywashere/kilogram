@@ -170,7 +170,7 @@ describe('jobs/', function(){
           })
 
 
-          const newJob = await Job.getJob();
+          const newJob = await Job.popJob();
 
           const j = await Job.findById(job.id);
 

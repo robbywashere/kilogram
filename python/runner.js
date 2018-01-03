@@ -30,7 +30,6 @@ class Agent {
       await pb.cmd('clean_slate');
       await Device.setFree(this.did);
     }
-
   }
 
 
@@ -61,6 +60,9 @@ class JobRunner {
       if (typeof this.agent._bridge === "undefined") {
         this.agent.connect(adbId);
       }
+
+      const photo = await this.job.getUploadedPhoto(); // TODO: move this logic outside of this class / function? 
+      if (photo) args.objectname = photo.get('src'); //TODO move this logic outside of this class / function?
 
       const result = await this.agent.exec({ cmd, args });
 

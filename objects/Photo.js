@@ -14,7 +14,7 @@ module.exports = {
     src: {
       type: VIRTUAL,
       get: function(){
-        return `${this.get('uuid')}.${this.get('extension')}`
+        return `${this.get('bucket')}/${this.get('uuid')}.${this.get('extension')}`
       }
     },
     deleted: {
@@ -37,6 +37,9 @@ module.exports = {
       type: TEXT,
     }
   },
+  /* Scopes: {
+    uploaded: true
+  },*/
   Associate(){
   }, 
   StaticMethods: {

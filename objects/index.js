@@ -12,11 +12,13 @@ slurpDir((object)=>{
   let definition = DB
     .define(object.Name, Object.assign({},object.Properties), { 
       tableName: object.TableName,
+      validate: object.Validate,
       hooks: object.Hooks, 
       scopes: object.Scopes,
       defaultScope: object.DefaultScope
     });
 
+  definition.$ = DB;
 
   // Instance Methods
   //
@@ -32,21 +34,18 @@ slurpDir((object)=>{
 
   // Static Methods
   Object.keys(object.StaticMethods||{}).forEach(k => {
-
     object.StaticMethods[k].bind(definition)
-
   });
 
 
-
   Object.assign(definition, Object.assign({}, object.StaticMethods))
-  definition.$ = DB;
   OBJECTS[object.Name] = definition;
 });
 
 
 Object.keys(OBJECTS).forEach(name => {
   if (ASSOCS[name]) ASSOCS[name].bind(OBJECTS[name])(OBJECTS);
+
 });
 
 

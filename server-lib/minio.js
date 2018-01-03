@@ -46,7 +46,7 @@ async function createBucket(client, retryCount=1){
     }
     process.exit(0);
   }
-  logger(`Bucket ${bucket} exists ... Skipping`)
+  logger.debug(`Bucket ${bucket} exists ... Skipping`)
 }
 
 function newClientAndBucket(){

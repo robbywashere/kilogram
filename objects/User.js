@@ -4,7 +4,12 @@ const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 module.exports = {
   Name: 'User',
   Properties:{
-
+    igPassword: {
+      type: STRING
+    },
+    igUsername: {
+      type: STRING
+    },
   },
   Scopes: {
   },
@@ -14,6 +19,6 @@ module.exports = {
   },
   Associate({ Post }){
     this.hasMany(Post);
-  }
+  },
 }
 

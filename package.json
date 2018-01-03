@@ -46,7 +46,8 @@
     "db:up": "node ./db/_up.js",
     "db:down": "node ./db/_down.js",
     "db:mig:down": "node ./db/_migdown.js",
-    "db:mig:up": "node ./db/_migup.js"
+    "db:mig:up": "node ./db/_migup.js",
+    "test": "supervisor -q -n exit -x mocha -- -b ./tests/*.test.js"
   },
   "devDependencies": {
     "babel-eslint": "^8.0.3",
