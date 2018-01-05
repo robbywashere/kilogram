@@ -24,15 +24,9 @@ slurpDir((object)=>{
   //
   Object.assign(definition.prototype, Object.assign({}, object.Methods))
 
+
+  definition._scopeFns = !!object.ScopeFunctions;
   // Scopes into instance Static functions
-  if (typeof object.Scopes !== "undefined" && object.ScopeFunctions) {
-    Object.keys(object.Scopes).forEach( k=> {
-      const fn = function(opts) { return this.scope(k).findAll(opts) }
-      const fnById = function(opts) { return this.scope(k).findById(opts) }
-      object.StaticMethods[k] = fn//.bind(definition);
-      object.StaticMethods[`${k}ById`] = fnById//.bind(definition);
-    })
-  }
 
   // Static Methods
   Object.keys(object.StaticMethods||{}).forEach(k => {
@@ -47,7 +41,22 @@ slurpDir((object)=>{
 
 //load initializers
 Object.keys(OBJECTS).forEach(name => {
-  if (INITS[name]) INITS[name].bind(OBJECTS[name])(OBJECTS);
+  let object = OBJECTS[name];
+
+  if (INITS[name]) INITS[name].bind(object)(OBJECTS);
+
+  let scopes = _.get(object,'options.scopes');
+
+  if (typeof scopes !== "undefined" && object._scopeFns) {
+    Object.keys(scopes).forEach( k=> {
+      const fn = function(opts) { return this.scope(k).findAll(opts) }
+      const fnById = function(id, opts) { return this.scope(k).findById(id, opts) }
+      const fnReload = function(opts) { return this.reload(scopes[k]) }
+      object.prototype[ _.camelCase(`reload ${k}`)] = fnReload;
+      object[k] = fn//.bind(definition);
+      object[`${k}ForId`] = fnById//.bind(definition);
+    })
+  }
 
 });
 

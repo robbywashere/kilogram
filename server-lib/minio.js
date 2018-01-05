@@ -55,14 +55,11 @@ function newClientAndBucket(){
   return c;
 }
 
-function listenBucketNotify(client){
-  const bucket = config.MINIO_BUCKET;
-  const createListener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*'])
 
-  logger.debug('Listening for s3 events ....')
-  createListener.on('notification', async function(record) {
+function onEventNotify(bucket) {
+  return async (record) => {
     const key = get(record,'s3.object.key'); 
-    const event =  get(record,'eventName'); //s3:ObjectCreated:Put
+    const event =  get(record,'eventName'); 
     logger.debug('Caught event: ', key, event);
     if (key) {
       try {
@@ -77,9 +74,14 @@ function listenBucketNotify(client){
         logger.error(e);
       }
     }
-  })
+  }
+}
 
-
+function listenBucketNotify(client){
+  const bucket = config.MINIO_BUCKET;
+  const createListener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*'])
+  logger.debug('Listening for s3/minio events ....')
+  createListener.on('notification', onEventNotify(bucket))
 }
 
 function signedURLRoute(client){
@@ -100,4 +102,4 @@ function signedURLRoute(client){
 }
 
 
-module.exports = { createBucket, newClient, listenBucketNotify, newClientAndBucket, signedURLRoute };
+module.exports = { createBucket, newClient, listenBucketNotify, newClientAndBucket, signedURLRoute, onEventNotify };

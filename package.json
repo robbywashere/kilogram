@@ -17,7 +17,7 @@
     "minio": "^3.2.3",
     "nodemon": "^1.14.3",
     "passport-minitools": "https://github.com/robbywashere/passport-minitools",
-    "pg": "^7.4.0",
+    "pg": "^6.4.2",
     "python-shell": "^0.4.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",

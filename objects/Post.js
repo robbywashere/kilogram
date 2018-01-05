@@ -1,5 +1,29 @@
 const sequelize = require('sequelize');
+const DB = require('../db');
+const { get } = require('lodash');
 const { STRING, TEXT, DATE, Op } = sequelize;
+
+const InitJobQuery = `
+  INSERT INTO
+    "Jobs"
+    ("PostId", "UserId", "createdAt", "updatedAt") (
+      SELECT 
+        "Posts"."id",
+        "Posts"."UserId",
+        NOW() "createdAt",
+        NOW() "updatedAt"
+      FROM
+        "Posts"
+      LEFT JOIN
+        "Jobs"
+      ON 
+        "Jobs"."PostId" = "Posts"."id"
+      WHERE
+        "Posts"."postDate" <= NOW()
+      AND
+        "Jobs"."PostId" IS NULL 
+    )
+`
 
 module.exports = {
   Name: 'Post',
@@ -16,21 +40,41 @@ module.exports = {
     this.belongsTo(User, { foreignKey: { allowNull: false }}); //TODO: add cascading deletes
     this.hasOne(Job);
     this.hasOne(Photo, { foreignKey: { allowNull: false }}) // TODO: allowNull false?
+    this.addScope('withJob', { include: [ Job ] } )
+    this.addScope('due', { include: [ Job ], where: { 
+      postDate: { [Op.lte]: sequelize.fn(`NOW`) },
+      '$Job$': { [Op.eq]: null }
+    }})
+    this.addScope('withUser', { include: [ User ] } )
   },
+  ScopeFunctions: true,
   Hooks: {
-    afterCreate: function (post){ 
-      const { Job } = require('./index'); 
-      return Job.create({
-        PostId: post.id,     
-        UserId: post.UserId,
-      })
-    }
   },
   Scopes: {
   },
   Methods:{
+    initJob: async function(){
+      const { Job } = DB.models; 
+      try {
+        await Job.create({
+          PostId: this.id,     
+          UserId: this.UserId,
+        })
+      } catch(e){
+        let error = e
+        if (get(e,'errors[0].type') === "unique violation") { 
+          // do nothing!
+          //JUST SAY NOPE: error = new Error(`Job already exists for PostId: ${this.id}`); 
+        } else {
+          throw error;
+        }
+      }
+    }
   },
   StaticMethods: {
+    initJobs: async function(){
+      return this.$.query(InitJobQuery, { type: sequelize.QueryTypes.INSERT })
+    }
   },
 }
 

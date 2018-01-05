@@ -1,5 +1,4 @@
 const sequelize = require('sequelize');
-const SEQ = require('../db');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
 const { DB_ENC_KEY } = require('config');
@@ -49,29 +48,20 @@ module.exports = {
       defaultValue: false,
     }
   },
-  //ScopeFunctions: true,
+  ScopeFunctions: true,
   Scopes: {
-    //full: { include: [{ all: true, nested: true }] }
+    outstanding: { where: { finish: false, inprog: false } }
   },
   Init({ Post, Photo, User }){
-    this.belongsTo(Post);
+    this.belongsTo(Post, { foreignKey: { unique: true } });
     this.belongsTo(User);
+    this.addScope('withPost', { include: [ { model: Post, include: [ Photo ] } ] })
+    this.addScope('withAll', { include: [ { model: Post, include: [Photo] }, User ] })
   }, 
   Methods: {
-    getUploadedPhoto: async function(){
-      let photo = await this.getPhoto();
-      return (this.Photo.uploaded) ? this.Photo : undefined;
-    }
   },
   StaticMethods: {
-    findByIdFull: function(id, opts) { 
-      return this.findById(id, { ...opts, include: [ { model: this.$.models.Post, include: [this.$.models.Photo] }, this.$.models.User ] 
-      }) 
-    },
-    popJob: async () => get((await SEQ.query(GetJobQuery, { type: sequelize.QueryTypes.SELECT })),0), // TODO: model: require(./index).Job ???
-    outstanding: function(){
-      return this.findAll({ where: { finish: false, inprog: false }})
-    }
+    popJob: async function(){ return get((await this.$.query(GetJobQuery, { type: sequelize.QueryTypes.SELECT })),0) } // TODO: model: require(./index).Job ???
   }
 }
 

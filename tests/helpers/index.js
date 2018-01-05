@@ -1,4 +1,5 @@
 const {readdirSync, readFileSync } = require('fs');
+const { User, Photo, Post } = require('../../objects');
 
 function loadFixture(name) {
   return readFileSync(`${__dirname}/../fixtures/${name}`).toString();
@@ -11,5 +12,22 @@ function fixtures(){
   return o;
 }
 
+async function createUserPostJob(){
+  const user = await User.create();
+  let post = await Post.create({
+    postDate: new Date(),
+    UserId: user.id,
+    Photo: {
+      bucket: 'uploads',
+      extension: 'jpg'
+    }
+  },{
+    include: [ Photo ]
+  })
+  await post.initJob();
+  await post.reloadWithJob();
 
-module.exports =  { fixtures }
+  return post;
+}
+
+module.exports =  { fixtures, createUserPostJob }

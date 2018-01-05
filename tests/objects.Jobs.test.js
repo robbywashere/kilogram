@@ -6,6 +6,8 @@ const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../db/sync');
 const Promise = require('bluebird');
+const { createUserPostJob } = require('./helpers');
+
 
 describe('objects/Jobs', function(){
 
@@ -13,21 +15,34 @@ describe('objects/Jobs', function(){
     return await sync(true);
   });
 
-  it ('should respond to findByIdFull with job.Post, job.Post.Photo, job.User',async function(){
 
-    const user = await User.create();
-    let post = await Post.create({
-      postDate: new Date(),
-      UserId: user.id,
-      Photo: {
-        bucket: 'uploads',
-        extension: 'jpg'
-      }
-    },{
-      include: [ Photo ]
-    }).then(p => p.reload({ include: [ Job ]}))
+  it('should respond to withPost and withPostForId with a .Post object with a .Photo object', async function(){
 
-    const job = await Job.findByIdFull(post.Job.id);
+
+    const post = await createUserPostJob();
+
+    const job1 = await Job.withPost({ where: {id: post.Job.id }})
+    const job2 = await Job.withPostForId(post.Job.id)
+    assert(job1[0].Post.Photo)
+    assert(job2.Post.Photo)
+
+  })
+  it ('should respond to reloadWithPost with a .Post object with a .Photo object', async function(){
+
+
+    const post = await createUserPostJob();
+
+    const job = await Job.findById(post.Job.id)
+    const j = await job.reloadWithPost();
+    assert(j.Post.Photo)
+
+  })
+
+  it ('should respond to withAllForId with job.Post, job.Post.Photo, job.User',async function(){
+
+    const post = await createUserPostJob();
+
+    const job = await Job.withAllForId(post.Job.id);
 
     assert(job.Post);
     assert(job.Post.Photo);
@@ -37,17 +52,7 @@ describe('objects/Jobs', function(){
   it('should .popJob - giving a single job returning a job from the db while updating that job as inprog: true', async function(){
 
 
-    const user = await User.create();
-    let post = await Post.create({
-      postDate: new Date(),
-      UserId: user.id,
-      Photo: {
-        bucket: 'uploads',
-        extension: 'jpg'
-      }
-    },{
-      include: [ Photo ]
-    }).then(p => p.reload({ include: [ Job ]}))
+    const post = await createUserPostJob();
 
     const job = await Job.findById(post.Job.id, { 
       include: [ { model: User }, { model: Post, include: [ { model: Photo } ] } ] 
@@ -61,17 +66,7 @@ describe('objects/Jobs', function(){
 
   it('should include Post, User, and Post.Photo', async function(){
 
-    const user = await User.create();
-    let post = await Post.create({
-      postDate: new Date(),
-      UserId: user.id,
-      Photo: {
-        bucket: 'uploads',
-        extension: 'jpg'
-      }
-    },{
-      include: [ Photo ]
-    }).then(p => p.reload({ include: [ Job ]}))
+    const post = await createUserPostJob();
 
     const job = await Job.findById(post.Job.id, { 
       include: [ { model: User }, { model: Post, include: [ { model: Photo } ] } ] 
