@@ -2,18 +2,6 @@ const sequelize = require('sequelize');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
 
-function byAbdId(o,ids){
-  o.adbId = {
-    [Op.in]: ids
-  };
-  return o
-}
-function byId(o){
-  o.id = {
-    [Op.in]: ids
-  };
-  return o
-}
 module.exports = {
   Name: 'Device',
   Properties:{

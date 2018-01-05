@@ -20,7 +20,7 @@ def object_download(objectname):
     name = objectname.split(".")[0]
     ext = objectname.split(".")[1]
     if not (re.match("^[A-Za-z0-9_-]*$", name)) or not (re.match("png|jpg|jpeg", ext)):
-        raise Exception('Error {} is not a valid name or extendsion {}',.format(name, ext))
+        raise Exception('Error {} is not a valid name or extendsion {}'.format(name, ext))
     minioClient = Minio(environ['MINIO_ENDPOINT'],
                       access_key=environ['MINIO_ACCESS_KEY'],
                       secret_key=environ['MINIO_SECRET_KEY'],

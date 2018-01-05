@@ -15,15 +15,15 @@ module.exports = {
   Associate({ Job, User, Photo }){
     this.belongsTo(User, { foreignKey: { allowNull: false }}); //TODO: add cascading deletes
     this.hasOne(Job);
-    this.hasOne(Photo) // TODO: allowNull false?
-    this.addScope('defaultScope', { include: [{ model: User } ] }, { override: true });
+    this.hasOne(Photo, { foreignKey: { allowNull: false }}) // TODO: allowNull false?
   },
   Hooks: {
-    afterCreate: async function (post){ //TODO: before create ??? 
-      post.User = await post.getUser();
-      const { Job } = require('./index'); //TODO: ????
-      post.Job = await Job.fromNewPost(post);
-      //TODO ??? post.save
+    afterCreate: function (post){ 
+      const { Job } = require('./index'); 
+      return Job.create({
+        PostId: post.id,     
+        UserId: post.UserId,
+      })
     }
   },
   Scopes: {

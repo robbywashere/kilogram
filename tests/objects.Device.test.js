@@ -72,7 +72,7 @@ describe('enabled and disabled', function(){
 
     assert.equal(d.enabled, false);
 
-    assert.deepEqual([], (await Device.enabled(['did'])));
+    assert.deepEqual([], (await Device.enabled()));
 
     assert.deepEqual('did', (await Device.disabled())[0].get('adbId'));
   
@@ -146,7 +146,7 @@ describe('zombies', function(){
       fields: ['updatedAt','idle','online', 'adbId']
     });
 
-    const zombies = await Device.zombies(minutes);
+    const zombies = await Device.zombies();
 
 
 

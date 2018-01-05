@@ -3,10 +3,18 @@ const { PythonBridge } = require('./bridge');
 
 const { Job, BotchedJob, Device } = require('../objects');
 
+const demand = require('../lib/demand');
+
 
 class Agent {
-  async exec({ cmd, args }){
+
+  constructor({ deviceId = demand('deviceId') }){
+    this.deviceId = deviceId;
+  }
+
+  async exec({ cmd=demain('cmd'), args={} } = demand('{ cmd, args<optional>}')){
     try {
+      if (!this._bridge) this.connect();
       return this._bridge.cmd(cmd, args);
 
     } catch(e) {
@@ -14,72 +22,56 @@ class Agent {
       throw e;
     }
   }
-  connect(did){
-    this.did = did;
-    this._bridge = new PythonBridge(did);
+  connect(){
+    this._bridge = new PythonBridge(this.deviceId);
     return this._bridge;
   }
   kill(){ 
     if (this._bridge && this._bridge.childProcess) this._bridge.childProcess.kill();
   }
   async killCleanFree(){
-
     this.kill();
-    if (this.did) {
-      let pb = new PythonBridge(this.did); 
-      await pb.cmd('clean_slate');
-      await Device.setFree(this.did);
-    }
+    this.connect();
+    await this._bridge.cmd('clean_slate');
+    await Device.setFree(this.deviceId);
   }
 
 
 }
 
 
-class JobRunner {
+async function JobRun({ job, photo, post, user, agent }, throws = true) {
 
-  constructor({ job, device, agent }) {
-    this.job = job;
-    this.device = device;
-    this.agent = agent;
-  }
 
-    /*inprog(val = true){
-    return this.job.update({
-      inprog: val 
+  try {
+
+    const result = await agent.exec({ 
+      cmd: 'full_dance', 
+      args: {
+        username: user.igUsername,
+        password: user.igPassword,
+        desc: post.desc,
+        objectname: photo.get('src')
+      } 
     });
-  }*/
 
-  async exec({throws = true } = {}){
+    await job.update({
+      inprog: false,
+      finish: true,
+      outcome: (result && typeof result === "object") ? result : { success: true }
+    })
 
-    try {
-      // await this.inprog();
-      const { cmd, args } = this.job;
-      const { adbId } = this.device;
+    return result;
 
-      if (typeof this.agent._bridge === "undefined") {
-        this.agent.connect(adbId);
-      }
-
-      const photo = await this.job.getUploadedPhoto(); // TODO: move this logic outside of this class / function? 
-      if (photo) args.objectname = photo.get('src'); //TODO move this logic outside of this class / function?
-
-      const result = await this.agent.exec({ cmd, args });
-
-      await this.job.update({
-        inprog: false,
-        finish: true,
-        outcome: (result && typeof result === "object") ? result : { success: true }
-      })
-
-      return result;
-    } catch(error) {
-      await this.job.update({ inprog: false, finish: false, outcome: error});
-      const { cmd, args } = this.job;
-      await BotchedJob.new(this.job,{ cmd, args, error, adbId: this.device.adbId })
-      if (throws) throw error;
-    }
+  } catch(error) {
+    await job.update({ inprog: false, finish: false, outcome: { success: false, error: error.toString() }});
+    //const { cmd, args } = job;
+    //TODO: await BotchedJob.new(job,{ cmd, args, error, adbId: device.adbId })
+    if (throws) throw error;
   }
+
+
 }
 
-module.exports = { JobRunner, Agent }
+
+module.exports = { JobRun, Agent }

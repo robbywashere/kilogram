@@ -40,7 +40,9 @@ module.exports = {
   /* Scopes: {
     uploaded: true
   },*/
-  Associate(){
+  Associate({ Post }){
+    this.belongsTo(Post);
+
   }, 
   StaticMethods: {
     new: function({ bucket, extension }) {

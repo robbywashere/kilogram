@@ -27,8 +27,10 @@ slurpDir((object)=>{
   // Scopes into instance Static functions
   if (typeof object.Scopes !== "undefined" && object.ScopeFunctions) {
     Object.keys(object.Scopes).forEach( k=> {
-      const fn = function() { return this.scope(k).findAll() }
-      object.StaticMethods[k] = fn.bind(definition)
+      const fn = function(opts) { return this.scope(k).findAll(opts) }
+      const fnById = function(opts) { return this.scope(k).findById(opts) }
+      object.StaticMethods[k] = fn//.bind(definition);
+      object.StaticMethods[`${k}ById`] = fnById//.bind(definition);
     })
   }
 

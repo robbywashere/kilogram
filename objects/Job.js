@@ -30,11 +30,9 @@ module.exports = {
   Properties:{
     cmd: {
       type: STRING,
-      allowNull: false,
     },
     args: {
       type: sequelize.JSON,
-      allowNull: false
     },
     outcome: {
       type: sequelize.JSON
@@ -51,27 +49,24 @@ module.exports = {
       defaultValue: false,
     }
   },
-  Associate({ BotchedJob, Post, Photo }){
+  //ScopeFunctions: true,
+  Scopes: {
+    //full: { include: [{ all: true, nested: true }] }
+  },
+  Associate({ Post, Photo, User }){
     this.belongsTo(Post);
-    
-    this.hasOne(Photo,{ through: Post, scope: { uploaded: true } });
-    this.hasMany(BotchedJob);
+    this.belongsTo(User);
   }, 
   Methods: {
     getUploadedPhoto: async function(){
-       let photo = await this.getPhoto();
-       console.log(photo);
-       return (this.Photo.uploaded) ? this.Photo : undefined;
+      let photo = await this.getPhoto();
+      return (this.Photo.uploaded) ? this.Photo : undefined;
     }
   },
   StaticMethods: {
-    fromNewPost: function (post){
-      const user = post.User;
-      const { igUsername, igPassword } = user;
-      return this.create({
-        cmd: 'full_dance ',
-        args: { username: igUsername, password: igPassword, desc: post.desc }
-      })
+    findByIdFull: function(id, opts) { 
+      return this.findById(id, { ...opts, include: [ { model: this.$.models.Post, include: [this.$.models.Photo] }, this.$.models.User ] 
+      }) 
     },
     popJob: async () => get((await SEQ.query(GetJobQuery, { type: sequelize.QueryTypes.SELECT })),0), // TODO: model: require(./index).Job ???
     outstanding: function(){
