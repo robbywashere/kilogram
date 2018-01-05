@@ -12,7 +12,7 @@ module.exports = {
       allowNull: false
     }
   },
-  Associate({ Job, User, Photo }){
+  Init({ Job, User, Photo }){
     this.belongsTo(User, { foreignKey: { allowNull: false }}); //TODO: add cascading deletes
     this.hasOne(Job);
     this.hasOne(Photo, { foreignKey: { allowNull: false }}) // TODO: allowNull false?

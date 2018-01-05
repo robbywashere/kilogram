@@ -17,7 +17,7 @@ module.exports = {
   },
   StaticMethods: {
   },
-  Associate({ Post }){
+  Init({ Post }){
     this.hasMany(Post);
   },
 }

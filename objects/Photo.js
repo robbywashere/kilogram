@@ -40,7 +40,7 @@ module.exports = {
   /* Scopes: {
     uploaded: true
   },*/
-  Associate({ Post }){
+  Init({ Post }){
     this.belongsTo(Post);
 
   }, 

@@ -1,13 +1,13 @@
 const _ = require('lodash');
 const DB = require('../db');
 const OBJECTS = {};
-const ASSOCS = {};
+const INITS = {};
 
 const slurpDir = require('../lib/slurpDir')(__dirname);
 
 slurpDir((object)=>{
 
-  if (object.Associate) ASSOCS[object.Name] = object.Associate;
+  if (object.Init) INITS[object.Name] = object.Init;
 
   let definition = DB
     .define(object.Name, Object.assign({},object.Properties), { 
@@ -45,8 +45,9 @@ slurpDir((object)=>{
 });
 
 
+//load initializers
 Object.keys(OBJECTS).forEach(name => {
-  if (ASSOCS[name]) ASSOCS[name].bind(OBJECTS[name])(OBJECTS);
+  if (INITS[name]) INITS[name].bind(OBJECTS[name])(OBJECTS);
 
 });
 

@@ -43,7 +43,7 @@ module.exports = {
       defaultValue: false,
     }
   },
-  Associate({ Post, Photo }){
+  Init({ Post, Photo }){
     this.belongsTo(Post);
     this.hasOne(Photo,{ through: Post, scope: { uploaded: true } });
   }, 

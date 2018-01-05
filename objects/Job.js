@@ -53,7 +53,7 @@ module.exports = {
   Scopes: {
     //full: { include: [{ all: true, nested: true }] }
   },
-  Associate({ Post, Photo, User }){
+  Init({ Post, Photo, User }){
     this.belongsTo(Post);
     this.belongsTo(User);
   }, 

@@ -21,7 +21,7 @@ module.exports = {
     },
   },
 
-  Associate({ Job }){
+  Init({ Job }){
     this.belongsTo(Job);
   }, 
 

@@ -23,7 +23,7 @@ module.exports = {
       defaultValue: sequelize.literal('NOW()'),
     }
   },
-  Associate(){
+  Init(){
   }, 
   StaticMethods: {
   }
