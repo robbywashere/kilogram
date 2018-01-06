@@ -19,7 +19,7 @@
 
  // Request to our Node.js server for an upload URL.
  function retrieveNewURL(file, cb) {
-   $.get(`/uploads/signedurl?name=${file.name}`, (url) => {
+   $.get(`/minio/uploads/signedurl?name=${file.name}`, (url) => {
      cb(url)
    })
  }

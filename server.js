@@ -30,12 +30,16 @@ finale.initialize({
   sequelize: DB
 })
 
-Object.keys(Objects).forEach(k=> finale.resource({ model: Objects[k] }))
 
 
 const mc = new MClient();
 
 app.use('/minio',Routes({ client: mc }));
+app.get('/upload', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+})
+
+Object.keys(Objects).forEach(k=> finale.resource({ model: Objects[k] }))
 
 Promise.all([syncDb(false), mc.init() ]).then(function(){
   const port = config.PORT;

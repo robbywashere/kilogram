@@ -56,9 +56,9 @@ class MClient {
     return objects;
   }
 
-  async newPhoto(){
+  async newPhoto({ bucket = this.bucket, extension}={}){
     const photo = await Photo.create({ bucket, extension });
-    return getSignedPutObject({ name: photo.src });
+    return this.getSignedPutObject({ name: photo.src });
   }
 
   init(){
@@ -176,7 +176,7 @@ function signedURL({ client, bucket, param = 'name' } = {}){
     try { 
       let extension = (req.query[param]||'').split('.')[1];
       if (!['jpg','png','jpeg'].includes(extension)) throw(new Error('Invalid extension'))
-      let url = await mc.newPhoto();
+      let url = await mc.newPhoto({ bucket, extension });
       res.end(url);
     } catch(e) {
       next(e);
