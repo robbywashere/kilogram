@@ -17,5 +17,5 @@ module.exports = {
   MINIO_ENDPOINT: process.env.MINIO_ENDPOINT, 
   MINIO_PORT: process.env.MINIO_PORT,
   MINIO_SECURE: process.env.MINIO_SECURE,
-  MINIO_BUCKET: process.env.MINIO_BUCKET,
+  MINIO_BUCKET: process.env.MINIO_BUCKET || 'uploads',
 };

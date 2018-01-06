@@ -42,9 +42,14 @@ module.exports = {
   },*/
   Init({ Post }){
     this.belongsTo(Post);
-
   }, 
   StaticMethods: {
+    setUploaded: function({ uuid }) {
+      return this.update({ uploaded: true },{ where: { uuid }})
+    },
+    setDeleted: function({ uuid }){
+      return this.update({ deleted: true }, { where: { uuid }})
+    },
     new: function({ bucket, extension }) {
       return this.create({
         bucket,
