@@ -25,6 +25,12 @@ app.use(require('serve-static')(__dirname + '/public'));
 
 app.use(require('body-parser').json());
 
+app.use(function(err, req, res, next) {
+  logger.error(err);
+  res.status(err.statusCode || 500)
+    .send(err.msg || err.toString());
+});
+
 finale.initialize({
   app,
   sequelize: DB
@@ -42,6 +48,13 @@ app.get('/upload', (req, res) => {
 
 Object.keys(Objects).forEach(k=> finale.resource({ model: Objects[k] }))
 
-const init = Promise.all([syncDb(false), mc.init() ])
+Promise.all([syncDb(false), mc.init() ]).then(function(){
+  const port = config.PORT;
+  app.listen(port, () => {
+    logger(`Listening on ${port}\nhttp://127.0.0.1:${port}`)
+  });
+
+});
+
 
 module.exports = { app, init }

@@ -68,7 +68,7 @@ class MClient {
   }
 
   init(){
-    return Promise.all([ this.createBucket(), this.listen({ events: MClient.PhotoEvents }) ]);
+    return this.createBucket().then( ()=> this.listen({ events: MClient.PhotoEvents }))
   }
 
   async createBucket({ bucket = this.bucket, region = this.region } = {}){
