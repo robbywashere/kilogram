@@ -8,6 +8,7 @@
     "aor-epilogue-client": "^0.2.0",
     "aor-rest-client-router": "^0.1.0",
     "bluebird": "^3.5.1",
+    "bson": "^1.0.4",
     "child-process-promise": "^2.2.1",
     "config": "^1.28.1",
     "dotenv": "^4.0.0",

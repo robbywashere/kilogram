@@ -10,6 +10,7 @@ const sync = require('../db/sync');
 const Promise = require('bluebird');
 const { createUserPostJob } = require('./helpers');
 const { constant, times } = require('lodash');
+const minioObj = require('../server-lib/minioObject');
 
 describe('objects/Post', function(){
 
@@ -56,7 +57,8 @@ describe('objects/Post', function(){
       UserId: user.id,
       Photo: {
         bucket: 'uploads',
-        extension: 'jpg'
+        extension: 'jpg',
+        objectName: minioObj.create('v2',{ payload: true })
       }
     },{
       include: [ Photo ]

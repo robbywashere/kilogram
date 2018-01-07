@@ -6,6 +6,11 @@ const sync = require('../db/sync');
 const { Device } = require('../objects');
 //const SequelizeMock = require('sequelize-mock');
 //sinon.stub(DB,"$", new SequelizeMock())
+
+
+describe('', function(){
+
+
 beforeEach(async ()=> {
   return sync(true);
 });
@@ -189,3 +194,4 @@ describe('syncDevices', function(){
 
 
 
+})

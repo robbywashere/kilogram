@@ -9,9 +9,11 @@ const get = require('lodash/get');
 const Promise = require('bluebird');
 const { Photo } = require('../objects');
 const { chunk } = require('lodash');
+const minioObj = require('../server-lib/minioObject');
 
 
 const ClientConfig =  {
+
   endPoint: config.MINIO_ENDPOINT,
   bucket: config.MINIO_BUCKET,
   port: parseInt(config.MINIO_PORT),
@@ -92,8 +94,8 @@ class MClient {
     })
   }
 
-  static PutPhotoFn({ bucket, uuid, extension }){
-    return Photo.create({ uuid, bucket, extension });
+  static PutPhotoFn({ bucket, uuid, extension, key }){
+    return Photo.create({ uuid, bucket, extension, objectName: key });
   }
   static DelPhotoFn({ uuid }){
     return Photo.setDeleted({ uuid });
@@ -109,7 +111,7 @@ class MClient {
       logger.debug('Caught event: ', key, event);
       if (key) {
         try {
-          const [ uuid, extension ] = key.split('.');
+          const { uuid, extension } = minioObj.parse(key);
           if (event === "s3:ObjectCreated:Put") {
             await putFn({ bucket, uuid, record, key, extension })
           } else if (event === "s3:ObjectRemoved:Deleted") {

@@ -8,11 +8,11 @@ const assert = require('assert');
 const sync = require('../db/sync');
 const { Post, Job, Device, User, Photo } = require('../objects');
 
+
+describe('jobs/', function(){
 beforeEach(async ()=> {
   return await sync(true);
 });
-
-describe('jobs/', function(){
 
   describe('function JobRun', function(){
     it(`should run a job via sending a 'full_dance' cmd sent to python bridge and properly respond to errors`, async function(){

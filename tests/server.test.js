@@ -8,9 +8,9 @@ const sinon = require('sinon');
 const syncDB = require('../db/sync');
 const { Photo } = require('../objects');
 
-beforeEach(syncDB);
 describe('server', function(){
 
+beforeEach(syncDB);
   describe('minio router', function(){
     describe('GET /objects', function(){
 

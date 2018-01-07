@@ -4,6 +4,7 @@ const {
   MClient,
 } = require('../server-lib/minio');
 
+const minioObj = require('../server-lib/minioObject');
 const sinon = require('sinon');
 
 const Promise = require('bluebird');
@@ -17,6 +18,8 @@ const { set } = require('lodash');
 const uuidv4 = require('uuid/v4');
 
 const { Photo } = require('../objects');
+
+const { v2MetaName } = Photo;
 
 function calledWith(stub){
 }
@@ -82,12 +85,14 @@ describe('retryConnRefused', function(){
     it ('should respond to put and delete events ', async function(){
 
       let putRecord = {}
-      set(putRecord,'s3.object.key','putUUID.jpg');
+      const uuid = uuidv4();
+      const key = v2MetaName({ filename: 'filename.jpg', uuid });
+      set(putRecord,'s3.object.key',key);
       set(putRecord,'s3.bucket.name','puttestBucket');
       set(putRecord,'eventName', 's3:ObjectCreated:Put');
 
       let delRecord = {}
-      set(delRecord,'s3.object.key','delUUID.jpg');
+      set(delRecord,'s3.object.key',key);
       set(delRecord,'s3.bucket.name','deltestBucket');
       set(delRecord,'eventName', 's3:ObjectRemoved:Deleted');
 
@@ -101,15 +106,15 @@ describe('retryConnRefused', function(){
       assert.deepEqual(putFn.getCall(0).args[0], {
         record: putRecord,
         extension: 'jpg',
-        key: 'putUUID.jpg',
-        uuid: 'putUUID',
+        key,
+        uuid,
         bucket: 'puttestBucket'
       });
       assert.deepEqual(delFn.getCall(0).args[0], {
         record: delRecord,
         extension: 'jpg',
-        key: 'delUUID.jpg',
-        uuid: 'delUUID',
+        key,
+        uuid,
         bucket: 'deltestBucket'
       });
 
@@ -122,21 +127,22 @@ describe('retryConnRefused', function(){
       const bucket = 'testBucket';
 
       const uuid = uuidv4();
-
+      const meta = { uuid, extension: 'jpg'}
+      const key = minioObj.create('v2',meta)
       let putRecord = {}
-      set(putRecord,'s3.object.key',`${uuid}.jpg`);
+      set(putRecord,'s3.object.key',key);
       set(putRecord,'s3.bucket.name',bucket);
       set(putRecord,'eventName', 's3:ObjectCreated:Put');
 
       let delRecord = {}
-      set(delRecord,'s3.object.key',`${uuid}.jpg`);
+      set(delRecord,'s3.object.key',key);
       set(delRecord,'s3.bucket.name',bucket);
       set(delRecord,'eventName', 's3:ObjectRemoved:Deleted');
       const eventHandler = MClient.PhotoEvents();
 
       await eventHandler(putRecord);
-
-      assert.equal(uuid,(await Photo.findAll())[0].get('uuid'));
+      const pMeta = (await Photo.findAll())[0].get('meta');
+      assert.deepEqual(meta,pMeta);
 
       await eventHandler(delRecord);
 

@@ -1,5 +1,6 @@
 const {readdirSync, readFileSync } = require('fs');
 const { User, Photo, Post } = require('../../objects');
+const minioObj = require('../../server-lib/minioObject');
 
 function loadFixture(name) {
   return readFileSync(`${__dirname}/../fixtures/${name}`).toString();
@@ -19,7 +20,8 @@ async function createUserPostJob(){
     UserId: user.id,
     Photo: {
       bucket: 'uploads',
-      extension: 'jpg'
+      extension: 'jpg',
+      objectName: minioObj.create('v2',{ payload: true })
     }
   },{
     include: [ Photo ]
