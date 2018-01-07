@@ -13,6 +13,18 @@ function fixtures(){
   return o;
 }
 
+function exprezz(){
+
+
+  const app = require('express')();
+  app.use(function(err, req, res, next) {
+    logger.error(err);
+    res.status(err.statusCode || 500)
+      .send(err.msg || err.toString());
+  });
+  return app;
+}
+
 async function createUserPostJob(){
   const user = await User.create();
   let post = await Post.create({
@@ -31,4 +43,4 @@ async function createUserPostJob(){
   return post;
 }
 
-module.exports =  { fixtures, createUserPostJob }
+module.exports =  { fixtures, createUserPostJob, exprezz }

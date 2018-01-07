@@ -19,7 +19,6 @@ const uuidv4 = require('uuid/v4');
 
 const { Photo } = require('../objects');
 
-const { v2MetaName } = Photo;
 
 function calledWith(stub){
 }
