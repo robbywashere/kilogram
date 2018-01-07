@@ -117,7 +117,6 @@ class MClient {
             await delFn({ key })
           }
         } catch(e) {
-          logger.error(e);
         }
       }
     }
@@ -154,7 +153,6 @@ function removeObject({ client, bucket, param = 'name' }={}){
     try {
       res.send(await mc.removeObject({ bucket, name: req.query[param] }));
     } catch(e) {
-      logger.error(e);
       next(e);
     }
   }
@@ -167,7 +165,6 @@ function listObjects({ client, bucket }={}){
     try {
       res.send(await mc.listObjectsWithSURLs());
     } catch(e) {
-      logger.error(e);
       next(e);
     }
   }

@@ -6,13 +6,24 @@ const v2 = {
   parse(objectname) {
     const { deserialize } = new bson();
     const decoded = new Buffer(objectname.replace(/_/g,'='), 'base64');
+    return JSON.parse(decoded);
+  },
+  create(obj){
+    const { serialize } = new bson();
+    return new Buffer(JSON.stringify(obj)).toString('base64').replace(/=/g,'_')
+  }
+}
+
+const v3 = {
+  parse(objectname) {
+    const { deserialize } = new bson();
+    const decoded = new Buffer(objectname.replace(/_/g,'='), 'base64');
     return deserialize(decoded);
   },
   create(obj){
     const { serialize } = new bson();
     return serialize(obj).toString('base64').replace(/=/g,'_')
   }
-
 }
 
 
@@ -50,7 +61,8 @@ const v1 = {
 
 const schemas = {
   v1,
-  v2
+  v2,
+  v3,
 }
 
 function create(version, ...args) {
@@ -69,4 +81,4 @@ function parse(objectname){
 
 }
 
-module.exports = { v1, v2, schemas, parse, create }
+module.exports = { ...schemas, schemas, parse, create }
