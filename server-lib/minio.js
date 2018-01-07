@@ -63,7 +63,7 @@ class MClient {
 
   async newPhoto({ bucket = this.bucket}={}){
     const uuid = uuidv4();
-    const name = minioObj.create('v2',{ bucket, uuid })
+    const name = minioObj.create('v3',{ uuid })
     return this.getSignedPutObject({ name });
   }
 

@@ -2,34 +2,70 @@
 const demand = require('../lib/demand');
 const bson = require('bson');
 
-const v2 = {
-  parse(objectname) {
+const BASS64CIPH = [['=','_'],['/','-'],['+','.']];
+
+class bass64 {
+  constructor(ciph){
+    this.cin = this.createCipher(ciph);
+    this.cout = this.createCipher(ciph.map(ca=>ca.reverse()));
+  }
+  in(str){
+    return bass64.translate(str,this.cin)
+  }
+  out(str){
+    return bass64.translate(str,this.cout)
+  }
+  createCipher(keys){
+    let o = new Map();
+    keys.forEach(([x,y])=>o.set(x,y));
+    return c => (o.has(c) ? o.get(c) : c)
+  }
+  static translate(str, cipher) { return str.split('').map(cipher).join('') }
+
+}
+
+const b64 = new bass64(BASS64CIPH);
+
+class v3 {
+  static enc(str){
+    return b64.in(str);
+  }
+
+  static dec(str){
+    return new Buffer(b64.out(str), 'base64');
+  }
+
+  static parse(objectname) {
     const { deserialize } = new bson();
-    const decoded = new Buffer(objectname.replace(/_/g,'='), 'base64');
-    return JSON.parse(decoded);
-  },
-  create(obj){
+    return deserialize(v3.dec(objectname));
+  }
+  static create(obj){
     const { serialize } = new bson();
-    return new Buffer(JSON.stringify(obj)).toString('base64').replace(/=/g,'_')
+    return v3.enc(serialize(obj).toString('base64'))
   }
 }
 
-const v3 = {
-  parse(objectname) {
-    const { deserialize } = new bson();
-    const decoded = new Buffer(objectname.replace(/_/g,'='), 'base64');
-    return deserialize(decoded);
-  },
-  create(obj){
-    const { serialize } = new bson();
-    return serialize(obj).toString('base64').replace(/=/g,'_')
+
+
+
+
+class v2 {
+  static enc(str){
+    return b64.in(new Buffer(str).toString('base64'))
+  }
+  static dec(str){
+    return new Buffer(b64.out(str), 'base64');
+  }
+  static parse(objectname) {
+    return JSON.parse(v2.dec(objectname));
+  }
+  static create(obj){
+    return v2.enc(JSON.stringify(obj));
   }
 }
 
-
-
-const v1 = {
-  parse(objectname) {
+class v1 {
+  static parse(objectname) {
     try {
       const [ name, extension ] = objectname.split('.');
       const decoded = new Buffer(name.replace(/_/g,'='), 'base64').toString('ascii');
@@ -40,8 +76,8 @@ const v1 = {
     } catch(e) {
       throw new Error(`Error parsing v1 obj schema\n${e}`)
     }
-  },
-  create(params) {
+  }
+  static create(params) {
     const p = ({ 
       uuid = demand('uuid'), 
       userId = demand('userId'), 

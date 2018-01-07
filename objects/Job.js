@@ -3,6 +3,28 @@ const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
 const { DB_ENC_KEY } = require('config');
 
+const InitJobQuery = `
+  INSERT INTO
+    "Jobs"
+    ("PostId", "UserId", "createdAt", "updatedAt") (
+      SELECT 
+        "Posts"."id",
+        "Posts"."UserId",
+        NOW() "createdAt",
+        NOW() "updatedAt"
+      FROM
+        "Posts"
+      LEFT JOIN
+        "Jobs"
+      ON 
+        "Jobs"."PostId" = "Posts"."id"
+      WHERE
+        "Posts"."postDate" <= NOW()
+      AND
+        "Jobs"."PostId" IS NULL 
+    )
+`
+
 const GetJobQuery =`
   UPDATE 
       "Jobs"
@@ -61,6 +83,9 @@ module.exports = {
   Methods: {
   },
   StaticMethods: {
+    initJobs: async function(){
+      return this.$.query(InitJobQuery, { type: sequelize.QueryTypes.INSERT })
+    },
     popJob: async function(){ return get((await this.$.query(GetJobQuery, { type: sequelize.QueryTypes.SELECT })),0) } // TODO: model: require(./index).Job ???
   }
 }

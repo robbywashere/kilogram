@@ -12,7 +12,7 @@ class Agent {
     this.deviceId = deviceId;
   }
 
-  async exec({ cmd=demain('cmd'), args={} } = demand('{ cmd, args<optional>}')){
+  async exec({ cmd=demand('cmd'), args={} } = demand('{ cmd, args<optional>}')){
     try {
       if (!this._bridge) this.connect();
       return this._bridge.cmd(cmd, args);

@@ -165,6 +165,15 @@ describe('zombies', function(){
 
 });
 
+describe.skip('restore devices in locked state; where idle: false and BUT no work is being done on them', function(){
+
+
+})
+
+describe('get device', function(){
+  it('should pop a device')
+})
+
 describe('syncDevices', function(){
   it ('should update devices (online: true where in <adb devices ids> and (online: false where not in <adb device ids>)', async function(){
 

@@ -3,28 +3,6 @@ const DB = require('../db');
 const { get } = require('lodash');
 const { STRING, TEXT, DATE, Op } = sequelize;
 
-const InitJobQuery = `
-  INSERT INTO
-    "Jobs"
-    ("PostId", "UserId", "createdAt", "updatedAt") (
-      SELECT 
-        "Posts"."id",
-        "Posts"."UserId",
-        NOW() "createdAt",
-        NOW() "updatedAt"
-      FROM
-        "Posts"
-      LEFT JOIN
-        "Jobs"
-      ON 
-        "Jobs"."PostId" = "Posts"."id"
-      WHERE
-        "Posts"."postDate" <= NOW()
-      AND
-        "Jobs"."PostId" IS NULL 
-    )
-`
-
 module.exports = {
   Name: 'Post',
   Properties:{
@@ -72,9 +50,6 @@ module.exports = {
     }
   },
   StaticMethods: {
-    initJobs: async function(){
-      return this.$.query(InitJobQuery, { type: sequelize.QueryTypes.INSERT })
-    }
   },
 }
 

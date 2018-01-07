@@ -34,11 +34,11 @@ describe('objects/Post', function(){
       include: [ Photo ]
     })
 
-    await Post.initJobs();
+    await Job.initJobs();
 
     //Run again to assure no dupes ;)
 
-    await Post.initJobs();
+    await Job.initJobs();
 
     const jobs = await Job.findAll();
 

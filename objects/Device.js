@@ -2,6 +2,31 @@ const sequelize = require('sequelize');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
 
+const GetDeviceQuery =`
+  UPDATE 
+      "Devices"
+  SET 
+      idle=false
+  WHERE
+      id in (
+          SELECT
+              id
+          FROM
+              "Devices"
+          WHERE
+              idle=false
+          AND 
+              online=true
+          AND
+              enabled=true
+          ORDER BY 
+              id asc
+          LIMIT 1 FOR UPDATE
+      )
+  RETURNING *;
+`
+
+
 module.exports = {
   Name: 'Device',
   Properties:{
@@ -38,6 +63,9 @@ module.exports = {
   },
   ScopeFunctions: true,
   Methods:{
+    setFree() {
+      return this.set('idle', true).save();
+    },
     enable: function(){
       return this.update({ enabled: true })
     },
@@ -46,6 +74,7 @@ module.exports = {
     },
   },
   StaticMethods: {
+    popDevice: async function(){ return get((await this.$.query(GetDeviceQuery, { type: sequelize.QueryTypes.SELECT })),0) },
     setFreeById: function(adbId) {
       return this.update({ 
         idle: true,
@@ -88,6 +117,7 @@ module.exports = {
       await this.syncOnline(ids);
     },
 
+    //TODO: For when a device disconnects in the middle of working/not { idle: true }, then comes back online
     freeDanglingByIds: async function(ids = []){
       await this.update({ online: true, idle: true },{ 
         where: {
