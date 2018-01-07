@@ -1,5 +1,6 @@
 const Minio = require('minio');
 const s2p = require('stream-to-promise');
+const uuid = require('uuid/v4');
 const { logger } = require('../lib/logger');
 const config = require('config');
 const { Router } = require('express');
@@ -59,8 +60,9 @@ class MClient {
   }
 
   async newPhoto({ bucket = this.bucket, extension}={}){
-    const photo = await Photo.create({ bucket, extension });
-    return this.getSignedPutObject({ name: photo.src });
+    //const photo = await Photo.create({ bucket, extension });
+    const name = Photo.srcStr({ bucket, extension, uuid: uuid() }) 
+    return this.getSignedPutObject({ name });
   }
 
   init(){
@@ -90,8 +92,8 @@ class MClient {
     })
   }
 
-  static PutPhotoFn({ uuid }){
-    return Photo.setUploaded({ uuid });
+  static PutPhotoFn({ bucket, uuid, extension }){
+    return Photo.create({ uuid, bucket, extension });
   }
   static DelPhotoFn({ uuid }){
     return Photo.setDeleted({ uuid });
@@ -109,9 +111,9 @@ class MClient {
         try {
           const [ uuid, extension ] = key.split('.');
           if (event === "s3:ObjectCreated:Put") {
-            await putFn({ bucket, uuid, record, key })
+            await putFn({ bucket, uuid, record, key, extension })
           } else if (event === "s3:ObjectRemoved:Deleted") {
-            await delFn({ bucket, uuid, record, key })
+            await delFn({ bucket, uuid, record, key, extension })
           }
         } catch(e) {
           logger.error(e);

@@ -46,13 +46,10 @@ describe('server', function(){
 
         const response = await request(app).get('/uploads?name=photo.jpg').expect(200)
 
+        assert(client.presignedPutObject.once())
+
         assert.equal(response.text, 'http://fakeurl');
 
-        const objectname  = client.presignedPutObject.getCall(0).args[1]
-
-        const photos = await Photo.findAll();
-
-        assert.equal(photos[0].get('src'), objectname);
 
       })
 

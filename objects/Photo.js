@@ -31,7 +31,7 @@ module.exports = {
     },
     uploaded: {
       type: BOOLEAN,
-      defaultValue: false
+      defaultValue: true 
     },
     url: {
       type: TEXT,
@@ -44,18 +44,13 @@ module.exports = {
     this.belongsTo(Post);
   }, 
   StaticMethods: {
+    srcStr: ({ bucket, uuid, extension })=> `${bucket}/${uuid}.${extension}`,
     setUploaded: function({ uuid }) {
-      return this.update({ uploaded: true },{ where: { uuid }})
+      throw new Error('DEPRECATED after 2cd9c7a5b8f72d76a3615ed56c6b69205f1934a9');
     },
     setDeleted: function({ uuid }){
       return this.update({ deleted: true }, { where: { uuid }})
     },
-    new: function({ bucket, extension }) {
-      return this.create({
-        bucket,
-        extension,
-      })
-    }
   }
 }
 

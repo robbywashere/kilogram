@@ -100,12 +100,14 @@ describe('retryConnRefused', function(){
 
       assert.deepEqual(putFn.getCall(0).args[0], {
         record: putRecord,
+        extension: 'jpg',
         key: 'putUUID.jpg',
         uuid: 'putUUID',
         bucket: 'puttestBucket'
       });
       assert.deepEqual(delFn.getCall(0).args[0], {
         record: delRecord,
+        extension: 'jpg',
         key: 'delUUID.jpg',
         uuid: 'delUUID',
         bucket: 'deltestBucket'
@@ -114,14 +116,12 @@ describe('retryConnRefused', function(){
 
     })
 
-    it ('should update Photo object on put and delete', async function(){
+    it('should update/create Photo db object on put and delete', async function(){
       await DBSync();
 
       const bucket = 'testBucket';
 
-      const photo = await Photo.create({ bucket, extension: 'jpg' })
-
-      const uuid = photo.get('uuid');
+      const uuid = uuidv4();
 
       let putRecord = {}
       set(putRecord,'s3.object.key',`${uuid}.jpg`);
@@ -136,7 +136,7 @@ describe('retryConnRefused', function(){
 
       await eventHandler(putRecord);
 
-      assert((await Photo.findAll())[0].get('uploaded'));
+      assert.equal(uuid,(await Photo.findAll())[0].get('uuid'));
 
       await eventHandler(delRecord);
 
