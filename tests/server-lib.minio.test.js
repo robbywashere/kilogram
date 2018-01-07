@@ -10,7 +10,13 @@ const Promise = require('bluebird');
 
 const assert = require('assert');
 
+const DBSync = require('../db/sync');
+
 const { set } = require('lodash');
+
+const uuidv4 = require('uuid/v4');
+
+const { Photo } = require('../objects');
 
 function calledWith(stub){
 }
@@ -87,8 +93,8 @@ describe('retryConnRefused', function(){
 
 
       const putFn = sinon.stub().resolves(putRecord);
-      const deleteFn = sinon.stub().resolves(delRecord);
-      const eventFn = MClient.Event({ putFn, deleteFn });
+      const delFn = sinon.stub().resolves(delRecord);
+      const eventFn = MClient.Event({ putFn, delFn });
       eventFn(putRecord);
       eventFn(delRecord);
 
@@ -98,14 +104,47 @@ describe('retryConnRefused', function(){
         uuid: 'putUUID',
         bucket: 'puttestBucket'
       });
-      assert.deepEqual(deleteFn.getCall(0).args[0], {
+      assert.deepEqual(delFn.getCall(0).args[0], {
         record: delRecord,
         key: 'delUUID.jpg',
         uuid: 'delUUID',
         bucket: 'deltestBucket'
       });
 
+
     })
+
+    it ('should update Photo object on put and delete', async function(){
+      await DBSync();
+
+      const bucket = 'testBucket';
+
+      const photo = await Photo.create({ bucket, extension: 'jpg' })
+
+      const uuid = photo.get('uuid');
+
+      let putRecord = {}
+      set(putRecord,'s3.object.key',`${uuid}.jpg`);
+      set(putRecord,'s3.bucket.name',bucket);
+      set(putRecord,'eventName', 's3:ObjectCreated:Put');
+
+      let delRecord = {}
+      set(delRecord,'s3.object.key',`${uuid}.jpg`);
+      set(delRecord,'s3.bucket.name',bucket);
+      set(delRecord,'eventName', 's3:ObjectRemoved:Deleted');
+      const eventHandler = MClient.PhotoEvents();
+
+      await eventHandler(putRecord);
+
+      assert((await Photo.findAll())[0].get('uploaded'));
+
+      await eventHandler(delRecord);
+
+      assert((await Photo.findAll())[0].get('deleted'));
+
+
+    })
+
 
   });
 

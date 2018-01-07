@@ -7,6 +7,7 @@ const router = Router();
 const get = require('lodash/get');
 const Promise = require('bluebird');
 const { Photo } = require('../objects');
+const { chunk } = require('lodash');
 
 
 const ClientConfig =  {
@@ -42,11 +43,12 @@ class MClient {
   }
 
   removeObject({ bucket = this.bucket, name }){
+    
     return this.client.removeObject(bucket, name)
   }
   async listObjectsWithSURLs(){
     const objects = await s2p(this.client.listObjects(this.bucket));
-    objects.forEach(o=>o.bucketName=bucket);
+    objects.forEach(o=>o.bucketName=this.bucket);
     for (let o of chunk(objects, 20)) { //<--- Fanout
       await Promise.all(o
         .map(obj => this.client
@@ -96,7 +98,7 @@ class MClient {
   }
   static Event({
     putFn,
-    deleteFn
+    delFn
   }) {
     return async (record) => {
       const key = get(record,'s3.object.key'); 
@@ -107,12 +109,9 @@ class MClient {
         try {
           const [ uuid, extension ] = key.split('.');
           if (event === "s3:ObjectCreated:Put") {
-            //const url = await client.presignedGetObject(bucket, key);
-            //       const result = await Photo.update({ uploaded: true, url },{ where: { uuid } });
             await putFn({ bucket, uuid, record, key })
           } else if (event === "s3:ObjectRemoved:Deleted") {
-            //await Photo.update({ deleted: true },{ where: { uuid } });
-            await deleteFn({ bucket, uuid, record, key })
+            await delFn({ bucket, uuid, record, key })
           }
         } catch(e) {
           logger.error(e);
@@ -150,7 +149,7 @@ function removeObject({ client, bucket, param = 'name' }={}){
   const mc = (client) ? client: new MClient({ bucket });
   return async (req, res, next) => { 
     try {
-    req.send(await mc.removeObject(req.query[param]));
+      res.send(await mc.removeObject({ bucket, name: req.query[param] }));
     } catch(e) {
       next(e);
     }
@@ -162,7 +161,7 @@ function listObjects({ client, bucket }={}){
   const mc = (client) ? client: new MClient({ bucket });
   return async (req, res, next) => { 
     try {
-    req.send(await mc.listObjectsWithSURLs());
+      res.send(await mc.listObjectsWithSURLs());
     } catch(e) {
       next(e);
     }
@@ -174,7 +173,7 @@ function signedURL({ client, bucket, param = 'name' } = {}){
   const mc = (client) ? client: new MClient({ bucket });
   return async (req, res, next) => {
     try { 
-      let extension = (req.query[param]||'').split('.')[1];
+      const extension = (req.query[param]||'').split('.')[1];
       if (!['jpg','png','jpeg'].includes(extension)) throw(new Error('Invalid extension'))
       let url = await mc.newPhoto({ bucket, extension });
       res.end(url);
@@ -190,8 +189,8 @@ function signedURL({ client, bucket, param = 'name' } = {}){
 function Routes({ client }) {
   const router = new Router();
   router.get('/objects', listObjects({ client }))
-  router.delete('/objects/:name', removeObject({ client, param: 'name' }));
-  router.get('/uploads/:name', signedURL({ client, param: 'name' }))
+  router.delete('/objects', removeObject({ client, param: 'name' }));
+  router.get('/uploads', signedURL({ client, param: 'name' }))
   return router;
 }
 
