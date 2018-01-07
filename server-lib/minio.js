@@ -1,6 +1,6 @@
 const Minio = require('minio');
 const s2p = require('stream-to-promise');
-const uuid = require('uuid/v4');
+const uuidv4 = require('uuid/v4');
 const { logger } = require('../lib/logger');
 const config = require('config');
 const { Router } = require('express');
@@ -61,9 +61,9 @@ class MClient {
     return objects;
   }
 
-  async newPhoto({ bucket = this.bucket, extension}={}){
-    //const photo = await Photo.create({ bucket, extension });
-    const name = Photo.srcStr({ bucket, extension, uuid: uuid() }) 
+  async newPhoto({ bucket = this.bucket}={}){
+    const uuid = uuidv4();
+    const name = minioObj.create('v2',{ bucket, uuid })
     return this.getSignedPutObject({ name });
   }
 
@@ -94,11 +94,11 @@ class MClient {
     })
   }
 
-  static PutPhotoFn({ bucket, uuid, extension, key }){
-    return Photo.create({ uuid, bucket, extension, objectName: key });
+  static PutPhotoFn({ bucket, key }){
+    return Photo.create({bucket, objectName: key });
   }
-  static DelPhotoFn({ uuid }){
-    return Photo.setDeleted({ uuid });
+  static DelPhotoFn({ key }){
+    return Photo.setDeleted(key);
   }
   static Event({
     putFn,
@@ -111,11 +111,10 @@ class MClient {
       logger.debug('Caught event: ', key, event);
       if (key) {
         try {
-          const { uuid, extension } = minioObj.parse(key);
           if (event === "s3:ObjectCreated:Put") {
-            await putFn({ bucket, uuid, record, key, extension })
+            await putFn({ bucket, record, key })
           } else if (event === "s3:ObjectRemoved:Deleted") {
-            await delFn({ bucket, uuid, record, key, extension })
+            await delFn({ key })
           }
         } catch(e) {
           logger.error(e);
@@ -155,6 +154,7 @@ function removeObject({ client, bucket, param = 'name' }={}){
     try {
       res.send(await mc.removeObject({ bucket, name: req.query[param] }));
     } catch(e) {
+      logger.error(e);
       next(e);
     }
   }
@@ -167,6 +167,7 @@ function listObjects({ client, bucket }={}){
     try {
       res.send(await mc.listObjectsWithSURLs());
     } catch(e) {
+      logger.error(e);
       next(e);
     }
   }
@@ -177,11 +178,10 @@ function signedURL({ client, bucket, param = 'name' } = {}){
   const mc = (client) ? client: new MClient({ bucket });
   return async (req, res, next) => {
     try { 
-      const extension = (req.query[param]||'').split('.')[1];
-      if (!['jpg','png','jpeg'].includes(extension)) throw(new Error('Invalid extension'))
-      let url = await mc.newPhoto({ bucket, extension });
+      let url = await mc.newPhoto({ bucket });
       res.end(url);
     } catch(e) {
+      logger.error(e);
       next(e);
     }
   }

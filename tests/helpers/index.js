@@ -20,7 +20,6 @@ async function createUserPostJob(){
     UserId: user.id,
     Photo: {
       bucket: 'uploads',
-      extension: 'jpg',
       objectName: minioObj.create('v2',{ payload: true })
     }
   },{
