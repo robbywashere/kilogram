@@ -100,21 +100,27 @@ module.exports = {
       if (fIds.length > 0) {
         newDevices = fIds.map(adbId=>({ online: true, idle: true, adbId }))
         return this.bulkCreate(newDevices)
+      } else {
+        return []
       }
     },
 
     syncOnline: async function (ids = []){
-      await this.update({ online: false },{ where: {
+      const nowOffline = await this.update({ online: false },{ where: {
+        online: true,
         adbId: { [Op.notIn]: ids  }
       }});
-      await this.update({ online: true },{ where: {
+      const nowOnline = await this.update({ online: true },{ where: {
+        online: false,
         adbId: { [Op.in]: ids }
       }});
+      return { nowOffline, nowOnline }
     },
 
     syncAll: async function( ids = []) {
-      await this.register(ids);
-      await this.syncOnline(ids);
+      const newDevices = await this.register(ids);
+      const syncd = await this.syncOnline(ids);
+      return { ...syncd, newDevices }; 
     },
 
     //TODO: For when a device disconnects in the middle of working/not { idle: true }, then comes back online

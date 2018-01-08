@@ -8,7 +8,7 @@ const syncDb = require('../db/sync');
 const runner = require('../python/runner');
 const Promise = require('bluebird');
 
-describe.only('engine' , function(){
+describe('engine' , function(){
 
   beforeEach(async ()=> syncDb())
 

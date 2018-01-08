@@ -8,7 +8,8 @@ const Promise = require('bluebird');
 const syncDevices = async () => {
   const devs = await cmds.adbDevices();
   await Device.freeDanglingByIds(devs); //TODO:???
-  await Device.syncAll(devs);
+  const resultOfSync = await Device.syncAll(devs);
+  logger.debug(resultOfSync);
 };
 
 
