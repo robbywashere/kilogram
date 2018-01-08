@@ -14,7 +14,7 @@ const GetDeviceQuery =`
           FROM
               "Devices"
           WHERE
-              idle=false
+              idle=true
           AND 
               online=true
           AND
@@ -74,7 +74,7 @@ module.exports = {
     },
   },
   StaticMethods: {
-    popDevice: async function(){ return get((await this.$.query(GetDeviceQuery, { type: sequelize.QueryTypes.SELECT })),0) },
+    popDevice: async function(){ return get((await this.$.query(GetDeviceQuery, { type: sequelize.QueryTypes.SELECT, model: this })),0) },
     setFreeById: function(adbId) {
       return this.update({ 
         idle: true,

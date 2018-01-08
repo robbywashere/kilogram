@@ -38,6 +38,8 @@ const GetJobQuery =`
               "Jobs"
           WHERE
               inprog=false
+          AND
+              finish=false
           ORDER BY 
               id asc
           LIMIT 1 FOR UPDATE
@@ -84,9 +86,9 @@ module.exports = {
   },
   StaticMethods: {
     initJobs: async function(){
-      return this.$.query(InitJobQuery, { type: sequelize.QueryTypes.INSERT })
+      return this.$.query(InitJobQuery, { type: sequelize.QueryTypes.INSERT, model: this })
     },
-    popJob: async function(){ return get((await this.$.query(GetJobQuery, { type: sequelize.QueryTypes.SELECT })),0) } // TODO: model: require(./index).Job ???
+    popJob: async function(){ return get((await this.$.query(GetJobQuery, { type: sequelize.QueryTypes.SELECT, model: this })),0) } // TODO: model: require(./index).Job ???
   }
 }
 
