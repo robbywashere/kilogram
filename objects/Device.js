@@ -106,14 +106,17 @@ module.exports = {
     },
 
     syncOnline: async function (ids = []){
-      const nowOffline = await this.update({ online: false },{ where: {
+      const returning = true;
+      const raw = true;
+      const mapAdbIds = ([_, x]) => x.map(d=>d.adbId)
+      const nowOffline = await this.update({ online: false },{ raw, returning, where: {
         online: true,
         adbId: { [Op.notIn]: ids  }
-      }});
-      const nowOnline = await this.update({ online: true },{ where: {
+      }}).then(mapAdbIds);
+      const nowOnline = await this.update({ online: true },{ raw, returning, where: {
         online: false,
         adbId: { [Op.in]: ids }
-      }});
+      }}).then(mapAdbIds);
       return { nowOffline, nowOnline }
     },
 
