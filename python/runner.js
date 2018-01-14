@@ -43,16 +43,11 @@ class Agent {
 }
 
 
-async function pullRemoteObject(name){
-
-
-}
-
-async function JobRun({ job = demand('job'), photo = demand('photo'), post = demand('post'), user = demand('user'), agent = demand('agent') }, throws = true) {
+async function JobRun({ job = demand('job'), photo = demand('photo'), post = demand('post'), user = demand('user'), agent = demand('agent'), minioClient = (new minio.MClient()) }, throws = true) {
   let localfile;
   try {
-    const mc = new minio.MClient();
-    localfile = await mc.pullPhoto(photo.objectName)
+    const mc = minioClient; 
+    localfile = await mc.pullPhoto({ name: photo.objectName })
     const result = await agent.exec({ 
       cmd: 'full_dance', 
       args: {
@@ -84,4 +79,4 @@ async function JobRun({ job = demand('job'), photo = demand('photo'), post = dem
 }
 
 
-module.exports = { JobRun, Agent, pullRemoteObject }
+module.exports = { JobRun, Agent }

@@ -25,13 +25,14 @@ const InitJobQuery = `
     )
 `
 
+//TODO: https://blog.2ndquadrant.com/what-is-select-skip-locked-for-in-postgresql-9-5/
 const GetJobQuery =`
   UPDATE 
       "Jobs"
   SET 
       inprog=true
   WHERE
-      id in (
+      id = (
           SELECT
               id
           FROM
@@ -40,9 +41,9 @@ const GetJobQuery =`
               inprog=false
           AND
               finish=false
-          ORDER BY 
-              id asc
-          LIMIT 1 FOR UPDATE
+          ORDER BY id 
+          FOR UPDATE SKIP LOCKED
+          LIMIT 1
       )
   RETURNING *;
 `

@@ -34,8 +34,10 @@ describe('MClient class', function(){
   describe('WrapMinioClient', function(){
     describe('>>>' ,function(){
       let callCount = 0;
+      let sandbox;
       beforeEach(function(){
-        sinon.stub(http, "request").callsFake(()=>{
+        sandbox = sinon.sandbox.create();
+        sandbox.stub(http, "request").callsFake(()=>{
           callCount++;
           const s = new Duplex();
           const err = new Error('ERROR CONN REFUSED');
@@ -44,7 +46,10 @@ describe('MClient class', function(){
           return s;
         });
       })
-      it.only(' should Pass custom wrapped client to constructor',
+      afterEach(function(){
+        sandbox.restore(); 
+      })
+      it('should Pass custom wrapped client to constructor',
         async function(){
 
           const transport = http;
@@ -74,10 +79,10 @@ describe('MClient class', function(){
         throw err;
       }
       const c = new Client();
-      WrapMinioClient(c, { retryDelayFn:  ()=>1 });
+      const wrappedClient = WrapMinioClient(c, { retryDelayFn:  ()=>1 });
 
       try {
-        await c.listBuckets();
+        await wrappedClient.listBuckets();
       } catch(e) {
         assert.equal(e.code, 'ECONNREFUSED');
       }
@@ -128,12 +133,17 @@ describe('MClient class', function(){
       client.bucketExists = sinon.stub().resolves();
       const mc = new MClient({ client, bucket: 'bucket' })
       mc.createBucket({ client, bucket: 'bucket', region: 'region' });
-      //TODOassert(client.makeBucket.calledWith('bucket','region'))
+      //TODO assert(client.makeBucket.calledWith('bucket','region'))
     })
-    describe.skip('pullRemoteObject', function(){
-
-      it ('should pull a remote object(photo) and store it locally', function(){
-
+    describe('pullPhoto', function(){
+      it ('should pull a photo and store it locally', async function(){
+        const client = {
+          fGetObject: sinon.mock().returns(Promise.resolve())
+        }
+        const mc = new MClient({ client, bucket: 'bucket' })
+        const file = await mc.pullPhoto({ name: 'xyz', tmpDir: '/dev/null' })
+        assert.equal('/dev/null/xyz', file);
+        assert(client.fGetObject.calledWith('bucket','xyz','/dev/null/xyz'))
       })
 
     })

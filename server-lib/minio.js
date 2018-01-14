@@ -21,6 +21,7 @@ const ClientConfig =  {
   secure: (config.MINIO_SECURE !== "true") ? false : true,
   accessKey: config.S3_ACCESS_KEY,
   secretKey: config.S3_SECRET_KEY,
+  tmpDir: config.MINIO_TMP_DIR
 }
 
 
@@ -49,12 +50,12 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
   getBucketPolicy
   setBucketPolicy`.split("\n").map(x=>x.trim());
 
-    const newClient = {};
+  const newClient = {};
   wrapMethods.forEach(m=>{
     const wfn = client[m];
     if (typeof wfn !== "undefined") {
       newClient[m] = (...args) => retryConnRefused3({ ...opts, fn: async ()=>wfn.bind(client)(...args), debug: wfn.name });
-    
+
     }
   })
   return newClient;
@@ -65,6 +66,7 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
 
 class MClient {
   constructor({ bucket = ClientConfig.bucket, region='us-east-1', config = ClientConfig, client }={}){
+    this.config = config;
     this.bucket = bucket;
     this.region = region;
     this.client = (client) ? client : new Minio.Client(config);
@@ -81,9 +83,9 @@ class MClient {
     return this.client.presignedPutObject(this.bucket, name, exp)
   }
 
-  async pullPhoto({ bucket = this.bucket, name }){
+  async pullPhoto({ bucket = this.bucket, name, tmpDir = this.config.tmpDir }){
     try {
-      const localpath = path.join(config.MINIO_TMP_DIR,name)
+      const localpath = path.join(tmpDir,name)
       await this.client.fGetObject(bucket,name,localpath)
       return localpath;
     } catch(e) {
@@ -158,7 +160,13 @@ class MClient {
       const key = get(record,'s3.object.key'); 
       const bucket = get(record,'s3.bucket.name'); 
       const event =  get(record,'eventName'); 
+
       logger.debug('Caught event: ', key, event);
+      try {
+        logger.debug('  event meta data',JSON.stringify(minioObj.parse(key)))
+      } catch(e) {
+        //swallow
+      }
       if (key) {
         try {
           if (event === "s3:ObjectCreated:Put") {
@@ -177,7 +185,7 @@ async function retryConnRefused3({ fn, retryCount = 1, retryDelayFn = (retries)=
   try {
     await fn();
   } catch(err) {
-    
+
     if (err.code === 'ECONNREFUSED' && retryCount <= max) {
       logger.debug(`Error: Connection refused, retrying ${retryCount}/${max} - ${debug}`)
       await Promise.delay(retryDelayFn(retryCount));

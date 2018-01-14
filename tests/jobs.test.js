@@ -13,17 +13,19 @@ const { MClient } = minio;
 
 describe('jobs/', function(){
   let minioStub;
-  beforeEach(async ()=> {
+
+  //TODO: remove this as passing minioClient to JobRun is now an option
+  /*beforeEach(async ()=> {
     await sync(true);
     const mClientStubInstance = function() {
       const mcstub = sinon.createStubInstance(MClient);
       mcstub.pullPhoto.resolves('/tmpfile');
       return mcstub;
     };
-     minioStub = sinon.stub(minio,'MClient').returns(mClientStubInstance())
+    minioStub = sinon.stub(minio,'MClient').returns(mClientStubInstance())
   });
   afterEach(()=>minioStub.restore())
-
+  */
 
   describe('function JobRun', function(){
     it(`should run a job via sending a 'full_dance' cmd sent to python bridge and properly respond to errors`, async function(){
@@ -31,7 +33,10 @@ describe('jobs/', function(){
 
       const execSpy = sinon.spy(()=>{ throw new Error('ERROR!') });
       const jobUpdateSpy = sinon.spy();
-      const photoGetSpy = sinon.stub().returns('src');
+
+      const minioClient = {
+        pullPhoto: sinon.mock().returns(Promise.resolve('/tmpfile'))
+      }
 
       const user = {
         igUsername: 'username',
@@ -47,13 +52,14 @@ describe('jobs/', function(){
         update: jobUpdateSpy
       }
       const photo = {
-        get: photoGetSpy,
-        objectName: 'objectnamefile'
+        objectName: 'objectName'
       }
 
 
 
-      await JobRun({ job, agent, post, photo, user }, false)
+      await JobRun({ job, agent, post, photo, user, minioClient }, false)
+
+      assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0],{ name: 'objectName' })
 
       assert(
         execSpy.calledWith({ 
@@ -81,12 +87,15 @@ describe('jobs/', function(){
 
     })
 
-    it(`should run a job via sending a 'full_dance' cmd sent to python bridge updating the job with the outcome`, async function(){
+    it(`should run a job downloading photo then sending a 'full_dance' cmd to python bridge updating the job with the outcome`, async function(){
 
 
       const execSpy = sinon.spy(()=>({ success: true }));
       const jobUpdateSpy = sinon.spy();
-      const photoGetSpy = sinon.stub().returns('src');
+
+      const minioClient = {
+        pullPhoto: sinon.mock().returns(Promise.resolve('/tmpfile'))
+      }
 
       const user = {
         igUsername: 'username',
@@ -102,15 +111,18 @@ describe('jobs/', function(){
         update: jobUpdateSpy
       }
       const photo = {
-        get: photoGetSpy
+        objectName: 'objectName'
       }
 
 
 
-      await JobRun({ job, agent, post, photo, user })
+      await JobRun({ job, agent, post, photo, user, minioClient })
 
-      assert(
-        execSpy.calledWith({ 
+      assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0],{ name: 'objectName' })
+
+      assert.deepEqual(
+        execSpy.getCall(0).args[0],
+        { 
           cmd: 'full_dance', 
           args: {
             username: 'username',
@@ -118,14 +130,15 @@ describe('jobs/', function(){
             desc: '#description',
             localfile: '/tmpfile' 
           } 
-        }))
+        })
 
-      assert(
-        jobUpdateSpy.calledWith({
+      assert.deepEqual(
+        jobUpdateSpy.getCall(0).args[0],
+        {
           inprog: false,
           finish: true,
           outcome: { success: true }
-        })
+        }
       )
 
     })
