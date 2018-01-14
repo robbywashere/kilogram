@@ -5,6 +5,8 @@ const { Job, BotchedJob, Device } = require('../objects');
 
 const demand = require('../lib/demand');
 
+const minio = require('../server-lib/minio');
+
 
 class Agent {
 
@@ -41,16 +43,23 @@ class Agent {
 }
 
 
+async function pullRemoteObject(name){
+
+
+}
+
 async function JobRun({ job = demand('job'), photo = demand('photo'), post = demand('post'), user = demand('user'), agent = demand('agent') }, throws = true) {
+  let localfile;
   try {
-    console.log(agent.exec.resolves);
+    const mc = new minio.MClient();
+    localfile = await mc.pullPhoto(photo.objectName)
     const result = await agent.exec({ 
       cmd: 'full_dance', 
       args: {
         username: user.igUsername, //TODO: user.getCredentials();
         password: user.igPassword,
         desc: post.desc,
-        objectname: photo.get('src')
+        localfile
       } 
     });
 
@@ -60,18 +69,19 @@ async function JobRun({ job = demand('job'), photo = demand('photo'), post = dem
       outcome: (result && typeof result === "object") ? result : { success: true }
     })
 
-    console.log(job.inprog)
-
     return result;
 
   } catch(error) {
     await job.update({ inprog: false, finish: false, outcome: { success: false, error: error.toString() }});
     //TODO: await BotchedJob.new(job,{ cmd, args, error, adbId: device.adbId })
     if (throws) throw error;
+  } finally {
+    //TODO rm localfile
+  
   }
 
 
 }
 
 
-module.exports = { JobRun, Agent }
+module.exports = { JobRun, Agent, pullRemoteObject }

@@ -2,11 +2,19 @@ const {
   retryConnRefused, 
   signedURL, 
   MClient,
+  WrapMinioClient,
 } = require('../server-lib/minio');
+
+const EventEmitter = require('events');
+
+const { Duplex } = require('stream');
+
+const http = require('http');
 
 const minioObj = require('../server-lib/minioObject');
 const sinon = require('sinon');
 
+const Minio = require('minio');
 const Promise = require('bluebird');
 
 const assert = require('assert');
@@ -20,45 +28,115 @@ const uuidv4 = require('uuid/v4');
 const { Photo } = require('../objects');
 
 
-function calledWith(stub){
-}
+describe('MClient class', function(){
 
-describe('retryConnRefused', function(){
 
-  it ('it should attempt given fn, retrying on on error.code == ECONNREFUS, retrying 5 times before throwing an error', async function(){
+  describe('WrapMinioClient', function(){
+    describe('>>>' ,function(){
+      let callCount = 0;
+      beforeEach(function(){
+        sinon.stub(http, "request").callsFake(()=>{
+          callCount++;
+          const s = new Duplex();
+          const err = new Error('ERROR CONN REFUSED');
+          err.code = 'ECONNREFUSED';
+          process.nextTick(()=>s.emit('error', err))
+          return s;
+        });
+      })
+      it.only(' should Pass custom wrapped client to constructor',
+        async function(){
 
-    sinon.stub(Promise,'delay').resolves();
-    const fn = sinon.spy(async () => { const e = new Error('Error'); e.code = 'ECONNREFUSED'; throw e })
-    try {
-      await retryConnRefused(fn)
-    } catch(e) {
-      assert.equal(e.toString().split("\n")[0],"Error: Could not connect to MINIO storage") 
-    }
-    assert.equal(fn.callCount,6);
-  });
+          const transport = http;
+          const client = WrapMinioClient((new Minio.Client({ endPoint: '127.0.0.1', transport, secure: false })),{ retryDelayFn: ()=>0 });
+          const mc = new MClient({ bucket: 'bucket', client })
 
-  it ('should attempt to createBucket when it doesnt exist', async function(){
-    const client = {};
-    let err = new Error('');
-    err.code = 'NoSuchBucket';
-    client.makeBucket = sinon.spy();
-    client.bucketExists = sinon.stub().rejects(err);
+          try {
+            await mc.client.listBuckets();
+          } catch(e) {
+            assert.equal(e.code, 'ECONNREFUSED');
+          }
+          assert.equal(callCount, 6)
 
-    const mc = new MClient({ client, bucket: 'bucket' })
+        })
 
-    mc.createBucket({ client, bucket: 'bucket', region: 'region' });
+    })
+    it('should wrap minio client to recover from error connection refusedes', async function(){
 
-    //TODOassert(client.makeBucket.calledWith('bucket','region'))
+
+      let callCount = 0;
+
+      const Client = function(){}
+      Client.prototype.listBuckets =async function listBuckets(){
+        callCount++;
+        const err = new Error('ERROR CONN REFUSED');
+        err.code = 'ECONNREFUSED';
+        throw err;
+      }
+      const c = new Client();
+      WrapMinioClient(c, { retryDelayFn:  ()=>1 });
+
+      try {
+        await c.listBuckets();
+      } catch(e) {
+        assert.equal(e.code, 'ECONNREFUSED');
+      }
+      assert.equal(callCount, 6)
+
+
+
+
+
+    })
 
   })
 
-  it ('should skip createBucket when it does exist', async function(){
-    let client = {};
-    client.makeBucket = sinon.spy();
-    client.bucketExists = sinon.stub().resolves();
-    const mc = new MClient({ client, bucket: 'bucket' })
-    mc.createBucket({ client, bucket: 'bucket', region: 'region' });
-    //TODOassert(client.makeBucket.calledWith('bucket','region'))
+  describe('retryConnRefused', function(){
+
+    it ('it should attempt given fn, retrying on on error.code == ECONNREFUSED, retrying 5 times before throwing an error', async function(){
+
+      sinon.stub(Promise,'delay').resolves();
+      const fn = sinon.spy(async () => { const e = new Error('Error'); e.code = 'ECONNREFUSED'; throw e })
+      try {
+        await retryConnRefused(fn)
+      } catch(e) {
+        assert.equal(e.toString().split("\n")[0],"Error: Could not connect to MINIO storage") 
+      }
+      assert.equal(fn.callCount,6);
+    });
+  })
+  describe('bucket setup',function(){
+
+    it ('should attempt to createBucket when it doesnt exist', async function(){
+      const client = {};
+      let err = new Error('');
+      err.code = 'NoSuchBucket';
+      client.makeBucket = sinon.spy();
+      client.bucketExists = sinon.stub().rejects(err);
+
+      const mc = new MClient({ client, bucket: 'bucket' })
+
+      mc.createBucket({ client, bucket: 'bucket', region: 'region' });
+
+      //TODOassert(client.makeBucket.calledWith('bucket','region'))
+
+    })
+
+    it ('should skip createBucket when it does exist', async function(){
+      let client = {};
+      client.makeBucket = sinon.spy();
+      client.bucketExists = sinon.stub().resolves();
+      const mc = new MClient({ client, bucket: 'bucket' })
+      mc.createBucket({ client, bucket: 'bucket', region: 'region' });
+      //TODOassert(client.makeBucket.calledWith('bucket','region'))
+    })
+    describe.skip('pullRemoteObject', function(){
+
+      it ('should pull a remote object(photo) and store it locally', function(){
+
+      })
+
+    })
   })
 
 

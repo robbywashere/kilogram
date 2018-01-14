@@ -1,4 +1,5 @@
 const Minio = require('minio');
+const path = require('path');
 const s2p = require('stream-to-promise');
 const uuidv4 = require('uuid/v4');
 const { logger } = require('../lib/logger');
@@ -10,10 +11,10 @@ const Promise = require('bluebird');
 const { Photo } = require('../objects');
 const { chunk } = require('lodash');
 const minioObj = require('../server-lib/minioObject');
+const demand = require('../lib/demand');
 
 
 const ClientConfig =  {
-
   endPoint: config.MINIO_ENDPOINT,
   bucket: config.MINIO_BUCKET,
   port: parseInt(config.MINIO_PORT),
@@ -23,6 +24,44 @@ const ClientConfig =  {
 }
 
 
+function WrapMinioClient(client = demand('client instance/client.prototype'), opts = {}){
+  const wrapMethods = `makeBucket
+  listBuckets
+  bucketExists
+  removeBucket
+  listObjects
+  listObjectsV2
+  listIncompleteUploads
+  fPutObject
+  fGetObject
+  getObject
+  putObject
+  copyObject
+  statObject
+  removeObject
+  removeIncompleteUpload
+  presignedGetObject
+  presignedPutObject
+  presignedPostPolicy
+  getBucketNotification
+  setBucketNotification
+  removeAllBucketNotification
+  getBucketPolicy
+  setBucketPolicy`.split("\n").map(x=>x.trim());
+
+    const newClient = {};
+  wrapMethods.forEach(m=>{
+    const wfn = client[m];
+    if (typeof wfn !== "undefined") {
+      newClient[m] = (...args) => retryConnRefused3({ ...opts, fn: async ()=>wfn.bind(client)(...args), debug: wfn.name });
+    
+    }
+  })
+  return newClient;
+
+}
+
+//WrapMinioClient(Minio.Client.prototype)
 
 class MClient {
   constructor({ bucket = ClientConfig.bucket, region='us-east-1', config = ClientConfig, client }={}){
@@ -30,6 +69,7 @@ class MClient {
     this.region = region;
     this.client = (client) ? client : new Minio.Client(config);
   }
+
 
   listen({ bucket = this.bucket, client = this.client, events }){
     const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*'])
@@ -41,12 +81,22 @@ class MClient {
     return this.client.presignedPutObject(this.bucket, name, exp)
   }
 
+  async pullPhoto({ bucket = this.bucket, name }){
+    try {
+      const localpath = path.join(config.MINIO_TMP_DIR,name)
+      await this.client.fGetObject(bucket,name,localpath)
+      return localpath;
+    } catch(e) {
+      throw e
+    }
+  }
+
   signedURL({ bucket= this.bucket }){
     return signedURL({ bucket, client: this.client })
   }
 
   removeObject({ bucket = this.bucket, name }){
-    
+
     return this.client.removeObject(bucket, name)
   }
   async listObjectsWithSURLs(){
@@ -61,9 +111,9 @@ class MClient {
     return objects;
   }
 
-  async newPhoto({ bucket = this.bucket}={}){
+  async newPhoto({ bucket = this.bucket, userId }={}){
     const uuid = uuidv4();
-    const name = minioObj.create('v3',{ uuid })
+    const name = minioObj.create('v4',{ uuid, userId })
     return this.getSignedPutObject({ name });
   }
 
@@ -73,7 +123,7 @@ class MClient {
 
   async createBucket({ bucket = this.bucket, region = this.region } = {}){
     try {
-      await retryConnRefused(()=>this.client.bucketExists(bucket))
+      await this.client.bucketExists(bucket)
     } catch(err) {
       if (err.code === 'NoSuchBucket') {
         try {
@@ -123,7 +173,31 @@ class MClient {
   }
 }
 
+async function retryConnRefused3({ fn, retryCount = 1, retryDelayFn = (retries)=>retries*3000, max = 5, debug = '' }) {
+  try {
+    await fn();
+  } catch(err) {
+    
+    if (err.code === 'ECONNREFUSED' && retryCount <= max) {
+      logger.debug(`Error: Connection refused, retrying ${retryCount}/${max} - ${debug}`)
+      await Promise.delay(retryDelayFn(retryCount));
+      return await retryConnRefused3({ fn, retryCount: retryCount+1, max, retryDelayFn, debug });
+    }
+    throw err;
+  }
+}
 
+async function retryConnRefused2({ fn, retryCount = 1, max = 5, ms = 3000 }) {
+  try {
+    await fn();
+  } catch(err) {
+    if (err.code === 'ECONNREFUSED' && retryCount <= max) {
+      await Promise.delay(retryCount*ms);
+      return retryConnRefused2({ fn, retryCount: retryCount+1, max, ms });
+    }
+    throw err;
+  }
+}
 
 async function retryConnRefused(fn, retryCount = 1) {
   try {
@@ -171,11 +245,12 @@ function listObjects({ client, bucket }={}){
 }
 
 
-function signedURL({ client, bucket, param = 'name' } = {}){
+function signedURL({ client, bucket } = {}){
   const mc = (client) ? client: new MClient({ bucket });
   return async (req, res, next) => {
     try { 
-      let url = await mc.newPhoto({ bucket });
+      const userId = get(req,'user.id') ? req.user.id : 'USERID';
+      let url = await mc.newPhoto({ bucket, userId });
       res.end(url);
     } catch(e) {
       logger.error(e);
@@ -196,4 +271,16 @@ function Routes({ client }) {
 }
 
 
-module.exports = { Routes, signedURL, removeObject, retryConnRefused, MClient, ClientConfig, listObjects };
+module.exports = { Routes, WrapMinioClient, signedURL, removeObject, retryConnRefused, MClient, ClientConfig, listObjects };
+
+/*
+{ Error: connect ECONNREFUSED 127.0.0.1:9000
+    at Object._errnoException (util.js:1019:11)
+    at _exceptionWithHostPort (util.js:1041:20)
+    at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1175:14)
+  code: 'ECONNREFUSED',
+  errno: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 9000 }
+  */

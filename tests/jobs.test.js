@@ -1,18 +1,29 @@
 
 process.env.NODE_ENV = 'test'; // TODO ?
-const { JobRun, Agent } = require('../python/runner');
+const { JobRun, Agent, pullRemoteObject } = require('../python/runner');
 
 const PythonShell = require('python-shell');
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../db/sync');
 const { Post, Job, Device, User, Photo } = require('../objects');
+const minio = require('../server-lib/minio');
+const { MClient } = minio; 
 
 
 describe('jobs/', function(){
-beforeEach(async ()=> {
-  return await sync(true);
-});
+  let minioStub;
+  beforeEach(async ()=> {
+    await sync(true);
+    const mClientStubInstance = function() {
+      const mcstub = sinon.createStubInstance(MClient);
+      mcstub.pullPhoto.resolves('/tmpfile');
+      return mcstub;
+    };
+     minioStub = sinon.stub(minio,'MClient').returns(mClientStubInstance())
+  });
+  afterEach(()=>minioStub.restore())
+
 
   describe('function JobRun', function(){
     it(`should run a job via sending a 'full_dance' cmd sent to python bridge and properly respond to errors`, async function(){
@@ -36,7 +47,8 @@ beforeEach(async ()=> {
         update: jobUpdateSpy
       }
       const photo = {
-        get: photoGetSpy
+        get: photoGetSpy,
+        objectName: 'objectnamefile'
       }
 
 
@@ -50,7 +62,7 @@ beforeEach(async ()=> {
             username: 'username',
             password: 'password',
             desc: '#description',
-            objectname: 'src' 
+            localfile: '/tmpfile' 
           } 
         }))
 
@@ -104,7 +116,7 @@ beforeEach(async ()=> {
             username: 'username',
             password: 'password',
             desc: '#description',
-            objectname: 'src' 
+            localfile: '/tmpfile' 
           } 
         }))
 

@@ -1,37 +1,22 @@
 #Android Debug Bridge version 1.0.39
 #Revision 3db08f2c6889-android
 
-from minio import Minio
-from minio.error import ResponseError
-import pprint
+#import pprint
 import sys, json
 from os import system
 from os import environ
+from os.path import join, dirname
+from dotenv import load_dotenv
 from uiautomator import Device
 import string
 import random
 
+dotenv_path = join(dirname(__file__),'..', '.env')
+load_dotenv(dotenv_path)
+
 def random_string(length=15):
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
 
-
-def object_download(objectname):
-    bucket = objectname.split("/")[0]
-    name = objectname.split(".")[0]
-    ext = objectname.split(".")[1]
-    if not (re.match("^[A-Za-z0-9_-]*$", name)) or not (re.match("png|jpg|jpeg", ext)):
-        raise Exception('Error {} is not a valid name or extendsion {}'.format(name, ext))
-    minioClient = Minio(environ['MINIO_ENDPOINT'],
-                      access_key=environ['MINIO_ACCESS_KEY'],
-                      secret_key=environ['MINIO_SECRET_KEY'],
-                      secure=environ['MINIO_SECURE'])
-
-    tmpdir = environ['MINIO_TMP_DIR']
-    localfile = '{}/{}.{}'.format(tmpdir,name,ext)
-    objectpath = '{}.{}'.format(name, ext)
-    minioClient.fget_object(bucket, objectpath, localfile)
-    return localfile
-#???    except ResponseError as err:
 
 class IGDevice:
     def __init__(self, device_id):
@@ -113,7 +98,7 @@ class IGDevice:
         myDevice.device(text='Share').click()
         self.photo_posted = True
 
-    def full_dance(self, username, password, localfile = None, objectname = None, desc = ""):
+    def full_dance(self, username, password, localfile,  desc = ""):
         if localfile is None:
             if objectname is None:
                 raise Exception('Error no localname or objectname given')
@@ -129,7 +114,6 @@ class IGDevice:
 
     def get(self, method):
         return getattr(self,method) 
-
 
 for line in sys.stdin:
     stdinput = json.loads(line)
