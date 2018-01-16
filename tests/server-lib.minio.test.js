@@ -25,7 +25,8 @@ const { set } = require('lodash');
 
 const uuidv4 = require('uuid/v4');
 
-const { Photo } = require('../objects');
+const objects = require('../objects');
+const { Photo } = objects; 
 
 
 describe('MClient class', function(){
@@ -164,6 +165,45 @@ describe('MClient class', function(){
       mc.listen({ events: eventFn });
       assert(client.listenBucketNotification.calledWith('bucket','','',[ 's3:ObjectCreated:*', 's3:ObjectRemoved:*' ]))
       assert(spyFn.calledWith('notification',eventFn))
+    })
+
+    it(`MClient.init() should setup PhotoEvents with listener`, async function(){
+    
+
+      let putRecord = {}
+      const uuid = uuidv4();
+      const key = minioObj.create('v2',{ uuid });
+      set(putRecord,'s3.object.key',key);
+      set(putRecord,'s3.bucket.name','puttestBucket');
+      set(putRecord,'eventName', 's3:ObjectCreated:Put');
+
+      let delRecord = {}
+      set(delRecord,'s3.object.key',key);
+      set(delRecord,'s3.bucket.name','deltestBucket');
+      set(delRecord,'eventName', 's3:ObjectRemoved:Deleted');
+    
+      const photoCreate = sinon.stub(Photo,'create').returns(Promise.resolve());
+      const photoDelete = sinon.stub(Photo,'setDeleted').returns(Promise.resolve());
+
+
+
+      const ee =  new EventEmitter();
+      const client = {
+        listenBucketNotification: ()=> ee
+      }
+      const mc = new MClient({ client, bucket: 'bucket' });
+
+      mc.createBucket = ()=>Promise.resolve();
+
+      await mc.init();
+
+      ee.emit('notification', putRecord);
+      ee.emit('notification', delRecord);
+
+      assert(photoCreate.calledWith({ bucket: 'puttestBucket', objectName: key}))
+      assert(photoDelete.calledWith(key))
+      
+    
     })
 
 

@@ -74,9 +74,10 @@ class MClient {
 
 
   listen({ bucket = this.bucket, client = this.client, events }){
-    const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*'])
-    logger.debug('Listening for s3/minio events ....')
-    listener.on('notification', events)
+    const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*']);
+    logger.debug('Listening for s3/minio events ....');
+    listener.on('notification', events);
+    return listener;
   }
 
   getSignedPutObject({ name, exp = 60}) { 
@@ -120,7 +121,7 @@ class MClient {
   }
 
   init(){
-    return this.createBucket().then( ()=> this.listen({ events: MClient.PhotoEvents }))
+    return this.createBucket().then( ()=> this.listen({ events: MClient.PhotoEvents() }))
   }
 
   async createBucket({ bucket = this.bucket, region = this.region } = {}){
@@ -175,6 +176,7 @@ class MClient {
             await delFn({ key })
           }
         } catch(e) {
+          logger.error(e)
         }
       }
     }
