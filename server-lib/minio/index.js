@@ -2,16 +2,16 @@ const Minio = require('minio');
 const path = require('path');
 const s2p = require('stream-to-promise');
 const uuidv4 = require('uuid/v4');
-const { logger } = require('../lib/logger');
+const { logger } = require('../../lib/logger');
 const config = require('config');
 const { Router } = require('express');
 const router = Router();
 const get = require('lodash/get');
 const Promise = require('bluebird');
-const { Photo } = require('../objects');
+const { Photo } = require('../../objects');
 const { chunk } = require('lodash');
-const minioObj = require('../server-lib/minioObject');
-const demand = require('../lib/demand');
+const minioObj = require('./minioObject');
+const demand = require('../../lib/demand');
 
 
 const ClientConfig =  {

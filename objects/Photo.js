@@ -3,7 +3,7 @@ const SEQ = require('../db');
 const { STRING,  TEXT, DATE, INTEGER, VIRTUAL, BOOLEAN, UUIDV4, UUID, Op } = sequelize;
 const { get } = require('lodash');
 const uuidv4 = require('uuid/v4');
-const minioObj = require('../server-lib/minioObject');
+const minioObj = require('../server-lib/minio/minioObject');
 
 module.exports = {
   Name: 'Photo',
@@ -42,6 +42,14 @@ module.exports = {
     },
     url: {
       type: TEXT,
+    }
+  },
+  Policy: {
+    show: {
+      attr: function (user, photo)  {
+        if (user && user.isAdmin) return true
+        return ['id','src', 'objectName','bucket'] 
+      }
     }
   },
   /* Scopes: {

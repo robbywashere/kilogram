@@ -1,5 +1,5 @@
 
-const demand = require('../lib/demand');
+const demand = require('../../lib/demand');
 const bson = require('bson');
 const msgpack = require('msgpack-lite');
 

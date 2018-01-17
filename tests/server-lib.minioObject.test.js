@@ -1,4 +1,4 @@
-const mo = require('../server-lib/minioObject');
+const mo = require('../server-lib/minio/minioObject');
 const uuidv4 = require('uuid/v4');
 const assert = require('assert');
 

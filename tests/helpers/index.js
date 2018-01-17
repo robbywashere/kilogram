@@ -1,6 +1,6 @@
 const {readdirSync, readFileSync } = require('fs');
 const { User, Photo, Post } = require('../../objects');
-const minioObj = require('../../server-lib/minioObject');
+const minioObj = require('../../server-lib/minio/minioObject');
 
 function loadFixture(name) {
   return readFileSync(`${__dirname}/../fixtures/${name}`).toString();

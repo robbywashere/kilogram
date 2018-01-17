@@ -11,7 +11,7 @@ const { Duplex } = require('stream');
 
 const http = require('http');
 
-const minioObj = require('../server-lib/minioObject');
+const minioObj = require('../server-lib/minio/minioObject');
 const sinon = require('sinon');
 
 const Minio = require('minio');

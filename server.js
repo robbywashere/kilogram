@@ -7,23 +7,24 @@ const { logger } = require('./lib/logger');
 const finale = require('finale-rest');
 const DB = require('./db');
 const Promise = require('bluebird');
-const s2p = require('stream-to-promise');
 const { MClient, Routes, signedURL, removeObject, listObjects } = require('./server-lib/minio');
 const corsHeaders = require('./server-lib/corsHeaders');
+const Auth = require('./server-lib/auth');
 
 const app = express();
 
-const { BucketEvents, Device, Job, BotchedJob } = require('./objects');
 
 const Objects = require('./objects');
 
 const syncDb = require('./db/sync');
 
+const initController = require('./controllers');
+
 app.use(corsHeaders);
 
-app.use(require('serve-static')(__dirname + '/public'));
+app.use('/auth',Auth(app));
 
-app.use(require('body-parser').json());
+app.use(require('serve-static')(__dirname + '/public'));
 
 app.use(function(err, req, res, next) {
   logger.error(err);
@@ -31,11 +32,11 @@ app.use(function(err, req, res, next) {
     .send(err.msg || err.toString());
 });
 
-finale.initialize({
+
+initController({
   app,
   sequelize: DB
 })
-
 
 
 const mc = new MClient();
@@ -46,7 +47,8 @@ app.get('/upload', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 })
 
-Object.keys(Objects).forEach(k=> finale.resource({ model: Objects[k] }))
+
+
 
 Promise.all([syncDb(false), mc.init() ]).then(function(){
   const port = config.PORT;

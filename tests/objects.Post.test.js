@@ -10,13 +10,36 @@ const sync = require('../db/sync');
 const Promise = require('bluebird');
 const { createUserPostJob } = require('./helpers');
 const { constant, times } = require('lodash');
-const minioObj = require('../server-lib/minioObject');
+const minioObj = require('../server-lib/minio/minioObject');
 
 describe('objects/Post', function(){
 
   beforeEach(async ()=> {
     return await sync(true);
   });
+
+  it.skip('should adhere to Policy', async function(){
+
+    const user = await User.create({
+      isAdmin: true, 
+    });
+    const user2 = await User.create({
+    });
+    let post = await Post.create({
+      postDate: sequelize.fn('NOW'),
+      UserId: user.id,
+      Photo: {
+        bucket: 'uploads',
+        objectName: minioObj.create('v2',{ payload: true })
+      }
+    },{
+      include: [ Photo ]
+    })
+
+
+
+
+  })
 
   it('should create jobs for all outstanding posts with .initJobs', async function(){
 
@@ -29,7 +52,7 @@ describe('objects/Post', function(){
         bucket: 'uploads',
       }
     }    
-      
+
     await Post.bulkCreate(times(9,constant(props)),{
       include: [ Photo ]
     })
