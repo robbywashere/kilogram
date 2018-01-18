@@ -11,7 +11,7 @@ slurpDir((object)=>{
 
   if (object.Init) INITS[object.Name] = object.Init;
 
-  let definition = DB
+  let model = DB
     .define(object.Name, Object.assign({},object.Properties), { 
       tableName: object.TableName,
       validate: object.Validate,
@@ -20,13 +20,13 @@ slurpDir((object)=>{
       defaultScope: object.DefaultScope
     });
 
-  definition.$ = DB;
+  model.$ = DB;
 
   // Instance Methods
   //
-  Object.assign(definition.prototype, Object.assign({}, object.Methods))
+  Object.assign(model.prototype, Object.assign({}, object.Methods))
 
-  definition.prototype.authorize = async function(user = this._user){
+  model.prototype.authorize = async function(user = this._user){
     if (!(await _.get(object.Policy,this._policy).permit.bind(this)(user, this.dataValues))){
       let e = new Error('Access Denied');
       e.code = 403;
@@ -34,12 +34,44 @@ slurpDir((object)=>{
     } 
   }
 
-  definition.prototype.policyAuthorize = function(policy, user) {
+  
+
+  //Policies
+  //
+  //
+
+  model.policyScope =  function(policy, user){
+
+    //TODO: impliment all
+    const scopeName = _.get(object.PolicyScopes,policy);
+
+    const scope = _.get(object.Scopes,scopeName);
+    /*if (typeof scope === "undefined") {
+      throw new Error(`Scope ${scopeName} does not exist on Object definition '${object.Name}'`)
+    }*/
+
+    if (typeof scope === "function"){
+      return model.scope({method: [scopeName, user]})
+    } 
+    if (typeof scope === "object"){
+      return model.scope(scopeName)
+    }
+    return model
+  
+
+  
+  }
+
+  model.prototype.policyAuthorize = function(policy, user) {
     this.setPolicy(policy,user);
     return this.authorize();
   }
 
-  definition.prototype.setPolicy = function (policy, user){
+  model.prototype.setPolicy = function (policy, user){
+    //TODO: this could be insecure if mistaken
+    if (typeof object.Policy === "undefined") {
+      return this;
+    }
     this._policy = policy;
     if (user) {
       this._user = user;
@@ -57,9 +89,7 @@ slurpDir((object)=>{
     return this;
   }
 
-  //Policies
-  //
-  definition.prototype.toJSON = function (action) { 
+  model.prototype.toJSON = function (action) { 
     const j = _.clone(
       this.get({
         plain: true
@@ -70,7 +100,7 @@ slurpDir((object)=>{
   }
 
 
-  definition.prototype.getPolicyAttrs = function(){
+  model.prototype.getPolicyAttrs = function(){
     const attrs =_.get(_.get(object.Policy,this._policy),'attr');
     if (typeof attrs === "function") {
       return attrs(this._user, this);
@@ -90,13 +120,13 @@ slurpDir((object)=>{
 
   }
 
-  const oldSet = definition.prototype.set;
-  definition.prototype.set = function(key, value, options){
+  const oldSet = model.prototype.set;
+  model.prototype.set = function(key, value, options){
     if (attrCheck.bind(this)(key)) return oldSet.bind(this)(key,value, options); 
   }
 
-  const oldGet = definition.prototype.get;
-  definition.prototype.get = function (key,options) {
+  const oldGet = model.prototype.get;
+  model.prototype.get = function (key,options) {
     if (attrCheck.bind(this)(key)) return oldGet.bind(this)(key,options); 
   }
 
@@ -107,17 +137,17 @@ slurpDir((object)=>{
 
 
 
-  definition._scopeFns = !!object.ScopeFunctions;
+  model._scopeFns = !!object.ScopeFunctions;
   // Scopes into instance Static functions
 
   // Static Methods
   Object.keys(object.StaticMethods||{}).forEach(k => {
-    object.StaticMethods[k].bind(definition)
+    object.StaticMethods[k].bind(model)
   });
 
 
-  Object.assign(definition, Object.assign({}, object.StaticMethods))
-  OBJECTS[object.Name] = definition;
+  Object.assign(model, Object.assign({}, object.StaticMethods))
+  OBJECTS[object.Name] = model;
 });
 
 
@@ -146,8 +176,8 @@ Object.keys(OBJECTS).forEach(name => {
         object.prototype[ _.camelCase(`reload ${k}`)] = function(opts) { return this.reload(scopes[k]) };
       }
 
-      object[k] = fn//.bind(definition);
-      object[`${k}ForId`] = fnById//.bind(definition);
+      object[k] = fn//.bind(model);
+      object[`${k}ForId`] = fnById//.bind(model);
     })
   }
 

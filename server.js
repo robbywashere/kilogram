@@ -13,7 +13,6 @@ const Auth = require('./server-lib/auth');
 
 const app = express();
 
-
 const Objects = require('./objects');
 
 const syncDb = require('./db/sync');

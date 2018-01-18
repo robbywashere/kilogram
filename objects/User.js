@@ -23,12 +23,20 @@ module.exports = {
     igUsername: {
       type: STRING
     },
-    isAdmin: {
+    fooBar: {
       type: BOOLEAN,
       defaultValue: false
-    }
+    },
+    admin: {
+      type: BOOLEAN,
+      defaultValue: false
+    },
+
   },
+  ScopeFunctions: true, 
   Scopes: {
+    admins: { where: { admin: true } },
+    fooBar: { where: { fooBar: true }}
   },
   Methods:{
     verifyPassword: function (password) { return (this.passwordHash === hashify(this.passwordSalt, password)) }

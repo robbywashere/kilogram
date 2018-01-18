@@ -19,25 +19,27 @@ module.exports = {
     }
   },
   PolicyScopes: {
-    index: this.userPosts //if typeof === function then .scope({method: ['userPosts', user]})
+    //list: this.userPosts //if typeof === function then .scope({method: ['userPosts', user]})
+    //
+    all: 'userPosts'
   },
   Policy: {
-    index: true,
-    new: { 
+    list: true,
+    create: { 
       attr: ['postDate', 'text']
     },
-    show: {
+    read: {
       permit: userOrAdmin,
       attr: function(user,post) {
         if (user.isAdmin) return true;
         return ['postDate', 'id', 'text', 'User', 'Job', 'Photo','IGAccount'];
       }
     },
-    edit: {
+    update: {
       permit: userOrAdmin,
       attr: ['postDate', 'text', 'id' ]
     },
-    destroy: {
+    delete: {
       permit: userOrAdmin,
     }
   },
@@ -58,7 +60,7 @@ module.exports = {
   },
   Scopes: {
     userPosts: function(user) {
-      return (user.isAdmin) ? {} : { where: { userId: user.id } }
+      return (user.admin) ? {} : { where: { UserId: user.id } }
     }
   },
   Methods:{
