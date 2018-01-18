@@ -7,9 +7,13 @@ function userOrAdmin(user, record) {
   return user.isAdmin || (record.UserId === user.id) 
 }
 
+
 module.exports = {
   Name: 'Post',
   Properties:{
+    foo: {
+      type: TEXT
+    },
     text: {
       type: TEXT
     },
@@ -18,29 +22,23 @@ module.exports = {
       allowNull: false
     }
   },
-  PolicyScopes: {
-    //list: this.userPosts //if typeof === function then .scope({method: ['userPosts', user]})
-    //
-    all: 'userPosts'
+  Authorize: {
+    all: function(user){
+      return !!user
+    }
   },
-  Policy: {
-    list: true,
-    create: { 
-      attr: ['postDate', 'text']
+  PolicyScopes: {
+    all: 'userScoped',
+  },
+  PolicyAttributes: {
+    all: true,
+    update: function(user){
+      if (user.admin) return true; 
+      return ['id']
     },
-    read: {
-      permit: userOrAdmin,
-      attr: function(user,post) {
-        if (user.isAdmin) return true;
-        return ['postDate', 'id', 'text', 'User', 'Job', 'Photo','IGAccount'];
-      }
-    },
-    update: {
-      permit: userOrAdmin,
-      attr: ['postDate', 'text', 'id' ]
-    },
-    delete: {
-      permit: userOrAdmin,
+    list: function(user){
+      if (user.admin) return ['id','UserId'] 
+      return ['id']
     }
   },
   Init({ Job, User, Photo, IGAccount }){
@@ -59,7 +57,7 @@ module.exports = {
   Hooks: {
   },
   Scopes: {
-    userPosts: function(user) {
+    userScoped: function(user) {
       return (user.admin) ? {} : { where: { UserId: user.id } }
     }
   },

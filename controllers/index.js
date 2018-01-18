@@ -5,43 +5,98 @@ const Objects = require('../objects');
 
 const finale = require('finale-rest');
 
-const { fromPairs } = require('lodash');
+const { isArray, fromPairs } = require('lodash');
+
+const { logger } = require('../lib/logger');
+
+const _ = require('lodash');
+
 
 const { ForbiddenError } = require('finale-rest').Errors;
 
-const aliases = `list index
+/*const aliases = `list index
  create new
  update edit
- delete destroy`.split("\n").map(pair=>pair.split(' ').map(item=>item.trim()).filter(x=>x))
+ delete destroy`.split("\n").map(pair=>pair.split(' ').map(item=>item.trim()).filter(x=>x))*/
 
+
+function AddSetPolicy(resource) {
+  ['list','read','delete','update','create'].forEach(action => {
+    resource[action].send.before(function(req, res, context){
+      try {
+        context.instance.setPolicy(action, req.user)
+        return context.continue;
+      } catch(e) {
+        logger.error(e);
+        context.error(e);
+      }
+    })
+  })
+
+}
 
 function AddAuth(resource){
-  resource.all.auth(function(req, res, context){
-    if (req.user) return context.continue
-    else {
-      throw new ForbiddenError(); 
-    }
-  })
-  return resource;
-}
-
-function AddPolicy(resource) {
-  ['list','read','delete','update','create'].forEach(action => {
-    resource[action]
-  })
-}
-function AddPolicyScope(resource) {
   ['list','read','delete','update','create'].forEach(action => {
     resource[action].start(function(req,res, context){
       try {
         //console.log(context.model.getPolicy);
-        context.model = context.model.policyScope(action, req.user);
-        return context.skip;
+        if (!context.model.authorize(action, req.user)) {
+          throw new ForbiddenError(); 
+        }
+        return context.continue;
       } catch(e){
-        console.error(e);
         context.error(e);
       }
 
+    })
+  })
+}
+
+function AddPolicyAttributes(resource) {
+  ['list','read','delete','update','create'].forEach(action => {
+    resource[action].start.after(function(req,res, context){
+      try {
+        const attrs = context.model.getPolicyAttrs(action, req.user);
+        if (attrs.length > 0) {
+          context.options.attributes = attrs; 
+          //req.body = _.pick(req.body,attrs) //TODO WTF
+        }
+        return context.continue;
+      } catch(e){
+        logger.error(e);
+        context.error(e);
+      }
+    })
+
+    resource[action].write.before(function(req,res, context){
+      try {
+        const attrs = context.model.getPolicyAttrs(action, req.user);
+        if (attrs.length > 0) {
+          context.options.attributes = attrs; 
+          context.attributes = _.pick(context.attributes, attrs)
+          req.body = _.pick(req.body,attrs) // TODO WTF
+        }
+        return context.continue;
+      } catch(e){
+        logger.error(e);
+        context.error(e);
+      }
+    })
+
+  })
+}
+
+
+function AddPolicyScope(resource) {
+  ['list','read','delete','update','create'].forEach(action => {
+    resource[action].start(function(req,res, context){
+      try {
+        context.model = context.model.policyScope(action, req.user);
+        return context.skip;
+      } catch(e){
+        logger.error(e);
+        context.error(e);
+      }
     })
   })
 }
@@ -56,35 +111,10 @@ module.exports = function({ app, sequelize }){
     const resource = finale.resource({ model: Objects[k] });
     AddAuth(resource);
     AddPolicyScope(resource);
+    AddPolicyAttributes(resource);
 
     return [ k, resource ];
   }));
-
-
-
-
-  /*
-  const user = finale.resource({ model: User })
-  //read, list, write, delete
-  user.read.auth(function(req, res, context){
-    if (req.user) return context.continue
-    else {
-      throw new ForbiddenError(); 
-    }
-  })
-  const post = finale.resource({ model: Post })
-  post.update.write(function(req, res, context){
-
-  })
-  post.list.fetch.before(function(req, res, context){
-    try {
-      context.instance = Post.userPosts(req.user)
-      return context.continue;
-    } catch(e) {
-      return context.error(e);
-    }
-  })*/
-
   return app;
 }
 

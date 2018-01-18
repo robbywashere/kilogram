@@ -11,7 +11,7 @@ module.exports = function Auth(app) {
 
 
   app.use(require('cookie-parser')());
-  //app.use(require('body-parser').urlencoded({ extended: true }));
+  // TODO: app.use(require('body-parser').urlencoded({ extended: true }));
   app.use(require('body-parser').json());
   app.use(require('express-session')({ 
     secret: config.APP_SECRET, 

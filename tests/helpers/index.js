@@ -13,10 +13,13 @@ function fixtures(){
   return o;
 }
 
-function exprezz(){
-
-
+function exprezz(user = {}){
   const app = require('express')();
+  app.use(require('body-parser').json());
+  app.all('*',function(req,res,next){ 
+    req.user = user;
+    next();
+  })
   app.use(function(err, req, res, next) {
     logger.error(err);
     res.status(err.statusCode || 500)

@@ -34,32 +34,63 @@ slurpDir((object)=>{
     } 
   }
 
-  
+
 
   //Policies
   //
   //
+  //
+
+  model.authorize = function(action, user){
+
+    const all =_.get(object.Authorize, 'all');
+    const one = _.get(object.Authoize,action);
+    const authorize =  (all) ? all : one;
+    if (typeof authorize === "boolean") return authorize; 
+    if (typeof authorize === "function") {
+      return authorize(user);
+    }
+    return false; //TODO: ????
+
+  }
 
   model.policyScope =  function(policy, user){
 
-    //TODO: impliment all
-    const scopeName = _.get(object.PolicyScopes,policy);
+    const all =_.get(object.PolicyScopes, 'all');
+    const specific = _.get(object.PolicyScopes, policy);
+    //const scopeName = (all) ? all : specific;
 
-    const scope = _.get(object.Scopes,scopeName);
-    /*if (typeof scope === "undefined") {
-      throw new Error(`Scope ${scopeName} does not exist on Object definition '${object.Name}'`)
-    }*/
 
-    if (typeof scope === "function"){
-      return model.scope({method: [scopeName, user]})
-    } 
-    if (typeof scope === "object"){
-      return model.scope(scopeName)
+    function callScope(scopeName, m) {
+      const scopeType = typeof _.get(object.Scopes,scopeName);
+      if (scopeType === "function"){
+        return m.scope({method: [scopeName, user]})
+      } 
+      if (scopeType === "object"){
+        return m.scope(scopeName)
+      }
+      // throw new Error(`Scope ${scopeName} is not defined on object '${object.Name}'`)
+      return m
     }
-    return model
-  
 
-  
+    return callScope(specific,callScope(all, model));
+  }
+
+  model.getPolicyAttrs = function(policy, user){
+    let result;
+    function callAttrs(attrs) {
+      if (typeof attrs === "undefined") return [];
+      if (typeof attrs === "function") {
+        result = attrs(user);
+      } else {
+        result =  attrs;
+      }
+      return (result === true) ? model.prototype.attributes : result;
+    }
+    const all = callAttrs(_.get(object.PolicyAttributes, 'all'));
+    const specific = callAttrs(_.get(object.PolicyAttributes, policy));
+    
+    return _.union(all,  specific)
   }
 
   model.prototype.policyAuthorize = function(policy, user) {
@@ -67,11 +98,12 @@ slurpDir((object)=>{
     return this.authorize();
   }
 
+    /*
   model.prototype.setPolicy = function (policy, user){
-    //TODO: this could be insecure if mistaken
-    if (typeof object.Policy === "undefined") {
+    /*if (typeof object.Policy === "undefined") {
       return this;
-    }
+    }*/
+    /*
     this._policy = policy;
     if (user) {
       this._user = user;
@@ -90,18 +122,14 @@ slurpDir((object)=>{
   }
 
   model.prototype.toJSON = function (action) { 
-    const j = _.clone(
-      this.get({
-        plain: true
-      })
-    );
+    const j = this.get({ plain: true }); 
     if (this._policy) return cleanObj(j);
     return j;
   }
 
 
   model.prototype.getPolicyAttrs = function(){
-    const attrs =_.get(_.get(object.Policy,this._policy),'attr');
+    const attrs =_.get(object.PolicyAttributes,this._policy)
     if (typeof attrs === "function") {
       return attrs(this._user, this);
     } else {
@@ -122,15 +150,17 @@ slurpDir((object)=>{
 
   const oldSet = model.prototype.set;
   model.prototype.set = function(key, value, options){
+    // console.log({ key, value })
     if (attrCheck.bind(this)(key)) return oldSet.bind(this)(key,value, options); 
   }
 
   const oldGet = model.prototype.get;
   model.prototype.get = function (key,options) {
+    //   console.log({ key });
     if (attrCheck.bind(this)(key)) return oldGet.bind(this)(key,options); 
   }
 
-
+  */
 
 
 
