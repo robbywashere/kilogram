@@ -31,10 +31,11 @@ module.exports = {
     all: 'userScoped',
   },
   PolicyAttributes: {
-    all: true,
     update: function(user){
       if (user.admin) return true; 
-      return ['id']
+      else {
+        return false;
+      }
     },
     list: function(user){
       if (user.admin) return ['id','UserId'] 

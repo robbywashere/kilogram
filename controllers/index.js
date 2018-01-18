@@ -54,12 +54,12 @@ function AddAuth(resource){
 
 function AddPolicyAttributes(resource) {
   ['list','read','delete','update','create'].forEach(action => {
-    resource[action].start.after(function(req,res, context){
+    resource[action].start.before(function(req,res, context){
       try {
         const attrs = context.model.getPolicyAttrs(action, req.user);
-        if (attrs.length > 0) {
+        if (attrs) {
           context.options.attributes = attrs; 
-          //req.body = _.pick(req.body,attrs) //TODO WTF
+          req.body = _.pick(req.body,attrs) //TODO WTF
         }
         return context.continue;
       } catch(e){
@@ -68,7 +68,7 @@ function AddPolicyAttributes(resource) {
       }
     })
 
-    resource[action].write.before(function(req,res, context){
+      /*resource[action].write.before(function(req,res, context){
       try {
         const attrs = context.model.getPolicyAttrs(action, req.user);
         if (attrs.length > 0) {
@@ -81,7 +81,7 @@ function AddPolicyAttributes(resource) {
         logger.error(e);
         context.error(e);
       }
-    })
+    })*/
 
   })
 }

@@ -51,7 +51,7 @@ describe.only('controllers', function(){
 
 
 
-    const user = await User.create({ admin: true });
+    const user = await User.create({ admin: false });
     const user2 = await User.create({ admin: true, fooBar: true });
 
     const post = await Post.create({ postDate: new Date(), UserId: 1 });
@@ -67,7 +67,7 @@ describe.only('controllers', function(){
         .put('/posts/1')
         .send({ foo: 'bar' })
         .expect(200);
-      console.log('>>>',res.body)
+      console.log('PUT',res.body)
     } catch(e) {
       throw e
     }
@@ -75,7 +75,10 @@ describe.only('controllers', function(){
       const res = await request(app)
         .get('/posts')
         .expect(200);
-      console.log('>>ddd>',res.body)
+      console.log('GET',res.body)
+
+      p = await Post.findById(1);
+      console.log(p.toJSON())
     } catch(e) {
       throw e
     }

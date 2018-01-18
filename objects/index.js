@@ -90,7 +90,8 @@ slurpDir((object)=>{
     const all = callAttrs(_.get(object.PolicyAttributes, 'all'));
     const specific = callAttrs(_.get(object.PolicyAttributes, policy));
     
-    return _.union(all,  specific)
+    const attrArr = _.union(all,  specific)
+    return attrArr;
   }
 
   model.prototype.policyAuthorize = function(policy, user) {
