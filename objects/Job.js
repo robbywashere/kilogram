@@ -73,6 +73,7 @@ module.exports = {
       defaultValue: false,
     }
   },
+  PolicyAssert: false,
   ScopeFunctions: true,
   Scopes: {
     outstanding: { where: { finish: false, inprog: false } }

@@ -2,10 +2,17 @@ const sequelize = require('sequelize');
 const crypto = require('crypto');
 const hashify = require('../server-lib/auth/hashify');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
+const Promise = require('bluebird');
 
 module.exports = {
   Name: 'User',
   Properties:{
+    email: {
+      type: STRING,
+      
+      //TODO: allow null false
+      //TODO: validate
+    },
     password: {
       type: VIRTUAL,
       set: function(val){ this.setDataValue('passwordHash', hashify(this.passwordSalt, val)) }
@@ -24,8 +31,7 @@ module.exports = {
       type: STRING
     },
     fooBar: {
-      type: BOOLEAN,
-      defaultValue: false
+      type: VIRTUAL,
     },
     admin: {
       type: BOOLEAN,
@@ -33,6 +39,12 @@ module.exports = {
     },
 
   },
+  Hooks: {
+  },
+  PolicyScopes:{},
+  Authorize: {},
+  PolicyAttributes:{},
+  PolicyAssert: true,
   ScopeFunctions: true, 
   Scopes: {
     admins: { where: { admin: true } },
@@ -43,8 +55,9 @@ module.exports = {
   },
   StaticMethods: {
   },
-  Init({ Post, IGAccount }){
+  Init({ Post, IGAccount, UserRecovery }){
     this.belongsToMany(IGAccount,{ through: 'UserIGAccount' })
+    this.hasMany(UserRecovery);
     this.hasMany(Post);
   },
 }

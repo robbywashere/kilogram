@@ -9,7 +9,9 @@ const { isArray, fromPairs } = require('lodash');
 
 const { logger } = require('../lib/logger');
 
-const _ = require('lodash');
+const { slurpDir2, excludeIndex } = require('../lib/slurpDir2');
+
+const { pick, get } = require('lodash');
 
 
 const { ForbiddenError } = require('finale-rest').Errors;
@@ -59,7 +61,7 @@ function AddPolicyAttributes(resource) {
         const attrs = context.model.getPolicyAttrs(action, req.user);
         if (attrs) {
           context.options.attributes = attrs; 
-          req.body = _.pick(req.body,attrs) //TODO WTF
+          req.body = pick(req.body,attrs) //TODO WTF
         }
         return context.continue;
       } catch(e){
@@ -68,13 +70,13 @@ function AddPolicyAttributes(resource) {
       }
     })
 
-      /*resource[action].write.before(function(req,res, context){
+    /*resource[action].write.before(function(req,res, context){
       try {
         const attrs = context.model.getPolicyAttrs(action, req.user);
         if (attrs.length > 0) {
           context.options.attributes = attrs; 
-          context.attributes = _.pick(context.attributes, attrs)
-          req.body = _.pick(req.body,attrs) // TODO WTF
+          context.attributes = pick(context.attributes, attrs)
+          req.body = pick(req.body,attrs) // TODO WTF
         }
         return context.continue;
       } catch(e){
@@ -101,6 +103,18 @@ function AddPolicyScope(resource) {
   })
 }
 
+
+function loadPath(app) {
+  return (path) => {
+    const name = get(get(path.split('/').splice(-1), 0).split('.'),0)
+    const controller = require(path);
+    app.use(`/${name}`, controller);
+  }
+}
+
+
+
+
 module.exports = function({ app, sequelize }){
   finale.initialize({
     app,
@@ -115,6 +129,9 @@ module.exports = function({ app, sequelize }){
 
     return [ k, resource ];
   }));
+
+  slurpDir2(__dirname, excludeIndex)(loadPath(app));
+
   return app;
 }
 

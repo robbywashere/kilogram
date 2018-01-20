@@ -12,6 +12,7 @@ module.exports = {
       type: STRING
     },
   },
+  PolicyAssert: false,
   Scopes: {
   },
   Methods:{

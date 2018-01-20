@@ -3,6 +3,7 @@ const { STRING, JSON, TEXT, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 
 module.exports = {
   Name: 'BotchedJob',
+  PolicyAssert: false,
   Properties:{
     adbId: {
       type: STRING

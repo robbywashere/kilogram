@@ -22,6 +22,7 @@ module.exports = {
       allowNull: false
     }
   },
+  PolicyAssert: true,
   Authorize: {
     all: function(user){
       return !!user

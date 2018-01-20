@@ -26,6 +26,9 @@ app.use(corsHeaders);
 
 app.use('/auth',Auth(app));
 
+dd
+app.use(require('body-parser').json());
+
 app.use(require('serve-static')(__dirname + '/public'));
 
 app.use(function(err, req, res, next) {

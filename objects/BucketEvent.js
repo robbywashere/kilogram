@@ -6,6 +6,7 @@ const { get } = require('lodash');
 module.exports = {
   Name: 'BucketEvents',
   TableName: 'bucketevents',
+  PolicyAssert: false,
   Properties:{
    key: { 
       type: STRING,

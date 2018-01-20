@@ -13,11 +13,13 @@
     "child-process-promise": "^2.2.1",
     "config": "^1.28.1",
     "cookie-parser": "^1.4.3",
+    "crypto-random-string": "^1.0.0",
     "dotenv": "^4.0.0",
     "express": "^4.16.2",
     "express-session": "^1.15.6",
     "finale-rest": "^0.1.3",
     "helmet": "^3.9.0",
+    "http-errors": "^1.6.2",
     "lodash": "^4.17.4",
     "minio": "^3.2.3",
     "msgpack-lite": "^0.1.26",
@@ -26,6 +28,7 @@
     "passport-local": "^1.0.0",
     "passport-minitools": "https://github.com/robbywashere/passport-minitools",
     "pg": "^6.4.2",
+    "pug": "^2.0.0-rc.4",
     "python-shell": "^0.4.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
@@ -58,7 +61,8 @@
     "db:mig:down": "node ./db/_migdown.js",
     "db:mig:up": "node ./db/_migup.js",
     "test": "supervisor -q -n exit -x mocha -- -b ./tests/*.test.js",
-    "test2": "mocha ./tests/*.test.js --reporter mocha-clearscreen-reporter --watch"
+    "test2": "mocha ./tests/*.test.js --reporter mocha-clearscreen-reporter --watch",
+    "test3": "mocha ./tests/*.test.js  --watch"
   },
   "devDependencies": {
     "babel-eslint": "^8.0.3",

@@ -48,6 +48,7 @@ module.exports = {
       type: STRING
     },
   },
+  PolicyAssert: false,
   Scopes: {
     enabled: { where: { enabled: true } },
     disabled: { where: { enabled: false } },

@@ -4,12 +4,13 @@ const request = require('supertest');
 const sync = require('../db/sync');
 const express = require('express');
 const { exprezz } = require('./helpers'); 
-const { User, Post } = require('../objects');
+const { User, UserRecovery, Post } = require('../objects');
+const assert = require('assert');
 const DB = require('../db');
 
 describe.only('controllers', function(){
-  beforeEach(async ()=> {
-    return await sync(true);
+  beforeEach(()=> {
+    return sync(true);
   });
 
   it('should do stuff', async function(){
@@ -46,13 +47,47 @@ describe.only('controllers', function(){
       throw e
     }
   });
+  it.only('should do password recovery', async function(){
 
-  it.only('>>>> ok', async function(){
+    const user = await User.create({ email: 'example@example.com' });
+
+    const app = exprezz(user);
+
+    initController({ app, sequelize: DB});
+
+    try {
+      const res = await request(app)
+        .post('/user_recovery/1')
+        .expect(200);
+    } catch(e) {
+      throw e
+    }
+
+    const key = (await UserRecovery.findOne({ where: { id: 1 }})).key
+
+    try {
+      const res = await request(app)
+        .put('/user_recovery')
+        .send({ newPassword: 'blah', key })
+        .expect(200);
+    } catch(e) {
+      throw e
+    }
+
+    const u = await User.findById(1);
+    assert(u.verifyPassword('blah'))
+
+  })
+
+
+  it('>>>> ok', async function(){
 
 
 
     const user = await User.create({ admin: false });
-    const user2 = await User.create({ admin: true, fooBar: true });
+    const user2 = await User.create({ admin: true});
+
+    await user2.update({ fooBar: 'blah' })
 
     const post = await Post.create({ postDate: new Date(), UserId: 1 });
 

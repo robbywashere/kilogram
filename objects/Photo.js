@@ -7,6 +7,7 @@ const minioObj = require('../server-lib/minio/minioObject');
 
 module.exports = {
   Name: 'Photo',
+  PolicyAssert: false,
   Properties:{
     objectName: {
       type: TEXT,

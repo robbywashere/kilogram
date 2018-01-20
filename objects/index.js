@@ -4,6 +4,7 @@ const DB = require('../db');
 const OBJECTS = {};
 const INITS = {};
 const { Model } = require('sequelize'); 
+const { logger } = require('../lib/logger')
 
 const slurpDir = require('../lib/slurpDir')(__dirname);
 
@@ -40,11 +41,25 @@ slurpDir((object)=>{
   //
   //
   //
+  //
+
+  const assertedProps = ['PolicyAttributes','PolicyScopes','Authorize'];
+  if (typeof object.PolicyAssert === "undefined") {
+    throw new Error(`PolicyAssert property must be either 'true' or 'false' on object ${object.Name}`)
+  }
+
+  if (object.PolicyAssert && assertedProps.map(prop=>object[prop]).some(x=> typeof x === "undefined")){
+    throw new Error(`${assertedProps.join(',')} Must be defined on object ${object.Name}'s properties when PolicyAssert is 'true'`)
+  }
+
+
+
+
 
   model.authorize = function(action, user){
 
     const all =_.get(object.Authorize, 'all');
-    const one = _.get(object.Authoize,action);
+    const one = _.get(object.Authorize,action);
     const authorize =  (all) ? all : one;
     if (typeof authorize === "boolean") return authorize; 
     if (typeof authorize === "function") {
@@ -89,7 +104,7 @@ slurpDir((object)=>{
     }
     const all = callAttrs(_.get(object.PolicyAttributes, 'all'));
     const specific = callAttrs(_.get(object.PolicyAttributes, policy));
-    
+
     const attrArr = _.union(all,  specific)
     return attrArr;
   }
@@ -99,12 +114,64 @@ slurpDir((object)=>{
     return this.authorize();
   }
 
-    /*
+  model._scopeFns = !!object.ScopeFunctions;
+  // Scopes into instance Static functions
+
+  // Static Methods
+  Object.keys(object.StaticMethods||{}).forEach(k => {
+    object.StaticMethods[k].bind(model)
+  });
+
+
+  Object.assign(model, Object.assign({}, object.StaticMethods))
+  OBJECTS[object.Name] = model;
+});
+
+
+//load initializers
+Object.keys(OBJECTS).forEach(name => {
+  let object = OBJECTS[name];
+
+  if (INITS[name]) INITS[name].bind(object)(OBJECTS);
+
+  let scopes = _.get(object,'options.scopes');
+
+  if (typeof scopes !== "undefined" && object._scopeFns) {
+    Object.keys(scopes).forEach( k=> {
+      let fn;
+      if (typeof scopes[k] === "function") {
+        fn = function(arg, opts) { return this.scope({ method: [k, arg ] }).findAll(opts) }
+      }
+      else {
+        fn = function(opts) { return this.scope(k).findAll(opts) }
+      }
+
+      const fnById = function(id, opts) { return this.scope(k).findById(id, opts) }
+
+      // scopes prefixed with 'with', will be givin a reload<withScope> method
+      if (k.substr(0,4) === "with") {
+        object.prototype[ _.camelCase(`reload ${k}`)] = function(opts) { return this.reload(scopes[k]) };
+      }
+
+      object[k] = fn.bind(object);
+      object[`${k}ForId`] = fnById.bind(object);
+    })
+  }
+
+});
+
+
+
+module.exports = OBJECTS;
+
+
+
+  /*
   model.prototype.setPolicy = function (policy, user){
-    /*if (typeof object.Policy === "undefined") {
+  /*if (typeof object.Policy === "undefined") {
       return this;
     }*/
-    /*
+  /*
     this._policy = policy;
     if (user) {
       this._user = user;
@@ -151,70 +218,20 @@ slurpDir((object)=>{
 
   const oldSet = model.prototype.set;
   model.prototype.set = function(key, value, options){
-    // console.log({ key, value })
+  // console.log({ key, value })
     if (attrCheck.bind(this)(key)) return oldSet.bind(this)(key,value, options); 
   }
 
   const oldGet = model.prototype.get;
   model.prototype.get = function (key,options) {
-    //   console.log({ key });
+  //   console.log({ key });
     if (attrCheck.bind(this)(key)) return oldGet.bind(this)(key,options); 
   }
 
-  */
+*/
 
 
 
 
 
-
-  model._scopeFns = !!object.ScopeFunctions;
-  // Scopes into instance Static functions
-
-  // Static Methods
-  Object.keys(object.StaticMethods||{}).forEach(k => {
-    object.StaticMethods[k].bind(model)
-  });
-
-
-  Object.assign(model, Object.assign({}, object.StaticMethods))
-  OBJECTS[object.Name] = model;
-});
-
-
-//load initializers
-Object.keys(OBJECTS).forEach(name => {
-  let object = OBJECTS[name];
-
-  if (INITS[name]) INITS[name].bind(object)(OBJECTS);
-
-  let scopes = _.get(object,'options.scopes');
-
-  if (typeof scopes !== "undefined" && object._scopeFns) {
-    Object.keys(scopes).forEach( k=> {
-      let fn;
-      if (typeof scopes[k] === "function") {
-        fn = function(arg, opts) { return this.scope({ method: [k, arg ] }).findAll(opts) }
-      }
-      else {
-        fn = function(opts) { return this.scope(k).findAll(opts) }
-      }
-
-      const fnById = function(id, opts) { return this.scope(k).findById(id, opts) }
-
-      // scopes prefixed with 'with', will be givin a reload<withScope> method
-      if (k.substr(0,4) === "with") {
-        object.prototype[ _.camelCase(`reload ${k}`)] = function(opts) { return this.reload(scopes[k]) };
-      }
-
-      object[k] = fn//.bind(model);
-      object[`${k}ForId`] = fnById//.bind(model);
-    })
-  }
-
-});
-
-
-
-module.exports = OBJECTS;
 
