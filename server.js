@@ -10,6 +10,7 @@ const Promise = require('bluebird');
 const { MClient, Routes, signedURL, removeObject, listObjects } = require('./server-lib/minio');
 const corsHeaders = require('./server-lib/corsHeaders');
 const Auth = require('./server-lib/auth');
+const helmet = require('helmet');
 
 const app = express();
 
@@ -18,6 +19,8 @@ const Objects = require('./objects');
 const syncDb = require('./db/sync');
 
 const initController = require('./controllers');
+
+app.use(helmet());
 
 app.use(corsHeaders);
 
