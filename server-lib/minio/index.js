@@ -153,10 +153,7 @@ class MClient {
   static DelPhotoFn({ key }){
     return Photo.setDeleted(key);
   }
-  static Event({
-    putFn,
-    delFn
-  }) {
+  static Event({ putFn,delFn }) {
     return async (record) => {
       const key = get(record,'s3.object.key'); 
       const bucket = get(record,'s3.bucket.name'); 

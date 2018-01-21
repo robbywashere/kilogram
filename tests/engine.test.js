@@ -1,4 +1,4 @@
-const { runJobs, run, mainLoop, KillFn, syncDevices } = require('../engine');
+const { runJobs, run, main, syncDevices } = require('../engine');
 const { createUserPostJob }  = require('./helpers')
 const sinon = require('sinon');
 const assert = require('assert');
@@ -12,8 +12,6 @@ const Promise = require('bluebird');
 describe.skip('engine' , function(){
 
   beforeEach(async ()=> syncDb())
-
-
 
   let agentStub;
   describe('runJobs', function(){
@@ -80,19 +78,16 @@ describe.skip('engine' , function(){
 
   describe('run', function(){
 
-    it ('should run a function every x amount of seconds and kill when kill function called' , async function(){
+    it('should run a function every x amount of milli seconds' , async function(){
 
       this.timeout(5000);
 
-      const fn = sinon.spy();
-      const killFn = KillFn();
-      run({ fn, killFn, seconds: 1 })
-      await Promise.delay(2000)
-      killFn();
-      assert(fn.calledTwice)
-
-
-
+      let called = 0;
+      const fn = ()=>{ called++; return Promise.resolve()};
+      const timer = run({ fn, milliseconds: 500 })
+      await Promise.delay(1000)
+      timer.close();
+      assert(called, 2)
     });
   })
 

@@ -117,6 +117,7 @@ function loadPath(app) {
 
 module.exports = function({ app, sequelize }){
   finale.initialize({
+    //TODO: base: 'api' ???
     app,
     sequelize
   })

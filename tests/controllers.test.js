@@ -6,9 +6,10 @@ const express = require('express');
 const { exprezz } = require('./helpers'); 
 const { User, UserRecovery, Post } = require('../objects');
 const assert = require('assert');
+const { logger } = require('../lib/logger');
 const DB = require('../db');
 
-describe.only('controllers', function(){
+describe('controllers', function(){
   beforeEach(()=> {
     return sync(true);
   });
@@ -47,7 +48,7 @@ describe.only('controllers', function(){
       throw e
     }
   });
-  it.only('should do password recovery', async function(){
+  it('should do password recovery', async function(){
 
     const user = await User.create({ email: 'example@example.com' });
 
@@ -102,7 +103,7 @@ describe.only('controllers', function(){
         .put('/posts/1')
         .send({ foo: 'bar' })
         .expect(200);
-      console.log('PUT',res.body)
+      logger('PUT',res.body)
     } catch(e) {
       throw e
     }
@@ -110,10 +111,10 @@ describe.only('controllers', function(){
       const res = await request(app)
         .get('/posts')
         .expect(200);
-      console.log('GET',res.body)
+      logger('GET',res.body)
 
       p = await Post.findById(1);
-      console.log(p.toJSON())
+      logger(p.toJSON())
     } catch(e) {
       throw e
     }
@@ -138,7 +139,7 @@ describe.only('controllers', function(){
       const res = await request(app)
         .get('/posts')
         .expect(200);
-      console.log(res.body);
+      logger(res.body);
     } catch(e) {
       throw e
     }

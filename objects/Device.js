@@ -2,7 +2,7 @@ const sequelize = require('sequelize');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
 
-const GetDeviceQuery =`
+const PopDeviceQuery =`
   UPDATE 
       "Devices"
   SET 
@@ -21,7 +21,8 @@ const GetDeviceQuery =`
               enabled=true
           ORDER BY 
               id asc
-          LIMIT 1 FOR UPDATE
+          FOR UPDATE SKIP LOCKED
+          LIMIT 1 
       )
   RETURNING *;
 `
@@ -75,7 +76,7 @@ module.exports = {
     },
   },
   StaticMethods: {
-    popDevice: async function(){ return get((await this.$.query(GetDeviceQuery, { type: sequelize.QueryTypes.SELECT, model: this })),0) },
+    popDevice: async function(){ return get((await this.$.query(PopDeviceQuery, { type: sequelize.QueryTypes.SELECT, model: this })),0) },
     setFreeById: function(adbId) {
       return this.update({ 
         idle: true,

@@ -13,35 +13,15 @@ const syncDevices = async () => {
 };
 
 
-const KillFn = ()=>{
-  let toKill = false;
-  return (kill)=> {
-    if (kill) toKill = true;
-    return toKill
-  }
-}
-
-const run = async function({ fn, seconds, killFn=()=>{} }){
-  for(;;) {
-    if (killFn()) {
-      const error = new Error(`Function ${fn.name} killed`)
-      error.code = 666;
-      throw error;
-    }
-    try {
-      await fn();
-    } catch(e) {
-      logger.error(`Unhandled exception in function: ${fn.name}`,e)
-    }
-    await Promise.delay(seconds * 1000)
-  }
+const run = function({ fn, milliseconds }){
+  return setInterval(()=>fn().catch(e=>logger.error(`Unhandled exception in function: ${fn.name}`,e)), milliseconds)
 }
 
 //device.reload()
 //if device.idle == false, free
 //TODO: assure jobs are ran in priority order
 
-const runJobs = async() => {
+const runJobs = async () => {
   //TODO: try catch block
   const outstanding = await Job.outstanding();
   const freeDevices = await Device.free();
@@ -63,10 +43,12 @@ const runJobs = async() => {
   }
 }
 
-const mainLoop= () => {
-  run(syncDevices,2);
-  run(Job.initJobs,5);
-  run(runJobs, 5);
+const main = ()=>{
+  return [
+    run(syncDevices,2000),
+    run(Job.initJobs,5000),
+    run(runJobs, 5000)
+  ];
 }
 
-module.exports = { runJobs, run, mainLoop, syncDevices, KillFn }
+module.exports = { runJobs, run, main, syncDevices }

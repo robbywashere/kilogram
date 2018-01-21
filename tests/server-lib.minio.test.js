@@ -99,17 +99,27 @@ describe('MClient class', function(){
 
   describe('retryConnRefused', function(){
 
-    it ('it should attempt given fn, retrying on on error.code == ECONNREFUSED, retrying 5 times before throwing an error', async function(){
+    describe('>>>',function(){
 
-      sinon.stub(Promise,'delay').resolves();
-      const fn = sinon.spy(async () => { const e = new Error('Error'); e.code = 'ECONNREFUSED'; throw e })
-      try {
-        await retryConnRefused(fn)
-      } catch(e) {
-        assert.equal(e.toString().split("\n")[0],"Error: Could not connect to MINIO storage") 
-      }
-      assert.equal(fn.callCount,6);
-    });
+      beforeEach(function(){
+        sinon.stub(Promise,'delay').resolves();
+      })
+      afterEach(function(){
+        Promise.delay.restore();
+      })
+
+
+      it ('should attempt given fn, retrying on on error.code == ECONNREFUSED, retrying 5 times before throwing an error', async function(){
+
+        const fn = sinon.spy(async () => { const e = new Error('Error'); e.code = 'ECONNREFUSED'; throw e })
+        try {
+          await retryConnRefused(fn)
+        } catch(e) {
+          assert.equal(e.toString().split("\n")[0],"Error: Could not connect to MINIO storage") 
+        }
+        assert.equal(fn.callCount,6);
+      });
+    })
   })
   describe('bucket setup',function(){
 
@@ -167,43 +177,58 @@ describe('MClient class', function(){
       assert(spyFn.calledWith('notification',eventFn))
     })
 
-    it(`MClient.init() should setup PhotoEvents with listener`, async function(){
-    
-
-      let putRecord = {}
-      const uuid = uuidv4();
-      const key = minioObj.create('v2',{ uuid });
-      set(putRecord,'s3.object.key',key);
-      set(putRecord,'s3.bucket.name','puttestBucket');
-      set(putRecord,'eventName', 's3:ObjectCreated:Put');
-
-      let delRecord = {}
-      set(delRecord,'s3.object.key',key);
-      set(delRecord,'s3.bucket.name','deltestBucket');
-      set(delRecord,'eventName', 's3:ObjectRemoved:Deleted');
-    
-      const photoCreate = sinon.stub(Photo,'create').returns(Promise.resolve());
-      const photoDelete = sinon.stub(Photo,'setDeleted').returns(Promise.resolve());
+    describe('MClient', function(){
 
 
+      let photoCreate; 
+      let photoDelete;
 
-      const ee =  new EventEmitter();
-      const client = {
-        listenBucketNotification: ()=> ee
-      }
-      const mc = new MClient({ client, bucket: 'bucket' });
+      beforeEach(function(){
+        photoCreate = sinon.stub(Photo,'create').returns(Promise.resolve());
+        photoDelete = sinon.stub(Photo,'setDeleted').returns(Promise.resolve());
+      })
+      afterEach(function(){
+        photoCreate.restore();
+        photoDelete.restore();
+      })
 
-      mc.createBucket = ()=>Promise.resolve();
+      it(`MClient.init() should setup PhotoEvents with listener`, async function(){
 
-      await mc.init();
 
-      ee.emit('notification', putRecord);
-      ee.emit('notification', delRecord);
+        let putRecord = {}
+        const uuid = uuidv4();
+        const key = minioObj.create('v2',{ uuid });
+        set(putRecord,'s3.object.key',key);
+        set(putRecord,'s3.bucket.name','puttestBucket');
+        set(putRecord,'eventName', 's3:ObjectCreated:Put');
 
-      assert(photoCreate.calledWith({ bucket: 'puttestBucket', objectName: key}))
-      assert(photoDelete.calledWith(key))
-      
-    
+        let delRecord = {}
+        set(delRecord,'s3.object.key',key);
+        set(delRecord,'s3.bucket.name','deltestBucket');
+        set(delRecord,'eventName', 's3:ObjectRemoved:Deleted');
+
+
+
+
+        const ee =  new EventEmitter();
+        const client = {
+          listenBucketNotification: ()=> ee
+        }
+        const mc = new MClient({ client, bucket: 'bucket' });
+
+        mc.createBucket = ()=>Promise.resolve();
+
+        await mc.init();
+
+        ee.emit('notification', putRecord);
+        ee.emit('notification', delRecord);
+
+        assert(photoCreate.calledWith({ bucket: 'puttestBucket', objectName: key}))
+        assert(photoDelete.calledWith(key))
+
+
+      })
+
     })
 
 
@@ -243,7 +268,7 @@ describe('MClient class', function(){
     })
 
     it('should update/create Photo db object on put and delete', async function(){
-      await DBSync();
+      await DBSync(true);
 
       const bucket = 'testBucket';
 
@@ -262,6 +287,7 @@ describe('MClient class', function(){
       const eventHandler = MClient.PhotoEvents();
 
       await eventHandler(putRecord);
+      const ps = await Photo.findAll();
       const pMeta = (await Photo.findAll())[0].get('meta');
       assert.deepEqual(meta,pMeta);
 
