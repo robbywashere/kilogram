@@ -50,19 +50,20 @@ module.exports = {
   Scopes: {
     admins: { where: { admin: true } },
     fooBar: { where: { fooBar: true }},
-    //withAccounts: { include: [ { model: 'Account', include: [ { model: 'IGAccount' } ] } ] }
   },
   Methods:{
     verifyPassword: function (password) { return (this.passwordHash === hashify(this.passwordSalt, password)) },
-    findByIdWithAccounts: function(id) { return this.findById(id, { include: [ { model: 'Account', include: [ { model: 'IGAccount' } ] } ] }) }
   },
   StaticMethods: {
+    //findByIdWithAccounts: function(id) { return  this.scope('withAccounts').findById(id) }
+    findByIdWithAccounts: function (id) { return this.withAccountsForId(id) }
   },
-  Init({ Post, IGAccount, UserRecovery, Account }){
+  Init({ Post, IGAccount, UserRecovery, UserAccount, Account }){
     this.hasMany(UserRecovery);
     this.hasMany(Post);
     this.belongsToMany(Account, { through: 'UserAccount' });
     this.addScope('withAccounts', { include: [ { model: Account, include: [ { model: IGAccount } ] } ] });
+    this.addScope('withAdminAccounts', { include: [ { model: Account, where: { '$Accounts.UserAccount.role$': 'admin'  }  } ] });
   },
 }
 

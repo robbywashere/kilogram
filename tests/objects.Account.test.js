@@ -18,16 +18,27 @@ describe.only('Account object',function(){
 
     //console.log(account.toJSON())
 
-    const user = await User.create({ email: 'blah@blah.com' });
+    const user = await User.create({ password:'dude', email: 'blah@blah.com' });
     const user2 = await User.create({ email: 'blah2@blah2.com' });
-    await account.addUserAs(user,'member')
-    await account.addUserAs(user2,'admin')
+    await account.addUserAs(user,'admin')
+    await account.addUserAs(user2,'member')
 
-    //const users = await account.getUsers()
+    const users = await account.getUsers()
+    //console.log(users.find(u=>u.id !== user.id).UserAccount.role)
     //
+    //
+    
+    const a = await user.getAccounts()
+    await Account.update({ name: 'blah' },{ where: { id: 4 }})
+    //await user.reloadWithAdminAccounts();
 
-    await user.reloadWithAccounts();
-    console.log(user.toJSON()['Accounts'][0]);
+    u= await User.withAdminAccountsForId(user.id);
+
+    //  await user.reloadWithAccounts();
+    
+    //const u = await User.findByIdWithAccounts(1)
+    //console.log(u.Accounts.map(a=>({ role: a.UserAccount.role, accountId: a.id })))
+
 
 
     //    console.log(users.map(x=>x.toJSON()));

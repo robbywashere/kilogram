@@ -7,10 +7,16 @@ const Promise = require('bluebird');
 module.exports = {
   Name: 'Account',
   Properties:{
+    name: {
+      type: STRING
+    }
   },
   Hooks: {
   },
   PolicyScopes:{},
+  AuthorizeInstance: function(user, record){
+    //TODO???
+  },
   Authorize: {
     write: function(user){
       user.admin //|| user.UserAccount 
@@ -20,6 +26,7 @@ module.exports = {
   PolicyAssert: true,
   ScopeFunctions: true, 
   Scopes: {
+
   },
   Methods:{
     addUserAs: function(user,role){

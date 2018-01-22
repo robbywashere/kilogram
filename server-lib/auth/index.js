@@ -38,7 +38,7 @@ module.exports = function Auth(app) {
   passport.deserializeUser(async function(id, cb) {
 
     try {
-      const user = await User.findById(id, { include: [ { model: Account, include: [ IGAccount ] } ] });
+      const user = await User.findByIdWithAccounts(id);
       cb(null, user);
     } catch(e) {
       return cb(e);
