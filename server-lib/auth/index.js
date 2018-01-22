@@ -2,7 +2,7 @@ const passport = require('passport');
 
 const { Strategy } = require('passport-local');
 
-const { User } = require('objects');
+const { User, Account, IGAccount } = require('objects');
 
 const config = require('config');
 
@@ -38,7 +38,7 @@ module.exports = function Auth(app) {
   passport.deserializeUser(async function(id, cb) {
 
     try {
-      const user = await User.findById(id);
+      const user = await User.findById(id, { include: [ { model: Account, include: [ IGAccount ] } ] });
       cb(null, user);
     } catch(e) {
       return cb(e);

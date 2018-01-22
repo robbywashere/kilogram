@@ -8,19 +8,21 @@ module.exports = {
     igPassword: {
       type: STRING
     },
-    igAccountname: {
+    igUsername: {
       type: STRING
     },
   },
-  PolicyAssert: false,
+  PolicyScopes:{},
+  Authorize: {},
+  PolicyAttributes:{},
+  PolicyAssert: true,
   Scopes: {
   },
   Methods:{
   },
   StaticMethods: {
   },
-  Init({ User }){
-    this.belongsToMany(User,{ through: 'UserIGAccount' })
+  Init(){
   },
 }
 

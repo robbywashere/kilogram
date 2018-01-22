@@ -9,9 +9,10 @@ module.exports = {
   Properties:{
     email: {
       type: STRING,
-      
+      validate: {
+        isEmail: true
+      }
       //TODO: allow null false
-      //TODO: validate
     },
     password: {
       type: VIRTUAL,
@@ -48,17 +49,20 @@ module.exports = {
   ScopeFunctions: true, 
   Scopes: {
     admins: { where: { admin: true } },
-    fooBar: { where: { fooBar: true }}
+    fooBar: { where: { fooBar: true }},
+    //withAccounts: { include: [ { model: 'Account', include: [ { model: 'IGAccount' } ] } ] }
   },
   Methods:{
-    verifyPassword: function (password) { return (this.passwordHash === hashify(this.passwordSalt, password)) }
+    verifyPassword: function (password) { return (this.passwordHash === hashify(this.passwordSalt, password)) },
+    findByIdWithAccounts: function(id) { return this.findById(id, { include: [ { model: 'Account', include: [ { model: 'IGAccount' } ] } ] }) }
   },
   StaticMethods: {
   },
-  Init({ Post, IGAccount, UserRecovery }){
-    this.belongsToMany(IGAccount,{ through: 'UserIGAccount' })
+  Init({ Post, IGAccount, UserRecovery, Account }){
     this.hasMany(UserRecovery);
     this.hasMany(Post);
+    this.belongsToMany(Account, { through: 'UserAccount' });
+    this.addScope('withAccounts', { include: [ { model: Account, include: [ { model: IGAccount } ] } ] });
   },
 }
 
