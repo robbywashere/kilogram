@@ -26,6 +26,7 @@ module.exports = {
   Scopes: {
     forKey: function(key) { return { where: { key, createdAt },  include: [ this.sequelize.models.User ] } }
   },
+  AuthorizeInstance:{},
   Hooks: {
   },
   Methods:{

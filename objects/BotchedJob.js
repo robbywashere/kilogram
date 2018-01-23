@@ -26,6 +26,7 @@ module.exports = {
     this.belongsTo(Job);
   }, 
 
+  AuthorizeInstance:{},
   StaticMethods: {
     new: async function(job,{ cmd, args, error }) {
       //const { Job } = require('./index');

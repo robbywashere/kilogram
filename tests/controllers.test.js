@@ -4,7 +4,7 @@ const request = require('supertest');
 const sync = require('../db/sync');
 const express = require('express');
 const { exprezz } = require('./helpers'); 
-const { User, UserRecovery, Post } = require('../objects');
+const { Account, User, UserRecovery, Post } = require('../objects');
 const assert = require('assert');
 const { logger } = require('../lib/logger');
 const DB = require('../db');
@@ -34,6 +34,38 @@ describe('controllers', function(){
 
   });
 
+  it.only('should authorize instances', async function(){
+
+
+    const account = await Account.create();
+    const user = await User.create({ admin: false });
+    //await account.addUserAs(user,'member')
+    const post = await Post.create({ postDate: new Date(), UserId: 1, AccountId: account.id });
+    await user.reloadWithAccounts();
+    const app = exprezz(user);
+    initController({ app, sequelize: DB });
+
+    await request(app)
+      .get('/posts')
+      .expect(403);
+
+    await account.addUserAs(user,'member')
+
+    await user.reloadWithAccounts();
+
+    await request(app)
+      .get('/posts')
+      .expect(200);
+
+    const res = await request(app)
+      .get('/posts/1')
+      .expect(200);
+
+    console.log(res.body);
+
+
+
+  });
 
   it('should do post stuff', async function(){
     const user = await User.create();

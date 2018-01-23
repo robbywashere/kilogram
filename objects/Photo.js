@@ -45,6 +45,7 @@ module.exports = {
       type: TEXT,
     }
   },
+  AuthorizeInstance:{},
   Policy: {
     show: {
       attr: function (user, photo)  {

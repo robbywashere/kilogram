@@ -47,6 +47,7 @@ function AddAuth(resource){
         }
         return context.continue;
       } catch(e){
+        logger.error(e);
         context.error(e);
       }
 
@@ -54,37 +55,64 @@ function AddAuth(resource){
   })
 }
 
-function AddPolicyAttributes(resource) {
+function AddInstanceAuthorize(resource) {
   ['list','read','delete','update','create'].forEach(action => {
+    resource[action].fetch.after(function(req,res, context){
+      try {
+        if (isArray(context.instance) && context.instance.some(i=>!i.authorize(action, req.user))) { //TODO: promise support
+          throw new ForbiddenError(); 
+        }
+        else if (!isArray(context.instance) && !context.instance.authorize(action, req.user)) { //TODO: promise support
+          throw new ForbiddenError(); 
+        }
+        return context.continue
+      } catch(e){
+        logger.error(e);
+        context.error(e);
+      }
+
+    })
+  })
+
+}
+
+
+function AddPolicyAttributes(resource) {
+
+  ['delete','update','create'].forEach(action => {
     resource[action].start.before(function(req,res, context){
       try {
-        const attrs = context.model.getPolicyAttrs(action, req.user);
-        if (attrs) {
-          context.options.attributes = attrs; 
-          req.body = pick(req.body,attrs) //TODO WTF
-        }
+          const attrs = context.model.getPolicyAttrs(action, req.user);
+          if (attrs) {
+            context.options.attributes = attrs; 
+            req.body = pick(req.body,attrs) //TODO consider the security implications of this
+          }
         return context.continue;
       } catch(e){
         logger.error(e);
         context.error(e);
       }
     })
+  });
 
-    /*resource[action].write.before(function(req,res, context){
+  ['list','read'].forEach(action => {
+    resource[action].send.before(function(req,res, context){
       try {
-        const attrs = context.model.getPolicyAttrs(action, req.user);
-        if (attrs.length > 0) {
-          context.options.attributes = attrs; 
-          context.attributes = pick(context.attributes, attrs)
-          req.body = pick(req.body,attrs) // TODO WTF
-        }
+          const attrs = context.model.getPolicyAttrs(action, req.user);
+          if (attrs) {
+            if (isArray(context.instance)){
+              context.instance = context.instance.map(i=>i.dataValues = pick(i.dataValues,attrs));
+            }
+            else {
+              context.instance.dataValues = pick(context.instance.dataValues,attrs);
+            }
+          }
         return context.continue;
       } catch(e){
         logger.error(e);
         context.error(e);
       }
-    })*/
-
+    })
   })
 }
 
@@ -127,6 +155,7 @@ module.exports = function({ app, sequelize }){
     AddAuth(resource);
     AddPolicyScope(resource);
     AddPolicyAttributes(resource);
+    AddInstanceAuthorize(resource);
 
     return [ k, resource ];
   }));

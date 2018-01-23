@@ -34,14 +34,6 @@ function loadObject(object, registry) {
   //
   Object.assign(model.prototype, Object.assign({}, object.Methods))
 
-    /*model.prototype.authorize = async function(user = this._user){
-    if (!(await _.get(object.Policy,this._policy).permit.bind(this)(user, this.dataValues))){
-      let e = new Error('Access Denied');
-      e.code = 403;
-      throw e;
-    } 
-  }*/
-
 
 
   //Policies
@@ -50,7 +42,7 @@ function loadObject(object, registry) {
   //
   //
 
-  const assertedProps = ['PolicyAttributes','PolicyScopes','Authorize'];
+  const assertedProps = ['PolicyAttributes','PolicyScopes','Authorize','AuthorizeInstance'];
   if (typeof object.PolicyAssert === "undefined") {
     throw new Error(`PolicyAssert property must be either 'true' or 'false' on object ${object.Name}`)
   }
@@ -58,8 +50,6 @@ function loadObject(object, registry) {
   if (object.PolicyAssert && assertedProps.map(prop=>object[prop]).some(x=> typeof x === "undefined")){
     throw new Error(`${assertedProps.join(',')} Must be defined on object ${object.Name}'s properties when PolicyAssert is 'true'`)
   }
-
-
 
 
 
@@ -114,11 +104,18 @@ function loadObject(object, registry) {
 
     const attrArr = _.union(all,  specific)
     return attrArr;
+
   }
 
-  model.prototype.policyAuthorize = function(policy, user) {
-    this.setPolicy(policy,user);
-    return this.authorize();
+
+  //TODO: dry "undefined" boolean or functions with specific and all co-op
+  model.prototype.authorize  = function(policy, user) {
+    const allFn = _.get(object.AuthorizeInstance, 'all');
+    const all = (typeof allFn === "undefined") ? ()=> true : (typeof allFn === "boolean") ? ()=> allFn : allFn;
+    const specificFn = _.get(object.AuthorizeInstance, policy);
+    const specific = (typeof specificFn === "undefined") ? ()=> true : (typeof specificFn === "boolean") ? ()=> specificFn : specificFn;;
+    return specific.bind(this)(user) && all.bind(this)(user)
+
   }
 
   model._scopeFns = !!object.ScopeFunctions;

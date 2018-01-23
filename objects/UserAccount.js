@@ -11,6 +11,7 @@ module.exports = {
     role: {
       type: ENUM('member','admin'),
       allowNull: false,
+      defaultValue: 'member',
       validate: {
           isIn: [['member', 'admin']]
       }
@@ -18,8 +19,13 @@ module.exports = {
   },
   Hooks: {
   },
+  AuthorizeInstance:{},
   PolicyScopes:{},
-  Authorize: {},
+  Authorize: {
+    write: function(user){
+
+    }
+  },
   PolicyAttributes:{},
   PolicyAssert: true,
   ScopeFunctions: true, 

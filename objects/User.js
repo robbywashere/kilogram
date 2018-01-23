@@ -2,6 +2,7 @@ const sequelize = require('sequelize');
 const crypto = require('crypto');
 const hashify = require('../server-lib/auth/hashify');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
+const { get, isArray } = require('lodash');
 const Promise = require('bluebird');
 
 module.exports = {
@@ -40,6 +41,7 @@ module.exports = {
     },
 
   },
+  AuthorizeInstance:{},
   Hooks: {
   },
   PolicyScopes:{},
@@ -53,6 +55,13 @@ module.exports = {
   },
   Methods:{
     verifyPassword: function (password) { return (this.passwordHash === hashify(this.passwordSalt, password)) },
+    isAccountRole: function(accountId, role){
+      if (typeof this.Accounts === "undefined") {
+        throw new Error('User record must include Account');
+      }
+      const vetter = (isArray(role)) ? role.includes.bind(role) : (x)=>(x===role);
+      return this.Accounts.some(acc=>( vetter(get(acc,'UserAccount.role')) && get(acc,'id') === accountId) );
+    }
   },
   StaticMethods: {
     //findByIdWithAccounts: function(id) { return  this.scope('withAccounts').findById(id) }

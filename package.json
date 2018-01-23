@@ -61,8 +61,8 @@
     "db:mig:down": "node ./db/_migdown.js",
     "db:mig:up": "node ./db/_migup.js",
     "test": "supervisor -q -n exit -x mocha -- -b ./tests/*.test.js",
-    "test2": "LOG_LEVEL=0 && mocha ./tests/*.test.js --reporter mocha-clearscreen-reporter --watch",
-    "test3": "LOG_LEVEL=0 && mocha ./tests/*.test.js  --watch"
+    "test2": "export LOG_LEVEL=2 && mocha ./tests/*.test.js --reporter mocha-clearscreen-reporter --watch",
+    "test3": "export LOG_LEVEL=2 && mocha ./tests/*.test.js  --watch"
   },
   "devDependencies": {
     "babel-eslint": "^8.0.3",

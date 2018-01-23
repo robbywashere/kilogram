@@ -63,6 +63,7 @@ module.exports = {
       }
     }}
   },
+  AuthorizeInstance:{},
   ScopeFunctions: true,
   Methods:{
     setFree() {

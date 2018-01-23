@@ -75,6 +75,7 @@ module.exports = {
   },
   PolicyAssert: false,
   ScopeFunctions: true,
+  AuthorizeInstance:{},
   Scopes: {
     outstanding: { where: { finish: false, inprog: false } }
   },

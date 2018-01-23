@@ -14,6 +14,7 @@ module.exports = {
   },
   PolicyScopes:{},
   Authorize: {},
+  AuthorizeInstance:{},
   PolicyAttributes:{},
   PolicyAssert: true,
   Scopes: {

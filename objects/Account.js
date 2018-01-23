@@ -13,15 +13,27 @@ module.exports = {
   },
   Hooks: {
   },
-  PolicyScopes:{},
-  AuthorizeInstance: function(user, record){
-    //TODO???
+  AuthorizeInstance: {
+    all: function(user){
+      return (user.isAccountRole(this.id,["admin", "member"]))
+    },
+    create: function(user){
+      return (user.isAccountRole(this.id,"admin"))
+    },
+    update: function(){
+      return (user.isAccountRole(this.id,"admin"))
+    },
+    delete: function(){
+      return (user.isAccountRole(this.id,"admin"))
+    }
   },
   Authorize: {
     write: function(user){
       user.admin //|| user.UserAccount 
     }
   },
+  AuthorizeInstance:{},
+  PolicyScopes:{},
   PolicyAttributes:{},
   PolicyAssert: true,
   ScopeFunctions: true, 

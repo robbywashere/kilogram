@@ -2,11 +2,12 @@
 const { Account, IGAccount, User, UserAccount } = require('../objects');
 const DBSync = require('../db/sync');
 
-describe.only('Account object',function(){
+describe('Account object',function(){
 
   beforeEach(function(){
     return DBSync(true);
   })
+
   it ('Has multiple Users for one Account',async function(){
 
     const igAccount = await IGAccount.create({ id: 3 });
