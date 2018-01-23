@@ -9,7 +9,7 @@ const assert = require('assert');
 const { logger } = require('../lib/logger');
 const DB = require('../db');
 
-describe('controllers', function(){
+describe.skip('controllers', function(){
   beforeEach(()=> {
     return sync(true);
   });
@@ -34,7 +34,7 @@ describe('controllers', function(){
 
   });
 
-  it.only('should authorize instances', async function(){
+  it('should authorize instances', async function(){
 
 
     const account = await Account.create();
@@ -61,8 +61,7 @@ describe('controllers', function(){
       .get('/posts/1')
       .expect(200);
 
-    console.log(res.body);
-
+    assert.deepEqual(Object.keys(res.body),['id'])
 
 
   });

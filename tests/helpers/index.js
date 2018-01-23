@@ -1,5 +1,5 @@
 const {readdirSync, readFileSync } = require('fs');
-const { User, Photo, Post } = require('../../objects');
+const { User, Photo, Account, IGAccount, Post } = require('../../objects');
 const minioObj = require('../../server-lib/minio/minioObject');
 
 function loadFixture(name) {
@@ -28,6 +28,51 @@ function exprezz(user = {}){
   return app;
 }
 
+async function createAccountUserPostJob(){
+
+  const user = await User.create();
+  const account = await Account.create();
+  const igAccount = await IGAccount.create();
+  let post = await Post.create({
+    postDate: new Date(),
+    UserId: user.id,
+    AccountId: account.id,
+    IGAccountId: igAccount.id,
+    Photo: {
+      bucket: 'uploads',
+      objectName: minioObj.create('v2',{ payload: true })
+    }
+  },{
+    include: [ Photo ]
+  })
+
+  await post.initJob();
+  await post.reloadWithJob();
+
+  job = post.Job;
+  return { account, igAccount, user, post, job }
+}
+
+async function createAccountUserPost(){
+  const user = await User.create();
+  const account = await Account.create();
+  const igAccount = await IGAccount.create();
+  let post = await Post.create({
+    postDate: new Date(),
+    UserId: user.id,
+    AccountId: account.id,
+    IGAccountId: igAccount.id,
+    Photo: {
+      bucket: 'uploads',
+      objectName: minioObj.create('v2',{ payload: true })
+    }
+  },{
+    include: [ Photo ]
+  })
+  return { account, igAccount, user, post }
+}
+
+
 async function createUserPostJob(){
   const user = await User.create();
   let post = await Post.create({
@@ -46,4 +91,4 @@ async function createUserPostJob(){
   return post;
 }
 
-module.exports =  { fixtures, createUserPostJob, exprezz }
+module.exports =  { fixtures, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz }

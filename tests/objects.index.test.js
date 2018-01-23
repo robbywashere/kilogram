@@ -25,6 +25,9 @@ describe('objectLoader', function(){
       PolicyScopes:{
         all: 'userScoped'
       },
+      AuthorizeInstance: {
+      
+      },
       Authorize: {
         all: function(arg){
           return arg 

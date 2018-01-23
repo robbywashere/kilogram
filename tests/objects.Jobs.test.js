@@ -6,7 +6,7 @@ const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../db/sync');
 const Promise = require('bluebird');
-const { createUserPostJob } = require('./helpers');
+const { createAccountUserPostJob, createAccountUserPost, createUserPostJob } = require('./helpers');
 
 
 describe('objects/Jobs', function(){
@@ -19,7 +19,7 @@ describe('objects/Jobs', function(){
   it('should respond to withPost and withPostForId with a .Post object with a .Photo object', async function(){
 
 
-    const post = await createUserPostJob();
+    const { post }  = await createAccountUserPostJob();
 
     const job1 = await Job.withPost({ where: {id: post.Job.id }})
     const job2 = await Job.withPostForId(post.Job.id)
@@ -30,7 +30,7 @@ describe('objects/Jobs', function(){
   it ('should respond to reloadWithPost with a .Post object with a .Photo object', async function(){
 
 
-    const post = await createUserPostJob();
+    const { post }  = await createAccountUserPostJob();
 
     const job = await Job.findById(post.Job.id)
     const j = await job.reloadWithPost();
@@ -40,7 +40,7 @@ describe('objects/Jobs', function(){
 
   it ('should respond to withAllForId with job.Post, job.Post.Photo, job.User',async function(){
 
-    const post = await createUserPostJob();
+    const { post }  = await createAccountUserPostJob();
 
     const job = await Job.withAllForId(post.Job.id);
 
@@ -52,7 +52,7 @@ describe('objects/Jobs', function(){
   it('should .popJob - giving a single job returning a job from the db while updating that job as inprog: true', async function(){
 
 
-    const post = await createUserPostJob();
+    const { post }  = await createAccountUserPostJob();
 
     const job = await Job.findById(post.Job.id, { 
       include: [ { model: User }, { model: Post, include: [ { model: Photo } ] } ] 
@@ -66,7 +66,7 @@ describe('objects/Jobs', function(){
 
   it('should include Post, User, and Post.Photo', async function(){
 
-    const post = await createUserPostJob();
+    const { post }  = await createAccountUserPostJob();
 
     const job = await Job.findById(post.Job.id, { 
       include: [ { model: User }, { model: Post, include: [ { model: Photo } ] } ] 

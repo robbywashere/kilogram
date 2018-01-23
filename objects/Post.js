@@ -49,6 +49,7 @@ module.exports = {
   Init({ Job, User, Photo, Account, IGAccount }){
     //this.belongsTo(IGAccount, { foreignKey: { allowNull: false }}); //TODO: add cascading deletes
     this.belongsTo(Account, { foreignKey: { allowNull: false }});
+    this.belongsTo(IGAccount, { foreignKey: { allowNull: false }});
     this.belongsTo(User, { foreignKey: { allowNull: false }}); //TODO: add cascading deletes -- REMOVE??
     this.hasOne(Job);
     this.hasOne(Photo, { foreignKey: { allowNull: false }}) // TODO: allowNull false?
