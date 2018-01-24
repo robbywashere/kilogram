@@ -54,7 +54,7 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
   wrapMethods.forEach(m=>{
     const wfn = client[m];
     if (typeof wfn !== "undefined") {
-      newClient[m] = (...args) => retryConnRefused3({ ...opts, fn: async ()=>wfn.bind(client)(...args), debug: wfn.name });
+      newClient[m] = (...args) => retryConnRefused3({ ...opts, fn: async ()=>wfn.bind(client)(...args), debug: `Function: ${m}` });
 
     }
   })
@@ -69,7 +69,7 @@ class MClient {
     this.config = config;
     this.bucket = bucket;
     this.region = region;
-    this.client = (client) ? client : new Minio.Client(config);
+    this.client = (client) ? client : WrapMinioClient(new Minio.Client(config));
   }
 
 

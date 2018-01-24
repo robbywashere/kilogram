@@ -14,7 +14,7 @@ const { logger } = require('../lib/logger');
 const DB = require('../db');
 const { get } = require('lodash');
 
-describe.only('controllers',function(){
+describe('controllers',function(){
 
   let TestObj;
   beforeEach(async ()=>{

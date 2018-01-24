@@ -40,7 +40,7 @@
     "uuid": "^3.1.0"
   },
   "scripts": {
-    "dev:tabs": "./scripts/tab npm run minio:up & ./scripts/tab npm run dev & ./scripts/tab npm run crx:start",
+    "dev:tabs": "export LOG_LEVEL=3 && ./scripts/tab npm run minio:up & ./scripts/tab npm run dev & ./scripts/tab npm run crx:start",
     "crx:start": "export PORT=3001 && react-scripts start",
     "crx:build": "react-scripts build",
     "crx:test": "react-scripts test --env=jsdom",
@@ -50,7 +50,7 @@
     "minio:events:up": "mc events add myminio/uploads arn:minio:sqs::1:postgresql --events put,delete",
     "minio:events:down": "mc events remove myminio/uploads arn:minio:sqs::1:postgresql --force",
     "dev:auto": "NODE_ENV=development && nodemon server.js",
-    "dev": "NODE_ENV=development && node server.js",
+    "dev": "export LOG_LEVEL=3 && NODE_ENV=development && node server.js",
     "eslint": "eslint",
     "sync:seed": " node ./db/_sync.js && node ./db/seeders/_up.js",
     "seeds:up": "node ./db/seeders/_up.js",

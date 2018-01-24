@@ -187,15 +187,16 @@ function loadPath(app) {
 
 function Init({ app, sequelize = DB, objects = Objects }){
   loadObjectControllers({ app, sequelize, objects })
-  loadControllers(app);
+  loadPathControllers(app);
   return app;
 }
-
-Init.loadPathControllers = function(app){
+Init.loadPathControllers = loadPathControllers;
+function loadPathControllers(app){
   slurpDir2(__dirname, excludeIndex)(loadPath(app));
 }
 
-Init.loadObjectControllers = function({app, sequelize = DB, objects = Objects}) {
+Init.loadObjectControllers = loadObjectControllers
+function loadObjectControllers({app, sequelize = DB, objects = Objects}) {
 
   finale.initialize({
     //TODO: base: 'api' ???
