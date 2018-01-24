@@ -6,10 +6,11 @@ const { DB_ENC_KEY } = require('config');
 const InitJobQuery = `
   INSERT INTO
     "Jobs"
-    ("PostId", "UserId", "createdAt", "updatedAt") (
+    ("PostId", "IGAccountId", "AccountId", "createdAt", "updatedAt") (
       SELECT 
         "Posts"."id",
-        "Posts"."UserId",
+        "Posts"."IGAccountId",
+        "Posts"."AccountId",
         NOW() "createdAt",
         NOW() "updatedAt"
       FROM
@@ -79,11 +80,12 @@ module.exports = {
   Scopes: {
     outstanding: { where: { finish: false, inprog: false } }
   },
-  Init({ Post, Photo, User }){
+  Init({ Post, Photo, IGAccount, Account }){
     this.belongsTo(Post, { foreignKey: { unique: true } });
-    this.belongsTo(User);
+    this.belongsTo(Account, { foreignKey: { allowNull: false }});
+    this.belongsTo(IGAccount, { foreignKey: { allowNull: false }});
     this.addScope('withPost', { include: [ { model: Post, include: [ Photo ] } ] })
-    this.addScope('withAll', { include: [ { model: Post, include: [Photo] }, User ] })
+    this.addScope('withAll', { include: [ { model: Post, include: [Photo, Account, IGAccount ] }, Account, IGAccount ] })
   }, 
   Methods: {
   },

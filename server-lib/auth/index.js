@@ -2,9 +2,11 @@ const passport = require('passport');
 
 const { Strategy } = require('passport-local');
 
-const { User, Account, IGAccount } = require('objects');
+const { User, Account, IGAccount } = require('../../objects');
 
 const config = require('config');
+
+const { Router } = require('express');
 
 
 module.exports = function Auth(app) {
@@ -22,7 +24,7 @@ module.exports = function Auth(app) {
   passport.use(new Strategy(
     async (username, password, cb) => {
       try {
-        const user = await User.findOne({ where: { username } });
+        const user = await User.findOne({ where: { email: username } });
         if (!user) { return cb(null, false); }
         if (!user.verifyPassword(password)) { return cb(null, false); }
         return cb(null, user);
@@ -38,7 +40,9 @@ module.exports = function Auth(app) {
   passport.deserializeUser(async function(id, cb) {
 
     try {
-      const user = await User.findByIdWithAccounts(id);
+      //const user = await User.findByIdWithAccounts(id);
+      const user = await User.withAccountsForId(id);
+      user.setPolicy('read', user);
       cb(null, user);
     } catch(e) {
       return cb(e);
@@ -49,13 +53,19 @@ module.exports = function Auth(app) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  const login = passport.authenticate('local');
-  const logout = (req,res) => req.logout();
+  const router = new Router();
 
-  return {
-    login,
-    logout
-  }
+  router.post('/auth',passport.authenticate('local'), function(req, res){
+    req.user.setPolicy('read', req.user);
+    const user = req.user;
+    res.send({ user });
+  })
+  router.delete('/auth', (req,res) => {
+    req.logout();
+    res.sendStatus(200);
+  })
+  
+  return router;
 
 
 }

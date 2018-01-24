@@ -43,7 +43,7 @@ class Agent {
 }
 
 
-async function JobRun({ job = demand('job'), photo = demand('photo'), post = demand('post'), user = demand('user'), agent = demand('agent'), minioClient = (new minio.MClient()) }, throws = true) {
+async function JobRun({ job = demand('job'), photo = demand('photo'), post = demand('post'), igAccount = demand('igAccount'), agent = demand('agent'), minioClient = (new minio.MClient()) }, throws = true) {
   let localfile;
   try {
     const mc = minioClient; 
@@ -51,8 +51,8 @@ async function JobRun({ job = demand('job'), photo = demand('photo'), post = dem
     const result = await agent.exec({ 
       cmd: 'full_dance', 
       args: {
-        username: user.igUsername, //TODO: user.getCredentials();
-        password: user.igPassword,
+        username: igAccount.username, 
+        password: igAccount.password,
         desc: post.desc,
         localfile
       } 

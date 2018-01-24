@@ -256,7 +256,7 @@ function signedURL({ client, bucket } = {}){
   const mc = (client) ? client: new MClient({ bucket });
   return async (req, res, next) => {
     try { 
-      const userId = get(req,'user.id') ? req.user.id : 'USERID';
+      const userId = (typeof get(req,'user.id') !== "undefined") ? req.user.id : null;
       let url = await mc.newPhoto({ bucket, userId });
       res.end(url);
     } catch(e) {

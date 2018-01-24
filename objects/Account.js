@@ -9,6 +9,10 @@ module.exports = {
   Properties:{
     name: {
       type: STRING
+    },
+    enabled: {
+      type: BOOLEAN,
+      defaultValue: true,
     }
   },
   Hooks: {
@@ -20,16 +24,16 @@ module.exports = {
     create: function(user){
       return (user.isAccountRole(this.id,"admin"))
     },
-    update: function(){
+    update: function(user){
       return (user.isAccountRole(this.id,"admin"))
     },
-    delete: function(){
+    delete: function(user){
       return (user.isAccountRole(this.id,"admin"))
     }
   },
   Authorize: {
     write: function(user){
-      user.admin //|| user.UserAccount 
+      return !!user.superAdmin
     }
   },
   AuthorizeInstance:{},
@@ -47,9 +51,10 @@ module.exports = {
   },
   StaticMethods: {
   },
-  Init({ User, IGAccount }){
+  Init({ User, Account, IGAccount }){
     this.belongsToMany(User,{ through: 'UserAccount' })
     this.hasMany(IGAccount)
+    this.hasMany(Account)
     this.addScope('withIgAccount', { include: [ IGAccount ] })
   },
 }

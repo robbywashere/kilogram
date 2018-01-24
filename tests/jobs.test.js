@@ -38,9 +38,9 @@ describe('jobs/', function(){
         pullPhoto: sinon.mock().returns(Promise.resolve('/tmpfile'))
       }
 
-      const user = {
-        igUsername: 'username',
-        igPassword: 'password' 
+      const igAccount = {
+        username: 'username',
+        password: 'password' 
       }
       const post = {
         desc: "#description"
@@ -57,7 +57,7 @@ describe('jobs/', function(){
 
 
 
-      await JobRun({ job, agent, post, photo, user, minioClient }, false)
+      await JobRun({ job, agent, post, photo, igAccount, minioClient }, false)
 
       assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0],{ name: 'objectName' })
 
@@ -97,9 +97,9 @@ describe('jobs/', function(){
         pullPhoto: sinon.mock().returns(Promise.resolve('/tmpfile'))
       }
 
-      const user = {
-        igUsername: 'username',
-        igPassword: 'password' 
+      const igAccount = {
+        username: 'username',
+        password: 'password' 
       }
       const post = {
         desc: "#description"
@@ -116,7 +116,7 @@ describe('jobs/', function(){
 
 
 
-      await JobRun({ job, agent, post, photo, user, minioClient })
+      await JobRun({ job, agent, post, photo, igAccount, minioClient })
 
       assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0],{ name: 'objectName' })
 

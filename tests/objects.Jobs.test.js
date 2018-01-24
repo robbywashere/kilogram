@@ -1,7 +1,6 @@
 
 process.env.NODE_ENV = 'test'; // TODO ?
-const { Job, Post, Photo, User } = require('../objects');
-
+const { IGAccount, Account, Job, Post, Photo, User } = require('../objects');
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../db/sync');
@@ -38,7 +37,7 @@ describe('objects/Jobs', function(){
 
   })
 
-  it ('should respond to withAllForId with job.Post, job.Post.Photo, job.User',async function(){
+  it('should respond to withAllForId with job.Post, job.Post.Photo, job.IGAccount',async function(){
 
     const { post }  = await createAccountUserPostJob();
 
@@ -46,7 +45,8 @@ describe('objects/Jobs', function(){
 
     assert(job.Post);
     assert(job.Post.Photo);
-    assert(job.User)
+    assert(job.IGAccount)
+
   })
 
   it('should .popJob - giving a single job returning a job from the db while updating that job as inprog: true', async function(){
@@ -55,7 +55,7 @@ describe('objects/Jobs', function(){
     const { post }  = await createAccountUserPostJob();
 
     const job = await Job.findById(post.Job.id, { 
-      include: [ { model: User }, { model: Post, include: [ { model: Photo } ] } ] 
+      include: [ { model: IGAccount }, { model: Post, include: [ { model: Photo } ] } ] 
     });
 
     const j = await Job.popJob();
@@ -64,27 +64,34 @@ describe('objects/Jobs', function(){
 
   })
 
-  it('should include Post, User, and Post.Photo', async function(){
+  it('should include Post, Account, and Post.Photo', async function(){
 
     const { post }  = await createAccountUserPostJob();
 
     const job = await Job.findById(post.Job.id, { 
-      include: [ { model: User }, { model: Post, include: [ { model: Photo } ] } ] 
+      include: [ { model: IGAccount }, { model: Post, include: [ { model: Photo } ] } ] 
     });
 
     assert(job.Post);
     assert(job.Post.Photo);
-    assert(job.User);
+    assert(job.IGAccount);
 
 
   })
 
-  it ('should report outstanding jobs', async function(){
+  it('should report outstanding jobs', async function(){
+
+    const igAccount = await IGAccount.create();
+    const account = await Account.create();
     const j = await Job.create({
+      AccountId: account.id,
+      IGAccountId: igAccount.id,
       args: { arg1: 1 },
       cmd: 'cmd',
     })
     const jNot = await Job.create({
+      AccountId: account.id,
+      IGAccountId: igAccount.id,
       args: { arg1: 1 },
       cmd: 'cmd',
       inprog: true,
@@ -92,6 +99,8 @@ describe('objects/Jobs', function(){
     })
 
     const jNot2 = await Job.create({
+      AccountId: account.id,
+      IGAccountId: igAccount.id,
       args: { arg1: 1 },
       cmd: 'cmd',
       inprog: false,

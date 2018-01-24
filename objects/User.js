@@ -1,5 +1,6 @@
 const sequelize = require('sequelize');
 const crypto = require('crypto');
+const { logger } = require('../lib/logger');
 const hashify = require('../server-lib/auth/hashify');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get, isArray } = require('lodash');
@@ -10,6 +11,7 @@ module.exports = {
   Properties:{
     email: {
       type: STRING,
+      allowNull: false,
       validate: {
         isEmail: true
       }
@@ -21,6 +23,7 @@ module.exports = {
     },
     passwordHash: {
       type: STRING,
+      allowNull: false
     },
     passwordSalt: {
       type: STRING,
@@ -35,7 +38,7 @@ module.exports = {
     fooBar: {
       type: VIRTUAL,
     },
-    admin: {
+    superAdmin: {
       type: BOOLEAN,
       defaultValue: false
     },
@@ -43,15 +46,33 @@ module.exports = {
   },
   AuthorizeInstance:{},
   Hooks: {
+    afterCreate: async function(user, options){
+      const { Account } = this.sequelize.models;
+      if (!isArray(user.Accounts)) {
+        try {
+          logger.debug(`Account does not exist for UserId: ${user.id} - Creating ....`)
+          const account = await Account.create();
+          await account.addUserAs(user,'admin');
+        } catch(e) {
+          logger.error(`Could not create required Account for UserId: ${user.id} ... Aborting!\n ${e}`)
+          throw e;
+        }
+      
+      }
+    },
   },
   PolicyScopes:{},
   Authorize: {},
-  PolicyAttributes:{},
+  PolicyAttributes:{
+    all: function(user){
+      if (user.superAdmin) { return true }
+      return ['id','email']
+    }
+  },
   PolicyAssert: true,
   ScopeFunctions: true, 
   Scopes: {
-    admins: { where: { admin: true } },
-    fooBar: { where: { fooBar: true }},
+    superAdmins: { where: { superAdmin: true } },
   },
   Methods:{
     verifyPassword: function (password) { return (this.passwordHash === hashify(this.passwordSalt, password)) },

@@ -14,13 +14,10 @@ const syncDevices = async () => {
 
 
 const run = function({ fn, milliseconds }){
-  return setInterval(()=>fn().catch(e=>logger.error(`Unhandled exception in function: ${fn.name}`,e)), milliseconds)
+  return setInterval(()=>fn().catch(e=>logger.critical(`Unhandled exception in function: ${fn.name}`,e)), milliseconds)
 }
 
-//device.reload()
-//if device.idle == false, free
-//TODO: assure jobs are ran in priority order
-
+//TODO: assure jobs are ran in priority order, by ids???? vs DATE???
 const runJobs = async () => {
   //TODO: try catch block
   const outstanding = await Job.outstanding();
@@ -35,8 +32,8 @@ const runJobs = async () => {
         await job.reloadWithAll();
         const deviceId = device.get('adbId');
         const agent = new runner.Agent({ deviceId });
-        logger.debug(`Running Job: ${job.id}, Post: ${job.Post.id} User: ${job.User.id}, Device: ${deviceId}:${device.id}`);
-        await runner.JobRun({ post: job.Post, agent, job: job, user: job.User, photo: job.Post.Photo })
+        logger.debug(`Running Job: ${job.id}, Post: ${job.Post.id} IGAccount: ${job.IGAccount.id}, Device: ${deviceId}:${device.id}`);
+        await runner.JobRun({ post: job.Post, agent, job: job, igAccount: job.IGAccount, photo: job.Post.Photo })
       }
       await device.setFree();
     }

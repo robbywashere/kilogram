@@ -31,7 +31,7 @@ module.exports = {
     }
   },
   PolicyScopes: {
-    all: 'userScoped',
+    all: 'userAccountScoped',
   },
   PolicyAttributes: {
     all: ['id'],
@@ -59,6 +59,7 @@ module.exports = {
       '$Job$': { [Op.eq]: null }
     }})
     this.addScope('withUser', { include: [ User ] } )
+    this.addScope('withIGAccount', { include: [ IGAccount ] } )
   },
   ScopeFunctions: true,
   Hooks: {
@@ -66,6 +67,13 @@ module.exports = {
   Scopes: {
     userScoped: function(user) {
       return (user.admin) ? {} : { where: { UserId: user.id } }
+    },
+    userAccountScoped: function(user) {
+      if (!get(user,'Accounts.length')) {
+        throw new Error('Attempt to scope to Account without Account on user object')
+      }
+      const accountIds = user.Accounts.map(a=>a.id);
+      return (user.admin) ? {} : { where: { AccountId: { [Op.in]: accountIds } } }
     }
   },
   Methods:{
@@ -75,6 +83,8 @@ module.exports = {
         await Job.create({
           PostId: this.id,     
           UserId: this.UserId,
+          AccountId: this.AccountId,
+          IGAccountId: this.IGAccountId
         })
       } catch(e){
         let error = e

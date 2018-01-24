@@ -8,7 +8,7 @@ const assert = require('assert');
 const sequelize = require('sequelize');
 const sync = require('../db/sync');
 const Promise = require('bluebird');
-const { createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('./helpers');
+const { ezUser, createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('./helpers');
 const { constant, times } = require('lodash');
 const minioObj = require('../server-lib/minio/minioObject');
 
@@ -20,10 +20,10 @@ describe('objects/Post', function(){
 
   it.skip('should adhere to Policy', async function(){
 
-    const user = await User.create({
-      isAdmin: true, 
+    const user = await ezUser({
+     superAdmin: true 
     });
-    const user2 = await User.create({
+    const user2 = await ezUser({
     });
     let post = await Post.create({
       postDate: sequelize.fn('NOW'),
@@ -47,7 +47,7 @@ describe('objects/Post', function(){
     const account = await Account.create({});
     const igaccount = await IGAccount.create({});
 
-    const user = await User.create();
+    const user = await ezUser();
     const props = {
       postDate: sequelize.fn('NOW'),
       UserId: user.id,

@@ -88,6 +88,7 @@ function loadObject(object, registry) {
     return callScope(specific,callScope(all, model));
   }
 
+
   model.getPolicyAttrs = function(policy, user){
     let result;
     function callAttrs(attrs) {
@@ -107,6 +108,20 @@ function loadObject(object, registry) {
 
   }
 
+  model.prototype.toJSON = function() {
+    if (this._policy) {
+      const attrs = model.getPolicyAttrs(this._policy, this._user);
+      const dv = _.pick(_.clone(this.dataValues),attrs);
+      return dv;
+    } else {
+      return _.clone(this.dataValues);
+    }
+  }
+
+  model.prototype.setPolicy = function(policy, user){
+    this._policy = policy;
+    this._user = user;
+  }
 
   //TODO: dry "undefined" boolean or functions with specific and all co-op
   model.prototype.authorize  = function(policy, user) {

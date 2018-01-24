@@ -30,7 +30,11 @@ function exprezz(user = {}){
 
 async function createAccountUserPostJob(){
 
-  const user = await User.create();
+
+  const user = await User.create({
+    password: 'blah',
+    email: 'test@test.com'
+  });
   const account = await Account.create();
   const igAccount = await IGAccount.create();
   let post = await Post.create({
@@ -53,8 +57,19 @@ async function createAccountUserPostJob(){
   return { account, igAccount, user, post, job }
 }
 
+async function ezUser(...opts){
+  return User.create({
+    ...opts,
+    password: 'blah',
+    email: 'test@test.com'
+  })
+}
+
 async function createAccountUserPost(){
-  const user = await User.create();
+  const user = await User.create({
+    email: 'test@test.com',
+    password: 'blah',
+  });
   const account = await Account.create();
   const igAccount = await IGAccount.create();
   let post = await Post.create({
@@ -72,9 +87,38 @@ async function createAccountUserPost(){
   return { account, igAccount, user, post }
 }
 
+async function createAccountUserPostJob2(){
+
+  const account = await Account.create();
+  const igaccount = await IGAccount.create();
+
+  const user = await User.create({
+    email: 'test@test.com',
+    password: 'blah',
+  });
+  let post = await Post.create({
+    postDate: new Date(),
+    AccountId: account.id,
+    IGAccountId: igaccount.id,
+    UserId: user.id,
+    Photo: {
+      bucket: 'uploads',
+      objectName: minioObj.create('v2',{ payload: true })
+    }
+  },{
+    include: [ Photo ]
+  })
+  await post.initJob();
+  await post.reloadWithJob();
+
+  return post;
+}
 
 async function createUserPostJob(){
-  const user = await User.create();
+  const user = await User.create({
+    email: 'test@test.com',
+    password: 'blah',
+  });
   let post = await Post.create({
     postDate: new Date(),
     UserId: user.id,
@@ -91,4 +135,4 @@ async function createUserPostJob(){
   return post;
 }
 
-module.exports =  { fixtures, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz }
+module.exports =  { ezUser, fixtures, createAccountUserPostJob, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz }

@@ -5,15 +5,17 @@ const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 module.exports = {
   Name: 'IGAccount',
   Properties:{
-    igPassword: {
+    password: {
       type: STRING
     },
-    igUsername: {
+    username: {
       type: STRING
     },
   },
   PolicyScopes:{},
-  Authorize: {},
+  Authorize: {
+    
+  },
   AuthorizeInstance:{},
   PolicyAttributes:{},
   PolicyAssert: true,

@@ -10,7 +10,7 @@ const { logger } = require('../lib/logger');
 
 const { get } = require('lodash');
 
-const { userRecoveryEmail } = require('../emailTemplates');
+const { userRecoveryEmail } = require('../emails');
 
 const router = new Router();
 

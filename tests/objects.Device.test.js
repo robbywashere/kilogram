@@ -188,9 +188,6 @@ describe('Devices', function(){
 
   })
 
-  describe('get device', function(){
-    it('should pop a device')
-  })
 
   describe('syncDevices', function(){
     it ('should update devices (online: true where in <adb devices ids> and (online: false where not in <adb device ids>)', async function(){

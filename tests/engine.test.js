@@ -1,5 +1,5 @@
 const { runJobs, run, main, syncDevices } = require('../engine');
-const { createUserPostJob }  = require('./helpers')
+const { createAccountUserPostJob }  = require('./helpers')
 const sinon = require('sinon');
 const assert = require('assert');
 const cmds = require('../android/cmds');
@@ -9,7 +9,7 @@ const runner = require('../python/runner');
 const Promise = require('bluebird');
 
 //TODO: Possible memory link, interferes with other tests, must be ran seperately
-describe.skip('engine' , function(){
+describe('engine' , function(){
 
   beforeEach(async ()=> syncDb())
 
@@ -55,17 +55,17 @@ describe.skip('engine' , function(){
         enabled: true,
       })
 
-      const p = await createUserPostJob();
+      const p = (await createAccountUserPostJob()).post;
 
 
       await runJobs();
 
-      const { post, agent, job, user, photo } = jobRunStub.getCall(0).args[0];
+      const { post, agent, job, igAccount, photo } = jobRunStub.getCall(0).args[0];
 
       assert.equal(post.id,p.id);
       assert.equal(photo.id,p.Photo.id);
       assert.equal(job.id, p.Job.id)
-      assert(user.id)
+      assert(igAccount.id)
       assert(agentStub.calledWith({ deviceId: 'adbId1' }))
 
       await d1.reload();

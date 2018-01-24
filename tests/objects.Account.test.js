@@ -1,5 +1,6 @@
 
 const { Account, IGAccount, User, UserAccount } = require('../objects');
+const { ezUser } = require('./helpers');
 const DBSync = require('../db/sync');
 
 describe('Account object',function(){
@@ -17,10 +18,8 @@ describe('Account object',function(){
 
     await account.reloadWithIgAccount();
 
-    //console.log(account.toJSON())
-
-    const user = await User.create({ password:'dude', email: 'blah@blah.com' });
-    const user2 = await User.create({ email: 'blah2@blah2.com' });
+    const user = await ezUser({ password:'dude', email: 'blah@blah.com' });
+    const user2 = await ezUser({ email: 'blah2@blah2.com' });
     await account.addUserAs(user,'admin')
     await account.addUserAs(user2,'member')
 

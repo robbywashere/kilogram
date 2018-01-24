@@ -26,17 +26,9 @@ app.use(corsHeaders);
 
 app.use('/auth',Auth(app));
 
-dd
 app.use(require('body-parser').json());
 
 app.use(require('serve-static')(__dirname + '/public'));
-
-app.use(function(err, req, res, next) {
-  logger.error(err);
-  res.status(err.statusCode || 500)
-    .send(err.msg || err.toString());
-});
-
 
 initController({
   app,
@@ -61,6 +53,14 @@ Promise.all([syncDb(false), mc.init() ]).then(function(){
     logger(`Listening on ${port}\nhttp://127.0.0.1:${port}`)
   });
 
+});
+
+
+
+app.use(function(err, req, res, next) {
+  logger.error(err);
+  res.status(err.statusCode || 500)
+    .send(err.msg || err.toString());
 });
 
 
