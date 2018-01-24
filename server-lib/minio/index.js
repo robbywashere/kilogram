@@ -50,15 +50,13 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
   getBucketPolicy
   setBucketPolicy`.split("\n").map(x=>x.trim());
 
-  const newClient = {};
   wrapMethods.forEach(m=>{
     const wfn = client[m];
     if (typeof wfn !== "undefined") {
-      newClient[m] = (...args) => retryConnRefused3({ ...opts, fn: async ()=>wfn.bind(client)(...args), debug: `Function: ${m}` });
-
+      client[m] = (...args) => retryConnRefused3({ ...opts, fn: async ()=>wfn.bind(client)(...args), debug: `Function: ${m}` });
     }
   })
-  return newClient;
+  return client;
 
 }
 
