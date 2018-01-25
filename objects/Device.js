@@ -49,7 +49,16 @@ module.exports = {
       type: STRING
     },
   },
-  PolicyAssert: false,
+  PolicyScopes: { },
+  PolicyAssert: true,
+  PolicyAttributes: { all: true },
+  Authorize:{ 
+    all: (user) => user.superAdmin
+  },
+  AuthorizeInstance:{ 
+    all: (user) => user.superAdmin 
+  },
+  ScopeFunctions: true,
   Scopes: {
     enabled: { where: { enabled: true } },
     disabled: { where: { enabled: false } },
@@ -63,8 +72,6 @@ module.exports = {
       }
     }}
   },
-  AuthorizeInstance:{},
-  ScopeFunctions: true,
   Methods:{
     setFree() {
       return this.set('idle', true).save();

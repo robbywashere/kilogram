@@ -51,18 +51,19 @@ function loadObject(object, registry) {
     throw new Error(`${assertedProps.join(',')} Must be defined on object ${object.Name}'s properties when PolicyAssert is 'true'`)
   }
 
+  model._policyAssert = !!object.PolicyAssert;
 
 
   model.authorize = function(action, user){
 
-    const all =_.get(object.Authorize, 'all');
-    const one = _.get(object.Authorize,action);
-    const authorize =  (all) ? all : one;
-    if (typeof authorize === "boolean") return authorize; 
-    if (typeof authorize === "function") {
-      return authorize(user);
-    }
-    return false;
+    let all = _.get(object.Authorize, 'all', ()=>false);
+
+    if (typeof all === "boolean") all = ()=>all
+
+    let one = _.get(object.Authorize, action, ()=>false);
+    if (typeof one === "boolean") one = ()=>one
+
+    return all(user) || one(user);
 
   }
 
@@ -126,10 +127,10 @@ function loadObject(object, registry) {
   //TODO: dry "undefined" boolean or functions with specific and all co-op
   model.prototype.authorize  = function(policy, user) {
     const allFn = _.get(object.AuthorizeInstance, 'all');
-    const all = (typeof allFn === "undefined") ? ()=> true : (typeof allFn === "boolean") ? ()=> allFn : allFn;
+    const all = (typeof allFn === "undefined") ? ()=> false : (typeof allFn === "boolean") ? ()=> allFn : allFn;
     const specificFn = _.get(object.AuthorizeInstance, policy);
-    const specific = (typeof specificFn === "undefined") ? ()=> true : (typeof specificFn === "boolean") ? ()=> specificFn : specificFn;;
-    return specific.bind(this)(user) && all.bind(this)(user)
+    const specific = (typeof specificFn === "undefined") ? ()=> false : (typeof specificFn === "boolean") ? ()=> specificFn : specificFn;;
+    return specific.bind(this)(user) || all.bind(this)(user)
 
   }
 

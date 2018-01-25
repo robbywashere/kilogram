@@ -1,5 +1,5 @@
 const express = require('express');
-const { chunk } = require('lodash');
+const { chunk, get } = require('lodash');
 const { parse } = require('url');
 const fs = require('fs');
 const config = require('config');
@@ -20,13 +20,13 @@ const syncDb = require('./db/sync');
 
 const initController = require('./controllers');
 
-app.use(helmet());
+//app.use(helmet());
 
 app.use(corsHeaders);
 
-app.use('/auth',Auth(app));
-
 app.use(require('body-parser').json());
+
+app.use(Auth(app));
 
 app.use(require('serve-static')(__dirname + '/public'));
 

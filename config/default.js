@@ -14,7 +14,7 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV,
   PYTHON_PATH: process.env.PYTHON_PATH,
   PORT: process.env.PORT,
-  LOG_LEVEL: parseInt(process.env.LOG_LEVEL) || 0,
+  LOG_LEVEL: parseInt(process.env.LOG_LEVEL) || 3,
   MINIO_ENDPOINT: process.env.MINIO_ENDPOINT, 
   MINIO_PORT: process.env.MINIO_PORT,
   MINIO_SECURE: process.env.MINIO_SECURE,

@@ -9,7 +9,7 @@ describe('Account object',function(){
     return DBSync(true);
   })
 
-  it ('Has multiple Users for one Account',async function(){
+  it('Has multiple Users for one Account',async function(){
 
     const igAccount = await IGAccount.create({ id: 3 });
     const account = await Account.create({ id: 4 });
@@ -19,7 +19,7 @@ describe('Account object',function(){
     await account.reloadWithIgAccount();
 
     const user = await ezUser({ password:'dude', email: 'blah@blah.com' });
-    const user2 = await ezUser({ email: 'blah2@blah2.com' });
+    const user2 = await ezUser({ email: 'blah2@blah2.com', password: 'dude' });
     await account.addUserAs(user,'admin')
     await account.addUserAs(user2,'member')
 

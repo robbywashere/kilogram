@@ -35,7 +35,7 @@ describe('controllers',function(){
         all: 'userScoped'
       },
       AuthorizeInstance: {
-
+        all: true,
       },
       Authorize: {
         all: function(user){
@@ -103,7 +103,7 @@ describe('controllers',function(){
     const t1 = await TestObj.create({});
     const t2 = await TestObj.create({ UserId: user.id });
     const res = await request(app)
-      .get(`/testobjs/${t1.id}`)
+      .get(`/testobjs/1`)
       .expect(403);
 
     user.set('superAdmin', true);

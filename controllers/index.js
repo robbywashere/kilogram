@@ -13,16 +13,11 @@ const { slurpDir2, excludeIndex } = require('../lib/slurpDir2');
 
 const { pick, get } = require('lodash');
 
+const config = require('config');
 
 const { ForbiddenError, FinaleError } = require('finale-rest').Errors;
 
 const DB = require('../db');
-
-/*const aliases = `list index
- create new
- update edit
- delete destroy`.split("\n").map(pair=>pair.split(' ').map(item=>item.trim()).filter(x=>x))*/
-
 
 const lilLogger = (e) =>  { 
   logger.error(JSON.stringify(e,null,4)) 
@@ -33,32 +28,33 @@ function Handler(fn) {
   return function (req, res, context){
     try {
       return fn(req, res, context);
-    } catch(e) {
-      if (!(e instanceof FinaleError)) {
+    } catch(error) {
+      if (config.NODE_ENV === 'development') console.log(e);
+      if (!(error instanceof FinaleError)) {
         logger.critical(e);
       } else {
-        e.ip = req.ip;
-        lilLogger(e);
+        error.ip = req.ip;
+        lilLogger(error);
       }
-      context.error(e);
+      context.error(error);
     }
   }
 }
 
 function AddRequireUser(resource) {
   ['list','read','delete','update','create'].forEach(action => {
-    resource[action].start(Handler(function(req, res, context){
+    resource[action].start(function(req, res, context){
       if (typeof req.user === "undefined") {
         throw new ForbiddenError(); 
       }
       return context.continue
-    }))
+    })
   })
 
 }
 function AddSetPolicy(resource) {
   ['list','read','delete','update','create'].forEach(action => {
-    resource[action].send.before(Handler(function(req, res, context){
+    resource[action].send.before(function(req, res, context){
       if (isArray(context.instance)) {
         context.instance.map(i=>i.setPolicy(action, req.user))
       }
@@ -66,26 +62,26 @@ function AddSetPolicy(resource) {
         context.instance.setPolicy(action, req.user)
       }
       return context.continue;
-    }))
+    })
   })
 
 }
 
 function AddAuth(resource){
   ['list','read','delete','update','create'].forEach(action => {
-    resource[action].start(Handler(function(req,res, context){
+    resource[action].start(function(req,res, context){
       if (!context.model.authorize(action, req.user)) {
         throw new ForbiddenError(); 
       }
       return context.continue;
-    })
+    }
     )
   })
 }
 
 function AddInstanceAuthorize(resource) {
   ['list','read','delete','update','create'].forEach(action => {
-    resource[action].fetch.after(Handler(function(req,res, context){
+    resource[action].fetch.after(function(req,res, context){
       if (isArray(context.instance) && context.instance.some(i=>!i.authorize(action, req.user))) { //TODO: promise support
         throw new ForbiddenError(); 
       }
@@ -93,27 +89,21 @@ function AddInstanceAuthorize(resource) {
         throw new ForbiddenError(); 
       }
       return context.continue
-    }))
+    })
   })
 
 }
 function AddPolicyAttributes2(resource) { //this relies on the setPolicy and toJSON
 
   ['delete','update','create'].forEach(action => {
-    resource[action].start(Handler(function(req,res, context){
-      try {
-        const attrs = context.model.getPolicyAttrs(action, req.user);
-        if (attrs) {
-          context.options.attributes = attrs; 
-          req.body = pick(req.body,attrs) //TODO consider the security implications of this
-        }
-        return context.continue;
-      } catch(e){
-        e.ip = req.ip;
-        lilLogger(e);
-        context.error(e);
+    resource[action].start(function(req,res, context){
+      const attrs = context.model.getPolicyAttrs(action, req.user);
+      if (attrs) {
+        context.options.attributes = attrs; 
+        req.body = pick(req.body,attrs) //TODO consider the security implications of this
       }
-    }))
+      return context.continue;
+    })
   });
 }
 
@@ -123,22 +113,16 @@ function AddPolicyAttributes2(resource) { //this relies on the setPolicy and toJ
 function AddPolicyAttributes(resource) {
 
   ['delete','update','create'].forEach(action => {
-    resource[action].start(Handler(function(req,res, context){
-      try {
-        const attrs = context.model.getPolicyAttrs(action, req.user);
-        if (attrs) {
+    resource[action].start(function(req,res, context){
+      const attrs = context.model.getPolicyAttrs(action, req.user);
+      if (attrs) {
 
-          context.options.attributes = attrs; 
-          req.body = pick(req.body,attrs) //TODO consider the security implications of this
+        context.options.attributes = attrs; 
+        req.body = pick(req.body,attrs) //TODO consider the security implications of this
 
-        }
-        return context.continue;
-      } catch(e){
-        e.ip = req.ip;
-        lilLogger(e);
-        context.error(e);
       }
-    }))
+      return context.continue;
+    })
   });
 
   /* TODO: Overlap? ['list','read'].forEach(action => {
@@ -166,10 +150,10 @@ function AddPolicyAttributes(resource) {
 
 function AddPolicyScope(resource) {
   ['list','read','delete','update','create'].forEach(action => {
-    resource[action].start(Handler(function(req,res, context){
+    resource[action].start(function(req,res, context){
       context.model = context.model.policyScope(action, req.user);
       return context.continue;
-    }))
+    })
   })
 }
 
@@ -182,6 +166,32 @@ function loadPath(app) {
   }
 }
 
+function AddErrorHandler(resource) {
+
+
+  ['list','read','delete','update','create'].forEach(action => {
+
+    resource.controllers[action].error = function(req, res, error) {
+
+
+      if (!(error instanceof FinaleError)) {
+        logger.critical(error);
+      }  else if (config.NODE_ENV === 'development' || config.NODE_ENV === 'test') { 
+        console.error(error) 
+      } else {
+        error.ip = req.ip;
+        logger.error(JSON.stringify(error,null,4)) 
+      }
+
+      res.status(error.status);
+      res.json({
+        message: error.message,
+        errors: error.errors
+      });
+    };
+
+  });
+}
 
 
 
@@ -206,12 +216,19 @@ function loadObjectControllers({app, sequelize = DB, objects = Objects}) {
 
   const resources = fromPairs(Object.keys(objects).map(k=> {
     const resource = finale.resource({ model: objects[k] });
-    AddRequireUser(resource);
-    AddAuth(resource);
-    AddSetPolicy(resource);
-    AddPolicyScope(resource);
-    AddPolicyAttributes2(resource);
-    //AddInstanceAuthorize(resource);
+    if (objects[k]._policyAssert) {
+      AddRequireUser(resource);
+      //TODO: overlaps with AddRequireUser??? AddAuth(resource);
+      AddAuth(resource)
+      AddSetPolicy(resource);
+      AddPolicyScope(resource);
+      AddPolicyAttributes2(resource);
+      AddInstanceAuthorize(resource);
+      AddErrorHandler(resource);
+
+
+    }
+
 
     return [ k, resource ];
   }));

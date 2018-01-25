@@ -10,7 +10,7 @@ describe('server-lib/auth', function(){
 
   beforeEach(()=>DBSync(true))
 
-  it ('should login a user', async function(){
+  it('should login a user', async function(){
 
     const user = await User.create({ email: 'test@test.com', password:'blah'})
 

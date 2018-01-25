@@ -11,6 +11,7 @@ try {
 }
 
 module.exports = {
+  LOG_LEVEL: 3,
   S3_ACCESS_KEY: minioConfig.S3_ACCESS_KEY,
   S3_SECRET_KEY: minioConfig.S3_SECRET_KEY,
   DB_ENC_KEY: process.env.DB_ENC_KEY,

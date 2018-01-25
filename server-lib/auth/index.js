@@ -6,20 +6,31 @@ const { User, Account, IGAccount } = require('../../objects');
 
 const config = require('config');
 
+const { get } = require('lodash');
+
 const { Router } = require('express');
 
 
 module.exports = function Auth(app) {
 
 
-  app.use(require('cookie-parser')());
   // TODO: app.use(require('body-parser').urlencoded({ extended: true }));
   app.use(require('body-parser').json());
+  app.use(require('cookie-parser')());
   app.use(require('express-session')({ 
     secret: config.APP_SECRET, 
+    cookie: {},
     resave: true, 
     saveUninitialized: true 
   }));
+
+  if (config.NODE_ENV === 'production') {
+    app.set('trust proxy', 1) // trust first proxy
+    sess.cookie.secure = true // serve secure cookies
+  }
+
+  app.use(passport.initialize());
+  app.use(passport.session());
 
   passport.use(new Strategy(
     async (username, password, cb) => {
@@ -38,10 +49,9 @@ module.exports = function Auth(app) {
   });
 
   passport.deserializeUser(async function(id, cb) {
-
     try {
-      //const user = await User.findByIdWithAccounts(id);
       const user = await User.withAccountsForId(id);
+      if (!user) throw new Error('Invalid User');
       user.setPolicy('read', user);
       cb(null, user);
     } catch(e) {
@@ -49,9 +59,6 @@ module.exports = function Auth(app) {
     }
 
   });
-
-  app.use(passport.initialize());
-  app.use(passport.session());
 
   const router = new Router();
 
@@ -64,7 +71,7 @@ module.exports = function Auth(app) {
     req.logout();
     res.sendStatus(200);
   })
-  
+
   return router;
 
 

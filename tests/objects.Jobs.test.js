@@ -1,5 +1,3 @@
-
-process.env.NODE_ENV = 'test'; // TODO ?
 const { IGAccount, Account, Job, Post, Photo, User } = require('../objects');
 const sinon = require('sinon');
 const assert = require('assert');

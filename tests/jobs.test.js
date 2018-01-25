@@ -1,5 +1,4 @@
 
-process.env.NODE_ENV = 'test'; // TODO ?
 const { JobRun, Agent, pullRemoteObject } = require('../python/runner');
 
 const PythonShell = require('python-shell');

@@ -1,4 +1,3 @@
-process.env.NODE_ENV = 'test'; // TODO ?
 
 const sinon = require('sinon');
 const assert = require('assert');
