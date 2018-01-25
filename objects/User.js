@@ -73,8 +73,8 @@ module.exports = {
   },
   PolicyAttributes:{
     all: function(user){
-      if (user.superAdmin) { return true }
-      return  ['id','email']
+      //if (user.superAdmin) { return true }
+      return  ['id','email', 'createdAt', 'updatedAt', 'superAdmin' ]
     }
   },
   PolicyAssert: true,

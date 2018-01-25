@@ -1,2 +1,3 @@
 const { migUp } = require('./migrateDb');
-migUp();
+const cmd = require('../lib/handleCmd');
+cmd(migUp());

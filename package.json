@@ -13,6 +13,7 @@
     "bson": "^1.0.4",
     "child-process-promise": "^2.2.1",
     "config": "^1.28.1",
+    "connect-pg-simple": "^4.2.1",
     "cookie-parser": "^1.4.3",
     "crypto-random-string": "^1.0.0",
     "dotenv": "^4.0.0",
@@ -69,6 +70,7 @@
     "test": "export LOG_LEVEL=0 && mocha ./tests/*.test.js  ./tests/setup.js --watch",
     "test:verbose": "export LOG_LEVEL=2 && mocha ./tests/*.test.js  ./tests/setup.js --watch",
     "test:once": "export LOG_LEVEL=0 && mocha ./tests/*.test.js  ./tests/setup.js ",
+    "pg:session:up": "psql postgres < ./node_modules/connect-pg-simple/table.sql",
     "moo": "cowsay"
   },
   "proxy": "http://127.0.0.1:3000/",

@@ -3,9 +3,11 @@ const cleanObj = require('../lib/cleanObj');
 const DB = require('../db');
 const OBJECTS = {};
 const INITS = {};
+const { isArray } = require('lodash');
 const { Model } = require('sequelize'); 
 const { logger } = require('../lib/logger')
 
+const sequelize = require('sequelize');
 const slurpDir = require('../lib/slurpDir');
 
 function newRegistry(){
@@ -112,6 +114,11 @@ function loadObject(object, registry) {
   model.prototype.toJSON = function() {
     if (this._policy) {
       const attrs = model.getPolicyAttrs(this._policy, this._user);
+      //TODO: pass includeds???
+      for (const [key,val] of Object.entries(this.dataValues)){
+        if (isArray(val)) {
+        }
+      }
       const dv = _.pick(_.clone(this.dataValues),attrs);
       return dv;
     } else {
@@ -122,6 +129,13 @@ function loadObject(object, registry) {
   model.prototype.setPolicy = function(policy, user){
     this._policy = policy;
     this._user = user;
+    for (const [key, val] of Object.entries(this.dataValues)) {
+      if (isArray(val) && val[0] instanceof sequelize.Model ){
+        val.map(i=>i.setPolicy(policy, user))
+      } else if (val instanceof sequelize.Model) {
+        val.setPolicy(policy, user)
+      }
+    }
   }
 
   //TODO: dry "undefined" boolean or functions with specific and all co-op

@@ -51,6 +51,7 @@ async function up(){
 async function migDown(){
   const migPool = new Pool(migConfig)
   await runMigFiles(migPool, slurpDownSql(f=> [f,slurpFile(f)]))
+
   await migPool.end();
 }
 async function migUp(){
