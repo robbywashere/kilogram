@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const hashify = require('../server-lib/auth/hashify');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const Promise = require('bluebird');
+const { isLoggedIn } = require('./_helpers');
 
 module.exports = {
   Name: 'Account',
@@ -39,7 +40,7 @@ module.exports = {
     }
   },
   Authorize: {
-    all: true 
+    all: isLoggedIn
   },
   PolicyScopes:{
     all: 'userScoped',

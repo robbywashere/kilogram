@@ -217,7 +217,7 @@ function loadObjectControllers({app, sequelize = DB, objects = Objects}) {
   const resources = fromPairs(Object.keys(objects).map(k=> {
     const resource = finale.resource({ model: objects[k] });
     if (objects[k]._policyAssert) {
-      AddRequireUser(resource);
+      //AddRequireUser(resource);
       //TODO: overlaps with AddRequireUser??? AddAuth(resource);
       AddAuth(resource)
       AddSetPolicy(resource);

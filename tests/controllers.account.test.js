@@ -13,7 +13,7 @@ const request = require('supertest');
 
 const { User, Account } = require('../objects');
 
-describe.only('Account Controller', function(){
+describe('Account Controller', function(){
   before(()=>dbSync(true))
   it('Should include account when scoped as such',async function(){
 
@@ -25,16 +25,11 @@ describe.only('Account Controller', function(){
 
     const acct = await Account.findAll({ include: [ User ] })
 
-    //console.log(acct.map(a=>a.toJSON()))
-
     const res = await request(app)
       .get('/accounts?scope=withUsers')
       .expect(200)
 
-    console.log(JSON.parse(res.text))
-
-
-
+    assert.equal(res.body[0].Users[0].email,'x@x.com')
 
   })
 

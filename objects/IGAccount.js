@@ -1,6 +1,7 @@
 const sequelize = require('sequelize');
 const crypto = require('crypto');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
+const { isLoggedIn } = require('./_helpers');
 
 module.exports = {
   Name: 'IGAccount',
@@ -14,7 +15,7 @@ module.exports = {
   },
   PolicyScopes:{},
   Authorize: {
-    
+    all: isLoggedIn
   },
   AuthorizeInstance:{},
   PolicyAttributes:{},

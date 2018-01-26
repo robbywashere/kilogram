@@ -2,6 +2,7 @@ const sequelize = require('sequelize');
 const DB = require('../db');
 const { get } = require('lodash');
 const { STRING, TEXT, DATE, Op } = sequelize;
+const { isLoggedIn } = require('./_helpers');
 
 
 
@@ -26,9 +27,7 @@ module.exports = {
   },
   PolicyAssert: true,
   Authorize: {
-    all: function(user){
-      return !!user
-    }
+    all: isLoggedIn 
   },
   PolicyScopes: {
     all: 'userAccountScoped',

@@ -5,6 +5,7 @@ const hashify = require('../server-lib/auth/hashify');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get, isArray } = require('lodash');
 const Promise = require('bluebird');
+const { isLoggedIn } = require('./_helpers');
 
 module.exports = {
   Name: 'User',
@@ -17,13 +18,17 @@ module.exports = {
         isEmail: true
       }
     },
+    verified:{
+      type: BOOLEAN,
+      defaultValue: true,
+    },
     password: {
       type: VIRTUAL,
       set: function(val){ this.setDataValue('passwordHash', hashify(this.passwordSalt, val.toString())) }
     },
     passwordHash: {
       type: STRING,
-      allowNull: false
+      //needed? allowNull: false
     },
     passwordSalt: {
       type: STRING,
@@ -69,7 +74,7 @@ module.exports = {
     // read: 'accountsScoped',
   },
   Authorize: {
-    all: true
+    all: isLoggedIn
   },
   PolicyAttributes:{
     all: function(user){

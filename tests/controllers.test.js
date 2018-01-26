@@ -8,7 +8,7 @@ const express = require('express');
 const { exprezz, ezUser } = require('./helpers'); 
 
 const { STRING, INTEGER } = require('sequelize');
-const { Account, IGAccount, User, UserRecovery, Post } = require('../objects');
+const { Account, IGAccount, UserInvite, User, UserRecovery, Post } = require('../objects');
 const assert = require('assert');
 const { logger } = require('../lib/logger');
 const DB = require('../db');
@@ -262,6 +262,23 @@ describe('controllers', function(){
 
     const u = await User.findById(1);
     assert(u.verifyPassword('blah'))
+
+  })
+
+
+  it.only('should do user invite', async function(){
+
+    const account = await Account.create({});
+    const ui = await UserInvite.create({
+      email: 'x@x.com',
+      AccountId: account.id,
+    });
+
+    await ui.redeem()
+
+    const user = await User.findById(ui.UserId,{ include: [ Account ] })
+
+    assert(user.Accounts.map(a=>a.id).includes(account.id));
 
   })
 

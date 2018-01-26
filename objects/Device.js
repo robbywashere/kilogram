@@ -1,6 +1,7 @@
 const sequelize = require('sequelize');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
+const { isSuperAdmin } = require('./_helpers');
 
 const PopDeviceQuery =`
   UPDATE 
@@ -53,10 +54,10 @@ module.exports = {
   PolicyAssert: true,
   PolicyAttributes: { all: true },
   Authorize:{ 
-    all: (user) => user.superAdmin
+    all: isSuperAdmin
   },
   AuthorizeInstance:{ 
-    all: (user) => user.superAdmin 
+    all: isSuperAdmin
   },
   ScopeFunctions: true,
   Scopes: {
