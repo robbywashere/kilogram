@@ -15,17 +15,15 @@ const { userRecoveryEmail } = require('../emails');
 const router = new Router();
 
 //TODO limit security
-router.post('/:user_id', async (req, res, next) => {
-  //TODO parseInt?
-
+router.post('/:email', async (req, res, next) => {
   try {
-    const userId = parseInt(req.params.user_id);
-    const user = await User.findById(userId)
-    if (!user) throw new NotFound(); 
-    const userRecovery = await UserRecovery.create({ UserId: userId });
-    const email = new emailer();
+    const { email } = req.params;
+    const user = await User.findOne({ where: { email } })
+    if (!user) throw new NotFound(); // TODO: return res.sendStatus(200) more secure?
+    const userRecovery = await UserRecovery.create({ UserId: user.id });
+    const recoveryEmail = new emailer();
     const { key } = userRecovery;
-    await email.send({msg: userRecoveryEmail({ key }), to: user.email });
+    await recoveryEmail.send({ msg: userRecoveryEmail({ key }), to: user.email });
     res.sendStatus(200)
   } catch(err) {
     logger.error(err);
@@ -37,12 +35,13 @@ router.put('/', async(req, res, next) => {
   try {
     const { newPassword, key } = req.body;
     if (!key || !newPassword) throw new BadRequest();
-    //console.log(await UserRecovery.forKey(key.toString()))
     const userRecovery = get((await UserRecovery.forKey(key.toString())),0)
     const user = get(userRecovery, 'User');
     if (!user) throw new NotFound();
-    await user.update({ password: newPassword.toString() });
-    await userRecovery.destroy(); //TODO ???
+    await Promise.all([
+      user.update({ password: newPassword.toString() }),
+      userRecovery.destroy()
+    ])
     res.sendStatus(200);
   } catch(err) {
     logger.error(err);
