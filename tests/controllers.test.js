@@ -158,7 +158,7 @@ describe('controllers',function(){
 
 })
 
-describe.skip('controllers', function(){
+describe('controllers', function(){
   beforeEach(()=> {
     return sync(true);
   });
@@ -243,7 +243,7 @@ describe.skip('controllers', function(){
 
     try {
       const res = await request(app)
-        .post('/user_recovery/1')
+        .post('/user_recovery/example@example.com')
         .expect(200);
     } catch(e) {
       throw e
