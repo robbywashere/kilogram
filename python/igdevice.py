@@ -1,18 +1,10 @@
-#Android Debug Bridge version 1.0.39
-#Revision 3db08f2c6889-android
 
-#import pprint
 import sys, json
 from os import system
-from os import environ
 from os.path import join, dirname
-from dotenv import load_dotenv
 from uiautomator import Device
 import string
 import random
-
-dotenv_path = join(dirname(__file__),'..', '.env')
-load_dotenv(dotenv_path)
 
 def random_string(length=15):
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
@@ -23,6 +15,22 @@ class IGDevice:
         self.device_id = device_id
         self.device = Device(device_id)
         self.photo_posted = False
+
+
+    def wake(self):
+        if self.device.screen == "off":
+            self.device.wakeup()
+
+    def sleep(self):
+        if self.device.screen == "on":
+            self.device.sleep()
+
+    def tear_down(self):
+        self.sleep()
+
+    def setup(self):
+        self.wake()
+        self.device.watcher("NotNow").when(text="Not Now",resourceId="com.instagram.android:id/button_negative").press.back()
 
     def open_ig(self):
         cmd = 'adb -s {} shell monkey -p com.instagram.android -c android.intent.category.LAUNCHER 1'.format(self.device_id)
@@ -114,35 +122,3 @@ class IGDevice:
 
     def get(self, method):
         return getattr(self,method) 
-
-for line in sys.stdin:
-    stdinput = json.loads(line)
-
-try:
-    stdinput 
-except NameError:
-    print "--- NO INPUT ---"
-    print json.dumps({ "success": False, "error": "noinput" });
-
-else:
-    error = None
-    if stdinput['method'] == "echo":
-        print json.dumps(stdinput)
-    else:
-        try:
-            myDevice = IGDevice(stdinput['deviceId'])
-            if stdinput['method'] == "raise_except":
-                raise Exception('exception!')
-            myDevice.device.watcher("NotNow").when(text="Not Now",resourceId="com.instagram.android:id/button_negative").press.back()
-            myDevice.get(input['method'])(**input['args']);
-            
-        except:
-            error = str(sys.exc_info()[0])
-
-        photo_posted = myDevice.get('photo_posted')
-        j = { "success": photo_posted, "error": error }
-        print json.dumps(j)
-
-
-
-
