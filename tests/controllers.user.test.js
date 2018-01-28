@@ -34,7 +34,7 @@ describe('User Controller', function(){
       .expect(200)
 
 
-    assert.deepEqual(res.body, [ { id: 3, email: 'x2@x2.com' }, { id: 1, email: 'x@x.com' } ]);
+    assert.deepEqual(res.body.map(u=>({ id: u.id, email: u.email })), [ { id: 3, email: 'x2@x2.com' }, { id: 1, email: 'x@x.com' } ]);
 
   
   })

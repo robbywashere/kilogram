@@ -125,26 +125,6 @@ function AddPolicyAttributes(resource) {
     })
   });
 
-  /* TODO: Overlap? ['list','read'].forEach(action => {
-    resource[action].send.before(Handler(function(req,res, context){
-      try {
-        const attrs = context.model.getPolicyAttrs(action, req.user);
-        if (attrs) {
-          if (isArray(context.instance)){
-            context.instance = context.instance.map(i=>i.dataValues = pick(i.dataValues,attrs));
-          }
-          else {
-            context.instance.dataValues = pick(context.instance.dataValues,attrs);
-          }
-        }
-        return context.continue;
-      } catch(e){
-        e.ip = req.ip;
-        lilLogger(e);
-        context.error(e);
-      }
-    }))
-  })*/
 }
 
 
@@ -195,6 +175,15 @@ function AddErrorHandler(resource) {
 
 
 
+function AddMiddlewares(resource){ 
+  AddAuth(resource)
+  AddSetPolicy(resource);
+  AddPolicyScope(resource);
+  AddPolicyAttributes2(resource);
+  AddInstanceAuthorize(resource);
+  AddErrorHandler(resource);
+}
+
 function Init({ app, sequelize = DB, objects = Objects }){
   loadObjectControllers({ app, sequelize, objects })
   loadPathControllers(app);
@@ -214,25 +203,16 @@ function loadObjectControllers({app, sequelize = DB, objects = Objects}) {
     sequelize
   })
 
-  const resources = fromPairs(Object.keys(objects).map(k=> {
+  Object.keys(objects).map(k=> {
     const resource = finale.resource({ model: objects[k] });
     if (objects[k]._policyAssert) {
-      //AddRequireUser(resource);
-      //TODO: overlaps with AddRequireUser??? AddAuth(resource);
-      AddAuth(resource)
-      AddSetPolicy(resource);
-      AddPolicyScope(resource);
-      AddPolicyAttributes2(resource);
-      AddInstanceAuthorize(resource);
-      AddErrorHandler(resource);
-
-
+      AddMiddlewares(resource);
     }
+  });
 
 
-    return [ k, resource ];
-  }));
 }
+
 
 
 module.exports = Init;

@@ -38,6 +38,8 @@ initController({
 
 const mc = new MClient();
 
+app.get('/force-logout',(req,res)=>{ req.logout(); res.send('logout'); }) //TODO: this is only for testing purposes
+
 app.use('/minio',Routes({ client: mc }));
 
 app.get('/upload', (req, res) => {

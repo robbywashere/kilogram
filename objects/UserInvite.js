@@ -70,10 +70,11 @@ module.exports = {
     redeem: async function(){
       const { User } = this.sequelize.models;
       const user = await User.findOne({ where: { id: this.UserId  } })
-      return Promise.all([
+      await Promise.all([
         user.addAccount(this.AccountId),
         this.destroy()
       ]);
+      return user;
     },
   },
   StaticMethods: {

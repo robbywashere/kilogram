@@ -133,7 +133,7 @@ describe('controllers',function(){
     await t1.reload();
 
     assert.equal(t1.foo,null);
-    
+
     const res4 = await request(app)
       .put(`/testobjs/2`)
       .send({ bar: 'foo' })
@@ -152,7 +152,7 @@ describe('controllers',function(){
       .expect(200);
 
     assert.deepEqual(res5.body, { id: 2, UserId: 1, foo: 'bar' })
-      
+
 
   })
 
@@ -235,38 +235,33 @@ describe('controllers', function(){
   });
   it('should do password recovery', async function(){
 
-    const user = await ezUser({ email: 'example@example.com' });
+    const email = 'example@example.com';
+
+    const user = await ezUser({ email });
 
     const app = exprezz(user);
 
     initController({ app, sequelize: DB});
 
-    try {
-      const res = await request(app)
-        .post('/user_recovery/example@example.com')
-        .expect(200);
-    } catch(e) {
-      throw e
-    }
+    const res1 = await request(app)
+      .post(`/user_recovery/${email}`)
+      .expect(200);
 
-    const key = (await UserRecovery.findOne({ where: { id: 1 }})).key
+    await user.reload();
 
-    try {
-      const res = await request(app)
-        .put('/user_recovery')
-        .send({ newPassword: 'blah', key })
-        .expect(200);
-    } catch(e) {
-      throw e
-    }
 
-    const u = await User.findById(1);
-    assert(u.verifyPassword('blah'))
+    const res2 = await request(app)
+      .put('/user_recovery')
+      .send({ password: 'blah', email, passwordKey: user.passwordKey })
+      .expect(200);
+    await user.reload();
+
+    assert(user.verifyPassword('blah'))
 
   })
 
 
-  it.only('should do user invite', async function(){
+  it('should do user invite', async function(){
 
     const account = await Account.create({});
     const ui = await UserInvite.create({

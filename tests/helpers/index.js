@@ -13,6 +13,14 @@ function fixtures(){
   return o;
 }
 
+function appLogger(app) {
+  app.use(function(err, req, res, next) {
+    console.error(err);
+    res.status(err.statusCode || 500)
+      .send(err.msg || err.toString());
+  });
+}
+
 function exprezz(user = {}){
   const app = require('express')();
   app.use(require('body-parser').json());
@@ -134,4 +142,4 @@ async function createUserPostJob(){
   return post;
 }
 
-module.exports =  { ezUser, fixtures, createAccountUserPostJob, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz }
+module.exports =  { ezUser, fixtures, createAccountUserPostJob, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz, appLogger  }

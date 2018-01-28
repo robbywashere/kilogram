@@ -17,7 +17,11 @@ router.put('/', async (req, res, next) => {
     const { key } = req.params;
     const userInvite = await UserInvite.findOne({ where: { key }});
     if (!userInvite) throw new NotFound(); 
-    await userInvite.redeem();
+    const user = await userInvite.redeem();
+    if (!user.verified) {
+      user.update({ verified: true }); //no await is okay ;)
+      return res.send({ key: user.passwordKey });
+    }
     res.sendStatus(200)
   } catch(err) {
     logger.error(err);

@@ -5,11 +5,11 @@ import { List, Datagrid, TextField, BooleanField, DateField } from 'admin-on-res
 export const AccountList = (props) => (
   <List {...props}>
     <Datagrid>
-      <TextField source="id" />
-      <TextField source="users" />
-      <TextField source="name" />
-      <DateField source="updatedAt" label="Updated at" showTime/>
-      <DateField source="createdAt" label="Created at" showTime/>
+      <TextField source='id' />
+      <TextField source='name' />
+      <BooleanField source='enabled' />
+      <DateField source='updatedAt' label='Updated at' showTime/>
+      <DateField source='createdAt' label='Created at' showTime/>
     </Datagrid>
   </List>
 );

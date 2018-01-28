@@ -12,18 +12,18 @@ const { get } = require('lodash');
 
 const { userRecoveryEmail } = require('../emails');
 
+const { genPasswordKey } = require('../objects/_helpers');
+
 const router = new Router();
 
 //TODO limit security
 router.post('/:email', async (req, res, next) => {
   try {
     const { email } = req.params;
-    const user = await User.findOne({ where: { email } })
+    const user = await User.newRecovery(email)
     if (!user) throw new NotFound(); // TODO: return res.sendStatus(200) more secure?
-    const userRecovery = await UserRecovery.create({ UserId: user.id });
     const recoveryEmail = new emailer();
-    const { key } = userRecovery;
-    await recoveryEmail.send({ msg: userRecoveryEmail({ key }), to: user.email });
+    await recoveryEmail.send({ msg: userRecoveryEmail({ key: user.passwordKey }), to: user.email });
     res.sendStatus(200)
   } catch(err) {
     logger.error(err);
@@ -33,15 +33,9 @@ router.post('/:email', async (req, res, next) => {
 
 router.put('/', async(req, res, next) => {
   try {
-    const { newPassword, key } = req.body;
-    if (!key || !newPassword) throw new BadRequest();
-    const userRecovery = get((await UserRecovery.forKey(key.toString())),0)
-    const user = get(userRecovery, 'User');
-    if (!user) throw new NotFound();
-    await Promise.all([
-      user.update({ password: newPassword.toString() }),
-      userRecovery.destroy()
-    ])
+    const { password, passwordKey, email } = req.body;
+    if (!passwordKey || !password || !email) throw new BadRequest();
+    await User.recover({ password, passwordKey, email });
     res.sendStatus(200);
   } catch(err) {
     logger.error(err);

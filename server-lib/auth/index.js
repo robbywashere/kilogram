@@ -16,6 +16,10 @@ const session = require('express-session');
 
 const pgSession = require('connect-pg-simple')(session);
 
+const { Forbidden } = require('http-errors');
+
+const { logger } = require('../../lib/logger');
+
 
 module.exports = function Auth(app) {
 
@@ -27,10 +31,6 @@ module.exports = function Auth(app) {
 
 
 
-  //TODO: replace with JWT
-  if (config.NODE_ENV === "development" ||
-    config.NODE_ENV === "production"
-  ) {
     app.use(session({
       store: new pgSession({
         //pool: DB.connectionManager.pool
@@ -43,15 +43,6 @@ module.exports = function Auth(app) {
       saveUninitialized:true,
       //cookie: {},
     }));
-  }
-  else {
-    app.use(session({ 
-      secret: config.APP_SECRET, 
-      cookie: {},
-      resave: true, 
-      saveUninitialized: true 
-    }));
-  }
 
   if (config.NODE_ENV === 'production') {
     app.set('trust proxy', 1) // trust first proxy
@@ -80,22 +71,31 @@ module.exports = function Auth(app) {
   passport.deserializeUser(async function(id, cb) {
     try {
       const user = await User.withAccountsForId(id);
-      if (!user) throw new Error('Invalid User');
-      user.setPolicy('read', user);
-      cb(null, user);
+      if (!user) throw new Error('Invalid User/User does not exist');
+      else {
+        user.setPolicy('read', user);
+        cb(null, user);
+      }
     } catch(e) {
-      return cb(e);
+      logger.error(e);
+      cb(null, false);
     }
 
   });
 
   const router = new Router();
 
+
+  router.get('/auth',function(req, res, next){
+    const user = req.user;
+    if (!user) { return next(new Forbidden()) }
+    res.send({ user });
+  });
   router.post('/auth',passport.authenticate('local'), function(req, res){
     req.user.setPolicy('read', req.user);
     const user = req.user;
     res.send({ user });
-  })
+  });
   router.delete('/auth', (req,res) => {
     req.logout();
     res.sendStatus(200);

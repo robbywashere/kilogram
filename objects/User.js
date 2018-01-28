@@ -2,10 +2,11 @@ const sequelize = require('sequelize');
 const crypto = require('crypto');
 const { logger } = require('../lib/logger');
 const hashify = require('../server-lib/auth/hashify');
-const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
+const { STRING, JSON, DATE, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get, isArray } = require('lodash');
 const Promise = require('bluebird');
-const { isLoggedIn } = require('./_helpers');
+const cryptoRandomString = require('crypto-random-string');
+const { isLoggedIn, genPasswordKey, within24hrs } = require('./_helpers');
 
 module.exports = {
   Name: 'User',
@@ -18,21 +19,29 @@ module.exports = {
         isEmail: true
       }
     },
+    passwordKey: {
+      type: STRING,
+      defaultValue: genPasswordKey 
+    },
+    refreshToken: {
+      defaultValue: ()=> cryptoRandomString(32),
+      type: STRING,
+    },
     verified:{
       type: BOOLEAN,
       defaultValue: true,
     },
     password: {
+      defaultValue: ()=> cryptoRandomString(32),
       type: VIRTUAL,
       set: function(val){ this.setDataValue('passwordHash', hashify(this.passwordSalt, val.toString())) }
     },
     passwordHash: {
       type: STRING,
-      //needed? allowNull: false
     },
     passwordSalt: {
       type: STRING,
-      defaultValue: ()=> crypto.randomBytes(16).toString('hex')
+      defaultValue: cryptoRandomString(32) 
     },
     superAdmin: {
       type: BOOLEAN,
@@ -79,7 +88,7 @@ module.exports = {
   PolicyAttributes:{
     all: function(user){
       //if (user.superAdmin) { return true }
-      return  ['id','email', 'createdAt', 'updatedAt', 'superAdmin' ]
+      return  ['id','email', 'createdAt', 'updatedAt', 'superAdmin' ] //TODO?
     }
   },
   PolicyAssert: true,
@@ -106,10 +115,16 @@ module.exports = {
     }
   },
   StaticMethods: {
-    //   findByIdWithAccounts: function (id) { return this.withAccountsForId(id) }
+    recover: function({ email, password, passwordKey }) {
+      return this.update({ passwordKey: genPasswordKey(), password: password.toString() },{ where: { passwordKey, email }, returning: true })
+        .then(([_,u])=>u[0])
+    },
+    newRecovery: function(email) {
+      return this.update({ passwordKey: genPasswordKey() }, { where: { email }, returning: true })
+        .then(([_,u])=>u[0]);
+    }
   },
-  Init({ Post, IGAccount, UserRecovery, UserAccount, Account }){
-    this.hasMany(UserRecovery);
+  Init({ Post, IGAccount, UserAccount, Account }){
     this.hasMany(Post);
     this.belongsToMany(Account, { through: 'UserAccount' });
     this.addScope('withAccounts', { include: [ { model: Account, include: [ { model: IGAccount } ] } ] });
