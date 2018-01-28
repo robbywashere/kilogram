@@ -84,7 +84,7 @@ describe('engine' , function(){
 
       let called = 0;
       const fn = ()=>{ called++; return Promise.resolve()};
-      const timer = run({ fn, milliseconds: 500 })
+      const timer = run(fn, 500)
       await Promise.delay(1000)
       timer.close();
       assert(called, 2)
@@ -131,7 +131,11 @@ describe('engine' , function(){
 
     })
   })
-  describe('mainLoop', function(){
+  describe('main loop', function(){
+
+    it.skip('should run the main loop', function(){
+    
+    })
 
   })
 

@@ -34,24 +34,8 @@ beforeEach(syncDB);
 
     })
 
-    describe('GET /uploads?name=', function(){
-
-      it ('should get a signed url to upload to', async function(){
-        const app = exprezz();
-        const client = {
-          presignedPutObject: sinon.mock().returns(Promise.resolve('http://fakeurl'))
-        }
-        const mc = new MClient({ bucket, client });
-        app.use(Routes({ client: mc }))
-
-        const response = await request(app).get('/uploads?name=photo.jpg').expect(200)
-
-        assert(client.presignedPutObject.once())
-
-        assert.equal(response.text, 'http://fakeurl');
-
-
-      })
+    describe.skip('POST /uploads?name=', function(){
+      //THIS IS ALREADY TEST ;)
 
 
     })

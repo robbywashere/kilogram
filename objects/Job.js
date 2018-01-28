@@ -72,6 +72,10 @@ module.exports = {
     finish: { 
       type: BOOLEAN,
       defaultValue: false,
+    },
+    ran: {
+      type: INTEGER,
+      defaultValue: 0,
     }
   },
   PolicyAssert: false,
@@ -79,6 +83,7 @@ module.exports = {
   AuthorizeInstance:{},
   Scopes: {
     outstanding: { where: { finish: false, inprog: false } }
+    //outstanding: { where: { ran: false } }
   },
   Init({ Post, Photo, IGAccount, Account }){
     this.belongsTo(Post, { foreignKey: { unique: true } });

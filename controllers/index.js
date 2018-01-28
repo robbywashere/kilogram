@@ -19,27 +19,6 @@ const { ForbiddenError, FinaleError } = require('finale-rest').Errors;
 
 const DB = require('../db');
 
-const lilLogger = (e) =>  { 
-  logger.error(JSON.stringify(e,null,4)) 
-};
-
-
-function Handler(fn) {
-  return function (req, res, context){
-    try {
-      return fn(req, res, context);
-    } catch(error) {
-      if (config.NODE_ENV === 'development') console.log(e);
-      if (!(error instanceof FinaleError)) {
-        logger.critical(e);
-      } else {
-        error.ip = req.ip;
-        lilLogger(error);
-      }
-      context.error(error);
-    }
-  }
-}
 
 function AddRequireUser(resource) {
   ['list','read','delete','update','create'].forEach(action => {
@@ -156,7 +135,7 @@ function AddErrorHandler(resource) {
 
       if (!(error instanceof FinaleError)) {
         logger.critical(error);
-      }  else if (config.NODE_ENV === 'development' || config.NODE_ENV === 'test') { 
+      }  else if (config.NODE_ENV === 'development') { 
         console.error(error) 
       } else {
         error.ip = req.ip;

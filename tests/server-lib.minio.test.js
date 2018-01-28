@@ -1,9 +1,11 @@
 const { 
   retryConnRefused, 
-  signedURL, 
   MClient,
   WrapMinioClient,
+  Routes,
 } = require('../server-lib/minio');
+
+const { signedURL } = require('../server-lib/minio/middlewares');
 
 const EventEmitter = require('events');
 
@@ -21,9 +23,15 @@ const assert = require('assert');
 
 const DBSync = require('../db/sync');
 
+const { ezUser, exprezz } = require('./helpers');
+
+const request = require('supertest');
+const dbsync = require('../db/sync');
+
 const { set } = require('lodash');
 
 const uuidv4 = require('uuid/v4');
+const uuid = require('uuid');
 
 const objects = require('../objects');
 const { Photo } = objects; 
@@ -303,28 +311,58 @@ describe('MClient class', function(){
 
   describe('signedURL', function(){
 
+    const sandbox = sinon.sandbox.create();
+    beforeEach(function(){
+      sandbox.stub(uuid,'v4').callsFake(()=>'UUID');
+      return dbsync(true);
+    })
+    afterEach(function(){
+      sandbox.restore();
+    })
     it('should return a signed url', async function(){
-      let client = {
-        newPhoto: sinon.stub().resolves('http://fakeurl/photo')
-      };
-      const su = signedURL({ client });
-      let req = { query: { name: 'filename.jpg' } }
-      let res = { end: sinon.spy() };
-      let next = sinon.spy();
-      await su(req, res, next);
-      assert(res.end.calledWith('http://fakeurl/photo'))
+
+      const user = await ezUser();
+      const client = new MClient({
+        client: { async presignedPutObject(){ return  'http://fakeurl/photo' } }
+      });
+
+      const router = Routes({ client })
+
+      const app = exprezz(user);
+
+      app.use(router);
+
+      const res = await request(app)
+        .post('/uploads')
+        .send({ name: 'filename.jpg' })
+        .expect(200)
+
+      assert.deepEqual(res.body,{ url: 'http://fakeurl/photo', uuid: 'UUID' })
 
     })
-    it.skip('should next(ERR) on bad extension', async function(){
-      let client = {
-        newPhoto: sinon.stub().resolves('http://fakeurl/photo')
-      };
-      const su = signedURL({ client });
-      let req = { query: { name: 'filename.IM_BAD' } }
-      let res = { end: sinon.spy() };
-      let next = sinon.spy();
-      await su(req, res, next);
-      assert.equal(next.getCall(0).args.toString(),'Error: Invalid extension')
+
+
+    it('should throw a 401 error when no user is on req obj and requests a signedurl', async function(){
+
+      const client = new MClient({
+        client: { async presignedPutObject(){ return  'http://fakeurl/photo' } }
+      });
+
+      const router = Routes({ client })
+
+      const app = exprezz();
+
+      app.use(router);
+
+      const res = await request(app)
+        .post('/uploads')
+        .send({ name: 'filename.jpg' })
+        .expect(401)
+
+    })
+
+
+    it.skip('should next(ERR) on bad mime type', async function(){
 
     })
 

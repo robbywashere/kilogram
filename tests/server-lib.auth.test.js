@@ -9,7 +9,7 @@ const { appLogger } = require('./helpers');
 const DBSync = require('../db/sync');
 
 
-describe.only('server-lib/auth', function(){
+describe('server-lib/auth', function(){
 
   beforeEach(()=>DBSync(true))
 

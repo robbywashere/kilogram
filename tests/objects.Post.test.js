@@ -35,9 +35,6 @@ describe('objects/Post', function(){
       include: [ Photo ]
     })
 
-
-
-
   })
 
   it('should create jobs for all outstanding posts with .initJobs', async function(){
@@ -84,6 +81,7 @@ describe('objects/Post', function(){
     await post.initJob();
 
     const pd = await Post.due();
+
     assert(pd);
 
   });

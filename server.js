@@ -20,9 +20,8 @@ const syncDb = require('./db/sync');
 
 const initController = require('./controllers');
 
-//app.use(helmet());
-
-app.use(corsHeaders);
+app.use(helmet());
+//app.use(corsHeaders);
 
 app.use(require('body-parser').json());
 
@@ -38,15 +37,11 @@ initController({
 
 const mc = new MClient();
 
-app.get('/force-logout',(req,res)=>{ req.logout(); res.send('logout'); }) //TODO: this is only for testing purposes
-
 app.use('/minio',Routes({ client: mc }));
 
-app.get('/upload', (req, res) => {
+app.get('/upload-static', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 })
-
-
 
 
 Promise.all([syncDb(false), mc.init() ]).then(function(){

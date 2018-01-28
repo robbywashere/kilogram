@@ -220,7 +220,7 @@ describe('controllers', function(){
 
   });
 
-  it('should do post stuff', async function(){
+  it.skip('should do post stuff', async function(){
     const user = await ezUser();
     const post = await Post.create({ postDate: new Date(), UserId: 1 });
     const app = exprezz(user);
@@ -323,10 +323,10 @@ describe('controllers', function(){
 
   it('should add policy scopes', async function(){
 
-    const user = await ezUser();
+    const user = await ezUser({ email: 'x@x.com' });
     const account = await Account.create();
     const igaccount = await IGAccount.create();
-    const user2 = await ezUser();
+    const user2 = await ezUser({ email: 'y@y.com' });
     const post = await Post.create({ 
 
       AccountId: account.id,

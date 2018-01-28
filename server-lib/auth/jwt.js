@@ -5,6 +5,7 @@ const Router = require('express').Router
 const config = require('config');
 const jwtToken = require('jsonwebtoken');
 const { Account, User } = require('../../objects');
+const handler = require('../../lib/handler');
 const { Unauthorized } = require('http-errors');
 
 const EXPIRE = (minutes = 60) => Math.floor(Date.now() / 1000) + (minutes * 60);
@@ -15,13 +16,11 @@ module.exports = function JWT(app){
 
   app.use(require('body-parser').json());
 
-  router.post('/auth',async function(req, res, next){
+  router.post('/auth',handler(async function(req, res, next){
 
-    try {
       const { username, password } = req.body;
 
       const user = await User.findOne({ where: { email: username }, include: [ Account ] })
-
 
       if (!user || (user && !user.verifyPassword(password))) {
         throw new Unauthorized();
@@ -41,12 +40,8 @@ module.exports = function JWT(app){
 
       res.send({ token })
 
-    } catch(e) {
 
-      next(e);
-    }
-
-  });
+  }));
 
 
   router.use(jwt({ secret: config.APP_SECRET }))
@@ -64,6 +59,7 @@ module.exports = function JWT(app){
       next(e);
     }
   })*/
+
   // Profile path
   router.get('/auth', async function(req, res){
     const { id, email, Accounts } = req.user;

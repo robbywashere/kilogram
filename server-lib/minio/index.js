@@ -1,7 +1,7 @@
 const Minio = require('minio');
 const path = require('path');
 const s2p = require('stream-to-promise');
-const uuidv4 = require('uuid/v4');
+const Uuid = require('uuid');
 const { logger } = require('../../lib/logger');
 const config = require('config');
 const { Router } = require('express');
@@ -12,6 +12,10 @@ const { Photo } = require('../../objects');
 const { chunk } = require('lodash');
 const minioObj = require('./minioObject');
 const demand = require('../../lib/demand');
+
+const { removeObject,
+  listObjects,
+  signedURL } = require('./middlewares');
 
 
 const ClientConfig =  {
@@ -113,9 +117,10 @@ class MClient {
   }
 
   async newPhoto({ bucket = this.bucket, userId }={}){
-    const uuid = uuidv4();
+    const uuid = Uuid.v4();
     const name = minioObj.create('v4',{ uuid, userId })
-    return this.getSignedPutObject({ name });
+    const url = await this.getSignedPutObject({ name }); //TODO: 
+    return { url, uuid };
   }
 
   init(){
@@ -135,7 +140,7 @@ class MClient {
         }
       } 
     }
-    logger.debug(`Bucket ${bucket} exists ... Skipping`)
+    logger.debug(`Bucket ${bucket} exists ... skipping`)
   }
 
   static PhotoEvents(){
@@ -226,44 +231,6 @@ async function retryConnRefused(fn, retryCount = 1) {
 }
 
 
-function removeObject({ client, bucket, param = 'name' }={}){
-  const mc = (client) ? client: new MClient({ bucket });
-  return async (req, res, next) => { 
-    try {
-      res.send(await mc.removeObject({ bucket, name: req.query[param] }));
-    } catch(e) {
-      next(e);
-    }
-  }
-
-}
-
-function listObjects({ client, bucket }={}){
-  const mc = (client) ? client: new MClient({ bucket });
-  return async (req, res, next) => { 
-    try {
-      res.send(await mc.listObjectsWithSURLs());
-    } catch(e) {
-      next(e);
-    }
-  }
-}
-
-
-function signedURL({ client, bucket } = {}){
-  const mc = (client) ? client: new MClient({ bucket });
-  return async (req, res, next) => {
-    try { 
-      const userId = (typeof get(req,'user.id') !== "undefined") ? req.user.id : null;
-      let url = await mc.newPhoto({ bucket, userId });
-      res.end(url);
-    } catch(e) {
-      logger.error(e);
-      next(e);
-    }
-  }
-}
-
 
 
 
@@ -271,7 +238,7 @@ function Routes({ client }) {
   const router = new Router();
   router.get('/objects', listObjects({ client }))
   router.delete('/objects', removeObject({ client, param: 'name' }));
-  router.get('/uploads', signedURL({ client, param: 'name' }))
+  router.post('/uploads', signedURL({ client, param: 'name' }))
   return router;
 }
 

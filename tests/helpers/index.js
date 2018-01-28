@@ -28,11 +28,6 @@ function exprezz(user = {}){
     req.user = user;
     next();
   })
-  app.use(function(err, req, res, next) {
-    logger.error(err);
-    res.status(err.statusCode || 500)
-      .send(err.msg || err.toString());
-  });
   return app;
 }
 

@@ -5,24 +5,29 @@ const { logger } = require('../lib/logger');
 const runner = require('../python/runner');
 const Promise = require('bluebird');
 
-const syncDevices = async () => {
+
+async function syncDevices() {
   const devs = await cmds.adbDevices();
   await Device.freeDanglingByIds(devs); //TODO:???
   const resultOfSync = await Device.syncAll(devs);
-  logger.debug(resultOfSync);
+  if (Object.entries(resultOfSync).map(([k,v])=>v).some(v=>v&&v.length)) {
+    logger.status('DELTA ▲ - ',resultOfSync); 
+  }
 };
 
 
-const run = function({ fn, milliseconds }){
-  return setInterval(()=>fn().catch(e=>logger.critical(`Unhandled exception in function: ${fn.name}`,e)), milliseconds)
+const run = function(fn, milliseconds){
+  return setInterval(function(){
+    fn().catch(e=>logger.critical(`Unhandled exception in function: ${fn.name}`,e))
+  }, milliseconds);
 }
 
 //TODO: assure jobs are ran in priority order, by ids???? vs DATE???
-const runJobs = async () => {
+ async function runJobs() {
   //TODO: try catch block
   const outstanding = await Job.outstanding();
   const freeDevices = await Device.free();
-  logger.debug({ freeDevices: freeDevices.length, outstandingJobs: outstanding.length })
+  logger.status({ freeDevices: freeDevices.length, outstandingJobs: outstanding.length })
   if (outstanding.length > 0 && freeDevices.length > 0) {
     const device = await Device.popDevice();
 
@@ -32,7 +37,7 @@ const runJobs = async () => {
         await job.reloadWithAll();
         const deviceId = device.get('adbId');
         const agent = new runner.Agent({ deviceId });
-        logger.debug(`Running Job: ${job.id}, Post: ${job.Post.id} IGAccount: ${job.IGAccount.id}, Device: ${deviceId}:${device.id}`);
+        logger.status(`Running Job: ${job.id}, Post: ${job.Post.id} IGAccount: ${job.IGAccount.id}, Device: ${deviceId}:${device.id}`);
         await runner.JobRun({ post: job.Post, agent, job: job, igAccount: job.IGAccount, photo: job.Post.Photo })
       }
       await device.setFree();
@@ -40,10 +45,10 @@ const runJobs = async () => {
   }
 }
 
-const main = ()=>{
+const main = function (){
   return [
     run(syncDevices,2000),
-    run(Job.initJobs,5000),
+    run(Job.initJobs.bind(Job),2000),
     run(runJobs, 5000)
   ];
 }
