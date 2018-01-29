@@ -1,16 +1,19 @@
 require('../objects');
 const config = require('config');
-module.exports = (force = (config.NODE_ENV !== "production")) => {
+const { logger } = require('../lib/logger');
+const Promise = require('bluebird');
+const db = require('./');
+module.exports = async function syncDb(force = (config.NODE_ENV !== "production")) {
   try {
-    return require('./index').sync({ force });
+    await db.sync({ force });
   } catch(e) {
     if (e.name === 'SequelizeConnectionRefusedError') {
-      console.error(`\n\n---- Error: Unable to connect to DB ----
-       * Check configuration
-       * Assure DB is online
-      `);
+      logger.error('Could not connect to DB, retrying ...')
+      await Promise.delay(5000)
+      return syncDb({ force });
     } else {
       throw e;
     }
   }
 };
+

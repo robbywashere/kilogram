@@ -183,11 +183,23 @@ class MClient {
   }
 }
 
+async function retryConnRefused4({ fn,  retryDelayFn = ()=>3000, debug = '' }) {
+  try {
+    await fn();
+  } catch(err) {
+    if (err.code === 'ECONNREFUSED') {
+      logger.debug(`Error: Connection refused, retrying ...  - ${debug}`)
+      await Promise.delay(retryDelayFn());
+      return await retryConnRefused4({ fn, retryDelayFn, debug });
+    }
+    throw err;
+  }
+}
+
 async function retryConnRefused3({ fn, retryCount = 1, retryDelayFn = (retries)=>retries*3000, max = 5, debug = '' }) {
   try {
     await fn();
   } catch(err) {
-
     if (err.code === 'ECONNREFUSED' && retryCount <= max) {
       logger.debug(`Error: Connection refused, retrying ${retryCount}/${max} - ${debug}`)
       await Promise.delay(retryDelayFn(retryCount));
