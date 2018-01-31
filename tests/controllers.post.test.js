@@ -16,7 +16,7 @@ const { User, Photo, IGAccount, Account, Post } = require('../objects');
 
 const minioObj = require('../server-lib/minio/minioObject');
 
-describe('Post Controller', function(){
+describe.only('Post Controller', function(){
   beforeEach(()=>dbSync(true))
 
   it('Should not only allow post creation for users not memeber of Account and IGAccount',async function(){
@@ -52,16 +52,16 @@ describe('Post Controller', function(){
       .post('/posts')
       .send({ AccountId, postDate, text, IGAccountId, UserId, objectName })
       .expect(403)
-    
+
 
   })
 
   it('Should only allow post creation for users not memeber of Account and IGAccount',async function(){
-    
+
 
     const user = await User.create({ superAdmin: false, password: 'x', email: 'x@x.com', Accounts: { } }, { include: [ Account ] })
 
-    const objectName = minioObj.create('v4',{ uuid: 'UUID', accountId: user.Accounts[0].id });
+    const objectName = minioObj.create('v4',{ uuid: 'UUID', accountId: 1 });
 
     const photo = await Photo.create({ objectName, bucket: 'uploads' });
 
@@ -87,5 +87,8 @@ describe('Post Controller', function(){
       .post('/posts')
       .send({ AccountId, postDate, text, IGAccountId, UserId, objectName })
       .expect(201)
+
+    const post = await Post.findById(1,{ include: [ Photo ] })
+    console.log(post.Photo.get('meta'));
   })
 })

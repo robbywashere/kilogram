@@ -4,6 +4,7 @@ const { get } = require('lodash');
 const { STRING, VIRTUAL, TEXT, DATE, Op } = sequelize;
 const minioObj = require('../server-lib/minio/minioObject');
 const { isLoggedIn, isSuperAdmin } = require('./_helpers');
+const { ForbiddenError, BadRequestError, NotFoundError, FinaleError } = require('finale-rest').Errors;
 
 
 
@@ -66,10 +67,12 @@ module.exports = {
       const { PhotoId, objectName } = instance;
       if (!PhotoId) {
         const { accountId } = minioObj.parse(objectName);
-        if (instance.AccountId !== accountId) throw new Error('AccountId mismatch for Post and Photo')
+        if (instance.AccountId !== accountId) throw new BadRequestError(`AccountId mismatch for Post and Photo: ${instance.AccountId}, ${accountId}`)
         const photo = await Photo.findOne({ where: { objectName }});
         if (photo){
           instance.dataValues.PhotoId = photo.id;
+        } else {
+          throw new NotFoundError(`Photo with objectName ${objectName} not found`)
         }
       }
     }

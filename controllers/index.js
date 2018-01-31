@@ -150,7 +150,6 @@ function AddErrorHandler(resource) {
 
     resource.controllers[action].error = function(req, res, error) {
 
-
       if (!(error instanceof FinaleError)) {
         logger.critical(error);
       }  else if (config.get('NODE_ENV') === 'development') { 
@@ -161,7 +160,7 @@ function AddErrorHandler(resource) {
       }
 
       res.status(error.status);
-      res.json({
+      res.send({
         message: error.message,
         errors: error.errors
       });
