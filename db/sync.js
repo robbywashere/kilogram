@@ -3,7 +3,7 @@ const config = require('config');
 const { logger } = require('../lib/logger');
 const Promise = require('bluebird');
 const db = require('./');
-module.exports = async function syncDb(force = (config.NODE_ENV !== "production")) {
+module.exports = async function syncDb(force = (config.get('NODE_ENV') !== "production")) {
   try {
     await db.sync({ force });
   } catch(e) {

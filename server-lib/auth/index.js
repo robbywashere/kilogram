@@ -30,21 +30,20 @@ module.exports = function Auth(app) {
 
 
 
-
     app.use(session({
       store: new pgSession({
         //pool: DB.connectionManager.pool
-        conObject: require('../../db/config')[config.NODE_ENV]
+        conObject: require('../../db/config')[config.get('NODE_ENV')]
         //pgPromise: DB.connectionManager.pool._Promise
       }),
-      secret: config.APP_SECRET, 
+      secret: config.get('APP_SECRET'), 
       resave: false,
       cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
       saveUninitialized:true,
       //cookie: {},
     }));
 
-  if (config.NODE_ENV === 'production') {
+  if (config.get('NODE_ENV') === 'production') {
     app.set('trust proxy', 1) // trust first proxy
     sess.cookie.secure = true // serve secure cookies
   }

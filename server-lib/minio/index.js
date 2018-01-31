@@ -4,8 +4,6 @@ const s2p = require('stream-to-promise');
 const Uuid = require('uuid');
 const { logger } = require('../../lib/logger');
 const config = require('config');
-const { Router } = require('express');
-const router = Router();
 const get = require('lodash/get');
 const Promise = require('bluebird');
 const { Photo } = require('../../objects');
@@ -19,13 +17,13 @@ const { removeObject,
 
 
 const ClientConfig =  {
-  endPoint: config.MINIO_ENDPOINT,
-  bucket: config.MINIO_BUCKET,
-  port: parseInt(config.MINIO_PORT),
-  secure: (config.MINIO_SECURE !== "true") ? false : true,
-  accessKey: config.S3_ACCESS_KEY,
-  secretKey: config.S3_SECRET_KEY,
-  tmpDir: config.MINIO_TMP_DIR
+  endPoint: config.get('MINIO_ENDPOINT'),
+  bucket: config.get('MINIO_BUCKET'),
+  port: parseInt(config.get('MINIO_PORT')),
+  secure: (config.get('MINIO_SECURE') !== "true") ? false : true,
+  accessKey: config.get('S3_ACCESS_KEY'),
+  secretKey: config.get('S3_SECRET_KEY'),
+  tmpDir: config.get('MINIO_TMP_DIR'),
 }
 
 
@@ -46,10 +44,10 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
   removeObject
   removeIncompleteUpload
   presignedGetObject
-  presignedPutObject
   presignedPostPolicy
   getBucketNotification
   setBucketNotification
+  presignedPutObject
   removeAllBucketNotification
   getBucketPolicy
   setBucketPolicy`.split("\n").map(x=>x.trim());
@@ -64,7 +62,8 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
 
 }
 
-//WrapMinioClient(Minio.Client.prototype)
+//TODO: return this to above list 
+//
 
 class MClient {
   constructor({ bucket = ClientConfig.bucket, region='us-east-1', config = ClientConfig, client }={}){
@@ -116,11 +115,11 @@ class MClient {
     return objects;
   }
 
-  async newPhoto({ bucket = this.bucket, userId }={}){
+  async newPhoto({ bucket = this.bucket, accountId = demand('accountId') }){
     const uuid = Uuid.v4();
-    const name = minioObj.create('v4',{ uuid, userId })
+    const name = minioObj.create('v4',{ uuid, accountId })
     const url = await this.getSignedPutObject({ name }); //TODO: 
-    return { url, uuid };
+    return { url, uuid, objectName: name };
   }
 
   init(){
@@ -185,7 +184,7 @@ class MClient {
 
 async function retryConnRefused4({ fn,  retryDelayFn = ()=>3000, debug = '' }) {
   try {
-    await fn();
+    return await fn();
   } catch(err) {
     if (err.code === 'ECONNREFUSED') {
       logger.debug(`Error: Connection refused, retrying ...  - ${debug}`)
@@ -198,7 +197,7 @@ async function retryConnRefused4({ fn,  retryDelayFn = ()=>3000, debug = '' }) {
 
 async function retryConnRefused3({ fn, retryCount = 1, retryDelayFn = (retries)=>retries*3000, max = 5, debug = '' }) {
   try {
-    await fn();
+    return await fn();
   } catch(err) {
     if (err.code === 'ECONNREFUSED' && retryCount <= max) {
       logger.debug(`Error: Connection refused, retrying ${retryCount}/${max} - ${debug}`)
@@ -211,7 +210,7 @@ async function retryConnRefused3({ fn, retryCount = 1, retryDelayFn = (retries)=
 
 async function retryConnRefused2({ fn, retryCount = 1, max = 5, ms = 3000 }) {
   try {
-    await fn();
+    return await fn();
   } catch(err) {
     if (err.code === 'ECONNREFUSED' && retryCount <= max) {
       await Promise.delay(retryCount*ms);
@@ -223,7 +222,7 @@ async function retryConnRefused2({ fn, retryCount = 1, max = 5, ms = 3000 }) {
 
 async function retryConnRefused(fn, retryCount = 1) {
   try {
-    await fn();
+    return await fn();
   } catch(err) {
     if (err.code === 'ECONNREFUSED') {
       if (retryCount <= 5) {
@@ -244,18 +243,7 @@ async function retryConnRefused(fn, retryCount = 1) {
 
 
 
-
-
-function Routes({ client }) {
-  const router = new Router();
-  router.get('/objects', listObjects({ client }))
-  router.delete('/objects', removeObject({ client, param: 'name' }));
-  router.post('/uploads', signedURL({ client, param: 'name' }))
-  return router;
-}
-
-
-module.exports = { Routes, WrapMinioClient, signedURL, removeObject, retryConnRefused, MClient, ClientConfig, listObjects };
+module.exports = { WrapMinioClient, signedURL, removeObject, retryConnRefused, MClient, ClientConfig, listObjects };
 
 /*
 { Error: connect ECONNREFUSED 127.0.0.1:9000

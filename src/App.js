@@ -10,12 +10,12 @@ import { AccountList } from './accounts';
 import { UserList } from './users';
 import { PhotoList } from './photos';
 import { BucketEventList } from './bucketevents';
-import authClient from './authClient';
+import { sessionClient } from './authClient';
 
 const http = (u, o = {}) => fetchJson(u, { ...o, credentials: 'include' });
 
 const App = () => (
-  <Admin restClient={epilogueClient(window.location.origin, http )} authClient={authClient} >
+  <Admin restClient={epilogueClient(window.location.origin, http )} authClient={sessionClient} >
         <Resource name="devices" list={DeviceList} />
         <Resource name="jobs" list={JobList} />
         <Resource name="accounts"  list={AccountList} />

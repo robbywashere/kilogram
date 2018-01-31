@@ -1,7 +1,10 @@
 
 const initController = require('../controllers');
+const { MClient } = require('../server-lib/minio');
 const { loadObjectControllers }  = require('../controllers');
 const { loadObject, initObjects, newRegistry } = require('../server-lib/objectLoader');
+
+const hashify = require('../server-lib/auth/hashify');
 const request = require('supertest');
 const sync = require('../db/sync');
 const express = require('express');
@@ -13,6 +16,7 @@ const assert = require('assert');
 const { logger } = require('../lib/logger');
 const DB = require('../db');
 const { get } = require('lodash');
+const Promise = require('bluebird');
 
 describe('controllers',function(){
 
@@ -38,7 +42,8 @@ describe('controllers',function(){
         all: true,
       },
       Authorize: {
-        all: function(user){
+        all: async function(user){
+          await Promise.resolve(true);
           return get(user,'superAdmin',false); 
         },
       },
@@ -169,7 +174,8 @@ describe('controllers', function(){
       next();
     })
 
-    initController({ app, sequelize: DB });
+    const client = new MClient();
+    initController({ app, sequelize: DB, client });
 
 
     try {
@@ -195,7 +201,8 @@ describe('controllers', function(){
       AccountId: account.id });
     await user.reloadWithAccounts();
     const app = exprezz(user);
-    initController({ app, sequelize: DB });
+    const client = new MClient();
+    initController({ app, sequelize: DB, client });
 
     const res1 = await request(app)
       .get('/posts')
@@ -224,7 +231,8 @@ describe('controllers', function(){
     const user = await ezUser();
     const post = await Post.create({ postDate: new Date(), UserId: 1 });
     const app = exprezz(user);
-    initController({ app, sequelize: DB });
+    const client = new MClient();
+    initController({ app, sequelize: DB, client });
     try {
       const res = await request(app)
         .get('/posts')
@@ -237,26 +245,30 @@ describe('controllers', function(){
 
     const email = 'example@example.com';
 
-    const user = await ezUser({ email });
+    const user = await ezUser({ email, password: 'blah' });
 
     const app = exprezz(user);
 
-    initController({ app, sequelize: DB});
+    const client = new MClient();
+    initController({ app, sequelize: DB, client });
 
     const res1 = await request(app)
       .post(`/user_recovery/${email}`)
       .expect(200);
 
+
     await user.reload();
 
+    const newPass = 'blah2';
 
     const res2 = await request(app)
       .put('/user_recovery')
-      .send({ password: 'blah', email, passwordKey: user.passwordKey })
+      .send({ password: newPass, email, passwordKey: user.passwordKey })
       .expect(200);
+
     await user.reload();
 
-    assert(user.verifyPassword('blah'))
+    assert(user.verifyPassword(newPass))
 
   })
 
@@ -295,7 +307,8 @@ describe('controllers', function(){
 
 
     const app = exprezz(user);
-    initController({ app, sequelize: DB });
+    const client = new MClient();
+    initController({ app, sequelize: DB, client });
 
     try {
       const res = await request(app)
@@ -345,7 +358,8 @@ describe('controllers', function(){
       req.user = user;
       next();
     })
-    initController({ app, sequelize: DB });
+    const client = new MClient();
+    initController({ app, sequelize: DB, client });
     try {
       const res = await request(app)
         .get('/posts')

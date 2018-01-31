@@ -6,7 +6,7 @@ const { STRING, JSON, DATE, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get, isArray } = require('lodash');
 const Promise = require('bluebird');
 const cryptoRandomString = require('crypto-random-string');
-const { isLoggedIn, genPasswordKey, within24hrs } = require('./_helpers');
+const { isLoggedIn, genPasswordKey, randomKey, within24hrs } = require('./_helpers');
 
 module.exports = {
   Name: 'User',
@@ -19,12 +19,16 @@ module.exports = {
         isEmail: true
       }
     },
+    verifyKey: {
+      type: STRING,
+      defaultValue: randomKey
+    },
     passwordKey: {
       type: STRING,
       defaultValue: genPasswordKey 
     },
     refreshToken: {
-      defaultValue: ()=> cryptoRandomString(32),
+      defaultValue: randomKey,
       type: STRING,
     },
     verified:{
@@ -32,16 +36,19 @@ module.exports = {
       defaultValue: true,
     },
     password: {
-      defaultValue: ()=> cryptoRandomString(32),
+      defaultValue: randomKey,
       type: VIRTUAL,
-      set: function(val){ this.setDataValue('passwordHash', hashify(this.passwordSalt, val.toString())) }
+      set: function(password){ 
+        const salt = randomKey();
+        this.setDataValue('passwordSalt', salt);
+        this.setDataValue('passwordHash',hashify({ salt , password }));
+      }
     },
     passwordHash: {
       type: STRING,
     },
     passwordSalt: {
       type: STRING,
-      defaultValue: cryptoRandomString(32) 
     },
     superAdmin: {
       type: BOOLEAN,
@@ -50,6 +57,7 @@ module.exports = {
 
   },
   Hooks: {
+    //beforeCreate: function(){}
     afterCreate: async function(user, options){
       const { Account } = this.sequelize.models;
       if (!isArray(user.Accounts)) {
@@ -105,7 +113,22 @@ module.exports = {
     } 
   },
   Methods:{
-    verifyPassword: function (password) { return (this.passwordHash === hashify(this.passwordSalt, password.toString())) },
+    igAccountIds: function(){
+      try {
+        const [ igAccountIds ] = this.Accounts.map(a=>a.IGAccounts.map(iga=>iga.id));
+        return igAccountIds;
+      } catch(e) {
+        return [];
+      }
+    },
+    accountIds: function(){
+      try {
+        return this.Accounts.map(A=>A.id);
+      } catch(e) {
+        return []
+      }
+    },
+    verifyPassword: function (password) { return (this.passwordHash === hashify({ salt: this.passwordSalt, password })) },
     isAccountRole: function(accountId, role){
       if (typeof this.Accounts === "undefined") {
         throw new Error('User record must include Account');
@@ -116,7 +139,7 @@ module.exports = {
   },
   StaticMethods: {
     recover: function({ email, password, passwordKey }) {
-      return this.update({ passwordKey: genPasswordKey(), password: password.toString() },{ where: { passwordKey, email }, returning: true })
+      return this.update({ passwordKey: genPasswordKey(), password },{ where: { passwordKey, email }, returning: true })
         .then(([_,u])=>u[0])
     },
     newRecovery: function(email) {
@@ -127,7 +150,7 @@ module.exports = {
   Init({ Post, IGAccount, UserAccount, Account }){
     this.hasMany(Post);
     this.belongsToMany(Account, { through: 'UserAccount' });
-    this.addScope('withAccounts', { include: [ { model: Account, include: [ { model: IGAccount } ] } ] });
+    this.addScope('withAccounts', { include: [ { model: Account, include: [ IGAccount ] } ] });
     this.addScope('withAdminAccounts', { include: [ { model: Account, where: { '$Accounts.UserAccount.role$': 'admin'  }  } ] });
   },
 }

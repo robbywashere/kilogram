@@ -29,23 +29,23 @@ app.use(Auth(app));
 
 app.use(require('serve-static')(__dirname + '/public'));
 
+const client = new MClient();
+
 initController({
   app,
+  client,
   sequelize: DB
 })
 
 
-const mc = new MClient();
-
-app.use('/minio',Routes({ client: mc }));
 
 app.get('/upload-static', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 })
 
 
-Promise.all([syncDb(false), mc.init() ]).then(function(){
-  const port = config.PORT;
+Promise.all([syncDb(false), client.init() ]).then(function(){
+  const port = config.get('PORT');
   app.listen(port, () => {
     logger(`Listening on ${port}\nhttp://127.0.0.1:${port}`)
   });

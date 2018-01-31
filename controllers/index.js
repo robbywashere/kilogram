@@ -11,14 +11,28 @@ const { logger } = require('../lib/logger');
 
 const { slurpDir2, excludeIndex } = require('../lib/slurpDir2');
 
+const demand = require('../lib/demand');
+
 const { pick, get } = require('lodash');
 
 const config = require('config');
 
 const { ForbiddenError, FinaleError } = require('finale-rest').Errors;
 
+const Promise = require('bluebird');
+
 const DB = require('../db');
 
+/*async function h(fn){
+  return function (req, res, context) {
+    try {
+      return await fn(req, res, context);
+    } catch(e) {
+      logger.error(e);
+      context.error(e);
+    }
+  }
+}*/
 
 function AddRequireUser(resource) {
   ['list','read','delete','update','create'].forEach(action => {
@@ -33,7 +47,7 @@ function AddRequireUser(resource) {
 }
 function AddSetPolicy(resource) {
   ['list','read','delete','update','create'].forEach(action => {
-    resource[action].send.before(function(req, res, context){
+    resource[action].send.before(async function(req, res, context){
       if (isArray(context.instance)) {
         context.instance.map(i=>i.setPolicy(action, req.user))
       }
@@ -48,9 +62,9 @@ function AddSetPolicy(resource) {
 
 function AddAuth(resource){
   ['list','read','delete','update','create'].forEach(action => {
-    resource[action].start(function(req,res, context){
-      if (!context.model.authorize(action, req.user)) {
-        throw new ForbiddenError(); 
+    resource[action].start(async function(req,res, context){
+      if (!await context.model.authorize(action, req.user)) {
+        throw new ForbiddenError(`Access denied to ${context.model.tableName}`); 
       }
       return context.continue;
     }
@@ -60,11 +74,11 @@ function AddAuth(resource){
 
 function AddInstanceAuthorize(resource) {
   ['list','read','delete','update','create'].forEach(action => {
-    resource[action].fetch.after(function(req,res, context){
-      if (isArray(context.instance) && context.instance.some(i=>!i.authorize(action, req.user))) { //TODO: promise support
+    resource[action].write(async function(req,res, context){
+      if (isArray(context.instance) && await Promise.map(context.instance,i=>i.authorize(action, req.user)).some(result=>!result)) { 
         throw new ForbiddenError(); 
       }
-      else if (!isArray(context.instance) && !context.instance.authorize(action, req.user)) { //TODO: promise support
+      else if (!isArray(context.instance) && (!await context.instance.authorize(action, req.user))) { 
         throw new ForbiddenError(); 
       }
       return context.continue
@@ -75,8 +89,8 @@ function AddInstanceAuthorize(resource) {
 function AddPolicyAttributes2(resource) { //this relies on the setPolicy and toJSON
 
   ['delete','update','create'].forEach(action => {
-    resource[action].start(function(req,res, context){
-      const attrs = context.model.getPolicyAttrs(action, req.user);
+    resource[action].start(async function(req,res, context){
+      const attrs = await context.model.getPolicyAttrs(action, req.user);
       if (attrs) {
         context.options.attributes = attrs; 
         req.body = pick(req.body,attrs) //TODO consider the security implications of this
@@ -92,8 +106,8 @@ function AddPolicyAttributes2(resource) { //this relies on the setPolicy and toJ
 function AddPolicyAttributes(resource) {
 
   ['delete','update','create'].forEach(action => {
-    resource[action].start(function(req,res, context){
-      const attrs = context.model.getPolicyAttrs(action, req.user);
+    resource[action].start(async function(req,res, context){
+      const attrs = await context.model.getPolicyAttrs(action, req.user);
       if (attrs) {
 
         context.options.attributes = attrs; 
@@ -109,19 +123,23 @@ function AddPolicyAttributes(resource) {
 
 function AddPolicyScope(resource) {
   ['list','read','delete','update','create'].forEach(action => {
-    resource[action].start(function(req,res, context){
-      context.model = context.model.policyScope(action, req.user);
+    resource[action].start(async function(req,res, context){
+      context.model = await context.model.policyScope(action, req.user);
       return context.continue;
     })
   })
 }
 
 
-function loadPath(app) {
+function loadPath({ app, client }) {
   return (path) => {
     const name = get(get(path.split('/').splice(-1), 0).split('.'),0)
-    const controller = require(path);
-    app.use(`/${name}`, controller);
+    const controller = require(path)({ app, client });  
+    if (controller.prototype.constructor.name === 'router') {
+      app.use(`/${name}`, controller);
+    } else {
+      logger.debug(`${path} export not instance of express.Router, skipping ...`);
+    } 
   }
 }
 
@@ -135,7 +153,7 @@ function AddErrorHandler(resource) {
 
       if (!(error instanceof FinaleError)) {
         logger.critical(error);
-      }  else if (config.NODE_ENV === 'development') { 
+      }  else if (config.get('NODE_ENV') === 'development') { 
         console.error(error) 
       } else {
         error.ip = req.ip;
@@ -163,14 +181,14 @@ function AddMiddlewares(resource){
   AddErrorHandler(resource);
 }
 
-function Init({ app, sequelize = DB, objects = Objects }){
+function Init({ app, sequelize = DB, client = demand('client'), objects = Objects }){
   loadObjectControllers({ app, sequelize, objects })
-  loadPathControllers(app);
+  loadPathControllers({ app, client });
   return app;
 }
 Init.loadPathControllers = loadPathControllers;
-function loadPathControllers(app){
-  slurpDir2(__dirname, excludeIndex)(loadPath(app));
+function loadPathControllers({ app, client }){
+  slurpDir2(__dirname, excludeIndex)(loadPath({ app, client }));
 }
 
 Init.loadObjectControllers = loadObjectControllers

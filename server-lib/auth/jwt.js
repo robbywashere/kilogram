@@ -36,7 +36,7 @@ module.exports = function JWT(app){
         superAdmin,
         Accounts,
         exp: EXPIRE()
-      },config.APP_SECRET);
+      },config.get('APP_SECRET'));
 
       res.send({ token })
 
@@ -44,7 +44,7 @@ module.exports = function JWT(app){
   }));
 
 
-  router.use(jwt({ secret: config.APP_SECRET }))
+  router.use(jwt({ secret: config.get('APP_SECRET') }))
 
   //deserialize
     /*router.use(async function(req, res, next){

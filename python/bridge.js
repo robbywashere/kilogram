@@ -11,7 +11,7 @@ class PythonBridge {
     this.logger = log;
 
     this.shell = new PythonShell('coupling.py', {
-      pythonPath: config.PYTHON_PATH,
+      pythonPath: config.get('PYTHON_PATH'),
       scriptPath: __dirname + '/../python',
       mode: 'json',
       parser: (output) => {

@@ -2,9 +2,9 @@ const {
   retryConnRefused, 
   MClient,
   WrapMinioClient,
-  Routes,
 } = require('../server-lib/minio');
 
+const Routes = require('../controllers/minio');
 const { signedURL } = require('../server-lib/minio/middlewares');
 
 const EventEmitter = require('events');

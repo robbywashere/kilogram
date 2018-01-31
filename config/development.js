@@ -12,9 +12,9 @@ try {
 
 module.exports = {
   LOG_LEVEL: 3,
-  S3_ACCESS_KEY: minioConfig.S3_ACCESS_KEY,
-  S3_SECRET_KEY: minioConfig.S3_SECRET_KEY,
-  DB_ENC_KEY: process.env.DB_ENC_KEY,
+  BASE_URL: process.env.BASE_URL || 'http://localhost',
+  S3_ACCESS_KEY: process.env.S3_ACCESS_KEY || minioConfig.S3_ACCESS_KEY,
+  S3_SECRET_KEY: process.env.S3_SECRET_KEY || minioConfig.S3_SECRET_KEY,
   NODE_ENV: process.env.NODE_ENV || 'development',
   PYTHON_PATH: process.env.PYTHON_PATH || '/usr/bin/local/python',
   PORT: process.env.PORT,

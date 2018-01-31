@@ -47,7 +47,7 @@ module.exports = {
   },
   PolicyAttributes:{
     all: function(user){
-      if (!!user.superAdmin) return ['name', 'enabled','id','Users','createdAt','updatedAt']
+      if (!!user.superAdmin) return ['name', 'enabled','id','Users','createdAt','updatedAt','IGAccounts']
       else {
         return []
       }
@@ -75,7 +75,7 @@ module.exports = {
     this.belongsToMany(User,{ through: 'UserAccount' })
     this.hasMany(IGAccount)
     this.hasMany(Account)
-    this.addScope('withIgAccount', { include: [ IGAccount ] })
+    this.addScope('withIgAccounts', { include: [ IGAccount ] })
     this.addScope('withUsers', { include: [ User ] })
   },
 }

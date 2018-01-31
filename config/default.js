@@ -2,6 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const cryptoRandomString = require('crypto-random-string');
 
 
 if (!fs.existsSync(path.join(__dirname,'..','.env')) && process.env.NODE_ENV === 'development') {
@@ -20,5 +21,5 @@ module.exports = {
   MINIO_SECURE: process.env.MINIO_SECURE,
   MINIO_BUCKET: process.env.MINIO_BUCKET || 'uploads',
   MINIO_TMP_DIR: process.env.MINIO_TMP_DIR || '/tmp',
-  APP_SECRET: process.env.APP_SECRET || 'keyboardcat'
+  APP_SECRET: process.env.APP_SECRET || cryptoRandomString(128) 
 };

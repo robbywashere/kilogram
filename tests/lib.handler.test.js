@@ -9,7 +9,7 @@ const request = require('supertest');
 
 describe('lib.handler',function(){
 
-  it.only('should catch error, log them, then call the next function with said error', async function(){
+  it('should catch error, log them, then call the next function with said error', async function(){
 
     const app = express();
 

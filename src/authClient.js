@@ -1,5 +1,5 @@
 // in src/authClient.js
-import { AUTH_LOGIN, AUTH_ERROR, AUTH_LOGOUT } from 'admin-on-rest';
+import { AUTH_CHECK, AUTH_LOGIN, AUTH_ERROR, AUTH_LOGOUT } from 'admin-on-rest';
 import axios from 'axios'; //TODO: NO!
 import { fetchJson } from 'admin-on-rest/lib/util/fetch';
 

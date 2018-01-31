@@ -4,6 +4,7 @@ const { STRING,  TEXT, DATE, INTEGER, VIRTUAL, BOOLEAN, UUIDV4, UUID, Op } = seq
 const { get } = require('lodash');
 const uuidv4 = require('uuid/v4');
 const minioObj = require('../server-lib/minio/minioObject');
+const { superAdmin } = require('./_helpers');
 
 module.exports = {
   Name: 'Photo',
@@ -12,6 +13,9 @@ module.exports = {
     objectName: {
       type: TEXT,
       allowNull: false
+    },
+    uuid: {
+      type: UUID,
     },
     meta: {
       type: VIRTUAL,
@@ -49,8 +53,7 @@ module.exports = {
   Policy: {
     show: {
       attr: function (user, photo)  {
-        if (user && user.isAdmin) return true
-        return ['id','src', 'objectName','bucket'] 
+        return isSuperAdmin(user) || ['id','src', 'objectName','bucket'] 
       }
     }
   },
@@ -58,12 +61,9 @@ module.exports = {
     uploaded: true
   },*/
   Init({ Post }){
-    this.belongsTo(Post);
+    //   this.belongsTo(Post);
   }, 
   StaticMethods: {
-    setUploaded: function({ uuid }) {
-      throw new Error('DEPRECATED after 2cd9c7a5b8f72d76a3615ed56c6b69205f1934a9');
-    },
     setDeleted: function(objectName){
       return this.update({ deleted: true }, { where: { objectName }})
     },

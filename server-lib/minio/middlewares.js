@@ -1,14 +1,17 @@
-const { MClient } = require('./');
 const { logger } = require('../../lib/logger');
+const demand = require('../../lib/demand');
 const { get } = require('lodash');
-const { Unauthorized } = require('http-errors');
+const { BadRequest, Unauthorized } = require('http-errors');
 
 
-function removeObject({ client, bucket, param = 'name' }={}){
-  const mc = (client) ? client: new MClient({ bucket });
+
+//TODO: dont think this is even needed ?
+function removeObject({ client = demand('client') }){
   return async (req, res, next) => { 
     try {
-      res.send(await mc.removeObject({ bucket, name: req.query[param] }));
+      const name = get(req,'query.name');
+      if (!name) throw new BadRequest('object name not specified');
+      res.send(await client.removeObject({ name }));
     } catch(e) {
       next(e);
     }
@@ -16,11 +19,10 @@ function removeObject({ client, bucket, param = 'name' }={}){
 
 }
 
-function listObjects({ client, bucket }={}){
-  const mc = (client) ? client: new MClient({ bucket });
+function listObjects({ client = demand('client') }){
   return async (req, res, next) => { 
     try {
-      res.send(await mc.listObjectsWithSURLs());
+      res.send(await client.listObjectsWithSURLs());
     } catch(e) {
       next(e);
     }
@@ -28,14 +30,13 @@ function listObjects({ client, bucket }={}){
 }
 
 
-function signedURL({ client, bucket } = {}){
-  const mc = (client) ? client: new MClient({ bucket });
+function signedURL({ client = demand('client') }){
   return async (req, res, next) => {
     try { 
-      const userId =get(req,'user.id');
-      if (typeof userId === "undefined") throw new Unauthorized();
-      const { uuid, url } = await mc.newPhoto({ bucket, userId });
-      res.send({ uuid, url });
+      const { AccountId } = req.body;
+      if (typeof req.user === "undefined" || !user.accountIds().includes(AccountId)) throw new Unauthorized();
+      const { uuid, url, objectName } = await client.newPhoto({ accountId });
+      res.send({ uuid, url, objectName });
     } catch(e) {
       next(e);
     }
