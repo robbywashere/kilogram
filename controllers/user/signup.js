@@ -2,21 +2,21 @@ const { Router } = require('express');
 
 const { NotFound, BadRequest } = require('http-errors');
 
-const { User } = require('../objects');
+const { User } = require('../../objects');
 
-const emailer = require('../server-lib/emailer');
+const emailer = require('../../server-lib/emailer');
 
-const { logger } = require('../lib/logger');
+const { logger } = require('../../lib/logger');
 
 const { get } = require('lodash');
 
 const config = require('config');
 
-const { userVerifyEmail } = require('../emails');
+const { userVerifyEmail } = require('../../emails');
 
-const ourUrl = require('../lib/ourUrl');
+const ourUrl = require('../../lib/ourUrl');
 
-const { genPasswordKey } = require('../objects/_helpers');
+const { genPasswordKey } = require('../../objects/_helpers');
 
 const querystring = require('querystring');
 

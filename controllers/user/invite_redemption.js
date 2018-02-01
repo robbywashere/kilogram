@@ -2,13 +2,13 @@ const { Router } = require('express');
 
 const { NotFound, BadRequest } = require('http-errors');
 
-const { UserRecovery, User } = require('../objects');
+const { UserRecovery, User } = require('../../objects');
 
-const emailer = require('../server-lib/emailer');
+const emailer = require('../../server-lib/emailer');
 
-const { logger } = require('../lib/logger');
+const { logger } = require('../../lib/logger');
 
-const handler = require('../lib/handler');
+const handler = require('../../lib/handler');
 
 const { get } = require('lodash');
 

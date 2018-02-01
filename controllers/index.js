@@ -9,9 +9,10 @@ const { isArray, fromPairs } = require('lodash');
 
 const { logger } = require('../lib/logger');
 
-const { slurpDir2, excludeIndex } = require('../lib/slurpDir2');
 
 const demand = require('../lib/demand');
+
+const { load, parsePaths } = require('./load');
 
 const { pick, get } = require('lodash');
 
@@ -23,192 +24,44 @@ const Promise = require('bluebird');
 
 const DB = require('../db');
 
-/*async function h(fn){
-  return function (req, res, context) {
-    try {
-      return await fn(req, res, context);
-    } catch(e) {
-      logger.error(e);
-      context.error(e);
-    }
-  }
-}*/
-
-function AddRequireUser(resource) {
-  ['list','read','delete','update','create'].forEach(action => {
-    resource[action].start(function(req, res, context){
-      if (typeof req.user === "undefined") {
-        throw new ForbiddenError(); 
-      }
-      return context.continue
-    })
-  })
-
-}
-function AddSetPolicy(resource) {
-  ['list','read','delete','update','create'].forEach(action => {
-    resource[action].send.before(async function(req, res, context){
-      if (isArray(context.instance)) {
-        context.instance.map(i=>i.setPolicy(action, req.user))
-      }
-      else {
-        context.instance.setPolicy(action, req.user)
-      }
-      return context.continue;
-    })
-  })
-
-}
-
-function AddAuth(resource){
-  ['list','read','delete','update','create'].forEach(action => {
-    resource[action].start(async function(req,res, context){
-      if (!await context.model.authorize(action, req.user)) {
-        throw new ForbiddenError(`Access denied to ${context.model.tableName}`); 
-      }
-      return context.continue;
-    }
-    )
-  })
-}
-
-function AddInstanceAuthorize(resource) {
-  ['list','read','delete','update','create'].forEach(action => {
-    resource[action].write(async function(req,res, context){
-      if (isArray(context.instance) && await Promise.map(context.instance,i=>i.authorize(action, req.user)).some(result=>!result)) { 
-        // if (action === "create") await Promise.map(context.instance, i=>i.destroy())
-        throw new ForbiddenError(); 
-      }
-      else if (!isArray(context.instance) && (!await context.instance.authorize(action, req.user))) { 
-        //     if (action === "create") await context.instance.destroy();
-        throw new ForbiddenError(); 
-      }
-      return context.continue
-    })
-  })
-
-}
-function AddPolicyAttributes2(resource) { //this relies on the setPolicy and toJSON
-
-  ['delete','update','create'].forEach(action => {
-    resource[action].start(async function(req,res, context){
-      const attrs = await context.model.getPolicyAttrs(action, req.user);
-      if (attrs) {
-        context.options.attributes = attrs; 
-        req.body = pick(req.body,attrs) //TODO consider the security implications of this
-      }
-      return context.continue;
-    })
-  });
-}
+const { isSuperAdmin } = require('../objects/_helpers');
 
 
 
-
-function AddPolicyAttributes(resource) {
-
-  ['delete','update','create'].forEach(action => {
-    resource[action].start(async function(req,res, context){
-      const attrs = await context.model.getPolicyAttrs(action, req.user);
-      if (attrs) {
-
-        context.options.attributes = attrs; 
-        req.body = pick(req.body,attrs) //TODO consider the security implications of this
-
-      }
-      return context.continue;
-    })
-  });
-
-}
-
-
-function AddPolicyScope(resource) {
-  ['list','read','delete','update','create'].forEach(action => {
-    resource[action].start(async function(req,res, context){
-      context.model = await context.model.policyScope(action, req.user);
-      return context.continue;
-    })
-  })
-}
-
-
-function loadPath({ app, client }) {
-  return (path) => {
-    const name = get(get(path.split('/').splice(-1), 0).split('.'),0)
-    const controller = require(path)({ app, client });  
-    if (controller.prototype.constructor.name === 'router') {
-      app.use(`/${name}`, controller);
-    } else {
-      logger.debug(`${path} export not instance of express.Router, skipping ...`);
-    } 
-  }
-}
-
-function AddErrorHandler(resource) {
-
-
-  ['list','read','delete','update','create'].forEach(action => {
-
-    resource.controllers[action].error = function(req, res, error) {
-
-      if (!(error instanceof FinaleError)) {
-        logger.critical(error);
-      }  else if (config.get('NODE_ENV') === 'development') { 
-        console.error(error) 
-      } else {
-        error.ip = req.ip;
-        logger.error(JSON.stringify(error,null,4)) 
-      }
-
-      res.status(error.status);
-      res.send({
-        message: error.message,
-        errors: error.errors
-      });
-    };
-
-  });
-}
-
-
-
-function AddMiddlewares(resource){ 
-  AddAuth(resource)
-  AddSetPolicy(resource);
-  AddPolicyScope(resource);
-  AddPolicyAttributes2(resource);
-  AddInstanceAuthorize(resource);
-  AddErrorHandler(resource);
-}
 
 function Init({ app, sequelize = DB, client = demand('client'), objects = Objects }){
   loadObjectControllers({ app, sequelize, objects })
   loadPathControllers({ app, client });
   return app;
 }
+
 Init.loadPathControllers = loadPathControllers;
 function loadPathControllers({ app, client }){
-  slurpDir2(__dirname, excludeIndex)(loadPath({ app, client }));
+  const paths = parsePaths(__dirname);
+  load({ paths, app, client, prefix: 'api' })
 }
 
 Init.loadObjectControllers = loadObjectControllers
 function loadObjectControllers({app, sequelize = DB, objects = Objects}) {
-
   finale.initialize({
-    //TODO: base: 'api' ???
+    base: 'admin',
     app,
     sequelize
   })
 
   Object.keys(objects).map(k=> {
     const resource = finale.resource({ model: objects[k] });
-    if (objects[k]._policyAssert) {
-      AddMiddlewares(resource);
-    }
+    ['list','read','delete','update','create'].forEach(action => {
+      resource[action].auth(function(req, res, context){
+        if (!isSuperAdmin(req.user)) {
+          throw new ForbiddenError(); 
+        } 
+        else {
+          return context.continue();
+        }
+      })
+    })
   });
-
-
 }
 
 

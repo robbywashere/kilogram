@@ -16,13 +16,13 @@ const http = (u, o = {}) => fetchJson(u, { ...o, credentials: 'include' });
 
 const App = () => (
   <Admin restClient={epilogueClient(window.location.origin, http )} authClient={sessionClient} >
-        <Resource name="devices" list={DeviceList} />
-        <Resource name="jobs" list={JobList} />
-        <Resource name="accounts"  list={AccountList} />
-        <Resource name="users" list={UserList} />
-        <Resource name="photos" list={PhotoList} />
-        <Resource name="bucketevents" list={BucketEventList} />
-    </Admin>
+    <Resource name="admin/devices" name='Devices' list={DeviceList} />
+    <Resource name="admin/jobs" name='Jobs' list={JobList} />
+    <Resource name="admin/accounts"  name='Accounts' list={AccountList} />
+    <Resource name="admin/users" name='Users' list={UserList} />
+    <Resource name="admin/photos" name='Photos' list={PhotoList} />
+    <Resource name="admin/bucketevents" name='Bucket Events' list={BucketEventList} />
+  </Admin>
 );
 
 export default App;

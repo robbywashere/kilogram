@@ -2,17 +2,17 @@ const { Router } = require('express');
 
 const { NotFound, BadRequest } = require('http-errors');
 
-const { UserRecovery, User } = require('../objects');
+const { UserRecovery, User } = require('../../objects');
 
-const emailer = require('../server-lib/emailer');
+const emailer = require('../../server-lib/emailer');
 
-const { logger } = require('../lib/logger');
+const { logger } = require('../../lib/logger');
 
 const { get } = require('lodash');
 
-const { userRecoveryEmail } = require('../emails');
+const { userRecoveryEmail } = require('../../emails');
 
-const { genPasswordKey } = require('../objects/_helpers');
+const { genPasswordKey } = require('../../objects/_helpers');
 
 
 module.exports = function(){

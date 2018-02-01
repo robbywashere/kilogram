@@ -1,9 +1,9 @@
 const { Router } = require('express');
-const demand = require('../lib/demand');
+const demand = require('../../lib/demand');
 
 const { removeObject,
   listObjects,
-  signedURL } = require('../server-lib/minio/middlewares');
+  signedURL } = require('../../server-lib/minio/middlewares');
 
 
 module.exports = function({ client = demand('client') }) {
