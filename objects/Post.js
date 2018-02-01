@@ -1,7 +1,7 @@
 const sequelize = require('sequelize');
 const DB = require('../db');
-const { get } = require('lodash');
-const { STRING, VIRTUAL, TEXT, DATE, Op } = sequelize;
+const { isUndefined, get } = require('lodash');
+const { STRING, UUID, VIRTUAL, TEXT, DATE, Op } = sequelize;
 const minioObj = require('../server-lib/minio/minioObject');
 const { isLoggedIn, isSuperAdmin } = require('./_helpers');
 const { ForbiddenError, BadRequestError, NotFoundError, FinaleError } = require('finale-rest').Errors;
@@ -14,14 +14,13 @@ module.exports = {
     text: {
       type: TEXT
     },
+    photoUUID: {
+      type: UUID
+    },
     postDate: {
       type: DATE,
       allowNull: false
     },
-    objectName: {
-      type: VIRTUAL,
-      allowNull: false
-    }
   },
   AuthorizeInstance:{
     all: isSuperAdmin,
@@ -45,7 +44,7 @@ module.exports = {
   PolicyAttributes: {
     all: function(user){
       if (isSuperAdmin(user)) return true;
-      return ['AccountId', 'IGAccountId', 'text', 'postDate', 'id', 'objectName']
+      return ['AccountId', 'IGAccountId', 'text', 'postDate', 'id', 'photoUUID', 'PhotoId']
     },
   },
   Init({ Job, Photo, Account, IGAccount }){
@@ -62,17 +61,19 @@ module.exports = {
   },
   ScopeFunctions: true,
   Hooks: {
+    //TODO: this can all be done with one raw query and is not needed :(
+    beforeCreate: async function(instance){
+      //console.log(instance.authorize());
+    },
     beforeValidate: async function(instance){
       const { Photo } = this.sequelize.models;
-      const { PhotoId, objectName } = instance;
-      if (!PhotoId) {
-        const { accountId } = minioObj.parse(objectName);
-        if (instance.AccountId !== accountId) throw new BadRequestError(`AccountId mismatch for Post and Photo: ${instance.AccountId}, ${accountId}`)
-        const photo = await Photo.findOne({ where: { objectName }});
+      if (isUndefined(instance.PhotoId)) {
+        const { photoUUID } = instance;
+        const photo = await Photo.findOne({ where: { uuid: photoUUID }});
         if (photo){
           instance.dataValues.PhotoId = photo.id;
         } else {
-          throw new NotFoundError(`Photo with objectName ${objectName} not found`)
+          throw new NotFoundError(`Photo with UUID: ${photoUUID} not found`)
         }
       }
     }
@@ -107,6 +108,13 @@ module.exports = {
     }
   },
   StaticMethods: {
+    createWithPhoto: async function(opts){
+      return this.create({ 
+        ...opts,
+        PhotoId: (await this.$.models.Photo.findOne({ where: { uuid: opts.photoUUID }})).id
+      });
+
+    },
   },
 }
 

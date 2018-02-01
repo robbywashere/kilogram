@@ -150,7 +150,8 @@ class MClient {
   }
 
   static PutPhotoFn({ bucket, key }){
-    return Photo.create({bucket, objectName: key });
+    const { uuid, accountId } = minioObj.parse(key);
+    return Photo.create({bucket, objectName: key, uuid, AccountId });
   }
   static DelPhotoFn({ key }){
     return Photo.setDeleted(key);

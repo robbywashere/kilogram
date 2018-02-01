@@ -76,9 +76,11 @@ function AddInstanceAuthorize(resource) {
   ['list','read','delete','update','create'].forEach(action => {
     resource[action].write(async function(req,res, context){
       if (isArray(context.instance) && await Promise.map(context.instance,i=>i.authorize(action, req.user)).some(result=>!result)) { 
+        // if (action === "create") await Promise.map(context.instance, i=>i.destroy())
         throw new ForbiddenError(); 
       }
       else if (!isArray(context.instance) && (!await context.instance.authorize(action, req.user))) { 
+        //     if (action === "create") await context.instance.destroy();
         throw new ForbiddenError(); 
       }
       return context.continue

@@ -32,6 +32,8 @@ describe.only('Post Controller', function(){
 
     const photo = await Photo.create({ objectName, bucket: 'uploads' });
 
+    const photoUUID = photo.uuid;
+
     //await user.accounts[0].addigaccount(igaccount1);
     // await user.accounts[0].addigaccount(igaccount2);
 
@@ -41,7 +43,7 @@ describe.only('Post Controller', function(){
 
     loadObjectControllers({ app, sequelize: DB, objects: { Post }})
 
-
+    console.log(await Post.findAll().map(p=>p.toJSON()))
 
     const AccountId = user.Accounts[0].id
     const IGAccountId = igAccount1.id;
@@ -50,13 +52,17 @@ describe.only('Post Controller', function(){
     const text = 'blah';
     const res = await request(app)
       .post('/posts')
-      .send({ AccountId, postDate, text, IGAccountId, UserId, objectName })
+      .send({ AccountId, postDate, text, IGAccountId, UserId, objectName, photoUUID })
       .expect(403)
 
 
+    const posts = await Post.findAll();
+
+    assert(!posts.length);
+
   })
 
-  it('Should only allow post creation for users not memeber of Account and IGAccount',async function(){
+  it.only('Should only allow post creation for users not memeber of Account and IGAccount',async function(){
 
 
     const user = await User.create({ superAdmin: false, password: 'x', email: 'x@x.com', Accounts: { } }, { include: [ Account ] })
@@ -85,7 +91,7 @@ describe.only('Post Controller', function(){
     const text = 'blah';
     const res = await request(app)
       .post('/posts')
-      .send({ AccountId, postDate, text, IGAccountId, UserId, objectName })
+      .send({ AccountId, postDate, text, IGAccountId, photoUUID: photo.uuid })
       .expect(201)
 
     const post = await Post.findById(1,{ include: [ Photo ] })

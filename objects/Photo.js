@@ -51,17 +51,9 @@ module.exports = {
   },
   AuthorizeInstance:{},
   Policy: {
-    show: {
-      attr: function (user, photo)  {
-        return isSuperAdmin(user) || ['id','src', 'objectName','bucket'] 
-      }
-    }
   },
-  /* Scopes: {
-    uploaded: true
-  },*/
-  Init({ Post }){
-    //   this.belongsTo(Post);
+  Init({ Account }){
+    this.belongsTo(Account)
   }, 
   StaticMethods: {
     setDeleted: function(objectName){
