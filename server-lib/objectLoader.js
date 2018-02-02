@@ -64,14 +64,17 @@ function initObjects(objectRegistry) {
     if (typeof scopes !== "undefined" && object._scopeFns) {
       Object.keys(scopes).forEach( k=> {
         let fn;
+        let fnById;
         if (typeof scopes[k] === "function") {
           fn = function(arg, opts) { return this.scope({ method: [k, arg ] }).findAll(opts) }
+          fnById = function(arg, id, opts) { return this.scope({ method: [k, arg ] }).findById(id, opts) }
+          object[`${k}Fn`] = function(arg){ return this.scope({ method: [k, arg ] }) }
         }
         else {
           fn = function(opts) { return this.scope(k).findAll(opts) }
+          fnById = function(id, opts) { return this.scope(k).findById(id, opts) }
         }
 
-        const fnById = function(id, opts) { return this.scope(k).findById(id, opts) }
 
         // scopes prefixed with 'with', will be givin a reload<withScope> method
         if (k.substr(0,4) === "with") {

@@ -16,7 +16,7 @@ const { User, Photo, IGAccount, Account, Post } = require('../objects');
 
 const minioObj = require('../server-lib/minio/minioObject');
 
-describe.only('Post Controller', function(){
+describe('Post Controller', function(){
   beforeEach(()=>dbSync(true))
 
   it('Should not only allow post creation for users not memeber of Account and IGAccount',async function(){
@@ -62,7 +62,7 @@ describe.only('Post Controller', function(){
 
   })
 
-  it.only('Should only allow post creation for users not memeber of Account and IGAccount',async function(){
+  it('Should only allow post creation for users not memeber of Account and IGAccount',async function(){
 
 
     const user = await User.create({ superAdmin: false, password: 'x', email: 'x@x.com', Accounts: { } }, { include: [ Account ] })

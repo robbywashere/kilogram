@@ -6,10 +6,10 @@ const urlJoin = require('url-join');
 const { join } = require('path');
 
 
-function isCntrlFile(path) {
-  return (path.substr(0,1) !== '_' &&
-    path.substr(0,1) !== '.' &&
-    path.substr(-3) === ".js")
+function isCntrlFile(filename) {
+  return (filename.substr(0,1) !== '_' &&
+    filename.substr(0,1) !== '.' &&
+    filename.substr(-3) === ".js")
 }
 
 
@@ -21,8 +21,9 @@ function endpoint(root,path) {
 
 function parsePaths(dir) {
   let result = [];
-  const roots = readdirSync(dir)
+  const roots = readdirSync(dir) //get directories
     .filter(f=>lstatSync(join(dir, f)).isDirectory())
+    .filter(f=>f !== "lib") //filter out lib dir
   roots.forEach(root=>{
     const files = readdirSync(join(dir,root))
       .filter(f=>lstatSync(join(dir,root, f)).isFile())

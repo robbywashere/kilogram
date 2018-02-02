@@ -5,6 +5,7 @@ const { STRING, UUID, VIRTUAL, TEXT, DATE, Op } = sequelize;
 const minioObj = require('../server-lib/minio/minioObject');
 const { isLoggedIn, isSuperAdmin } = require('./_helpers');
 const { ForbiddenError, BadRequestError, NotFoundError, FinaleError } = require('finale-rest').Errors;
+const { BadRequest } = require('http-errors');
 
 
 
@@ -73,12 +74,19 @@ module.exports = {
         if (photo){
           instance.dataValues.PhotoId = photo.id;
         } else {
-          throw new NotFoundError(`Photo with UUID: ${photoUUID} not found`)
+          throw new BadRequest(`Photo with UUID: ${photoUUID} not found`)
         }
       }
     }
   },
   Scopes: {
+    userScoped: function(user) {
+      if (!get(user,'Accounts.length')) {
+        throw new Error('Attempt to scope to Account without Account on user object')
+      }
+      const accountIds = user.Accounts.map(a=>a.id);
+      return (isSuperAdmin(user)) ? {} : { where: { AccountId: { [Op.in]: accountIds } } }
+    },
     userAccountScoped: function(user) {
       if (!get(user,'Accounts.length')) {
         throw new Error('Attempt to scope to Account without Account on user object')

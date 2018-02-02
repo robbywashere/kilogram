@@ -102,6 +102,7 @@ module.exports = {
   PolicyAssert: true,
   ScopeFunctions: true, 
   Scopes: {
+    //default: { include: [ this.sequelize.models.Accounts ] }
     superAdmins: { where: { superAdmin: true } },
     accountsScoped: function(user) {     
       const { Account } = this.sequelize.models;

@@ -57,17 +57,23 @@ module.exports = {
   PolicyAssert: true,
   ScopeFunctions: true, 
   Scopes: {
+    // withIGAccounts: { include: [ this.sequelize.models.IGAccount ] },
     userScoped: function(user){
       if (!get(user,'Accounts.length')) {
         throw new Error('User record must include Account');
       }
-      return (user.superAdmin) ? {} : { where: { id: { [Op.in]: user.Accounts.map(a=>a.id) } }}
+      return { where: { id: { [Op.in]: user.Accounts.map(a=>a.id) } }}
     }
   },
   Methods:{
     addUserAs: function(user,role){
       return this.addUser(user,{ through: { role }})
+    },
+    async igAccountIds: function(){
+      if (!this.IGAccounts) { await this.reloadWithIgAccounts() }
+      return this.IGAccounts.map(iga=>iga.id)
     }
+
   },
   StaticMethods: {
   },
