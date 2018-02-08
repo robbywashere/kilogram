@@ -12,7 +12,7 @@ const { logger } = require('../lib/logger');
 
 const demand = require('../lib/demand');
 
-const { load, parsePaths } = require('./load');
+const { load, parsePaths } = require('./_load');
 
 const { pick, get } = require('lodash');
 

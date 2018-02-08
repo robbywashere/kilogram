@@ -12,7 +12,7 @@ module.exports = class BaseResource {
     this.model = model;
     this.scope = scope;
     this.policy = policy;
-    this.sortableColumns =Object.keys(this.model.rawAttributes);
+    this.sortableColumns = Object.keys(this.model.rawAttributes);
   }
 
   static operators(query){
@@ -39,7 +39,7 @@ module.exports = class BaseResource {
     let order = [];
     let sortParams = sortQuery.split(',');
     sortParams.forEach(function(sortParam) {
-      const type =(sortParam.indexOf('-') === 0) ?  'DESC' : 'ASC'; 
+      const type = (sortParam.indexOf('-') === 0) ?  'DESC' : 'ASC'; 
       const name = sortParam.replace(/^-/,'');
       if (!columns.includes(name)) throw new BadRequest(`column '${name}' is not sortable/does not exist`);
       order.push([name, type]);
@@ -89,14 +89,13 @@ module.exports = class BaseResource {
           opts = { ...opts, limit, offset, order }
         }   
 
-        instance = await instanceFn.bind(this)(req,{ opts, req })
+        instance = await instanceFn.bind(this)(req,{ next, opts, req })
         const policy = new this.policy({ instance, user: req.user });
         const policyFn = (policy[name]) ? policy[name].bind(policy) : policy.default;
-        if (await policyFn()) {
-          return await transportFn({ opts, req, res, instance })
-        } else {
-          throw new Forbidden();
-        }
+
+        if (await policyFn())  return await transportFn({ opts, req, res, instance });
+        else throw new Forbidden();
+
       } catch(e) {
         if (e instanceof TypeError || 
           e instanceof ReferenceError ||
@@ -104,7 +103,7 @@ module.exports = class BaseResource {
         ) {
           logger.error(e)
         }
-        if (e.name.substr(0,6) === 'Sequel') {
+        if (e.name.substr(0,9) === 'Sequelize') {
           next(new BadRequest(e.message))
         } else {
           next(e)
@@ -113,23 +112,23 @@ module.exports = class BaseResource {
     }
   }
 
-  _collectionWhere({header, opts }){
-    if (!header) throw new BadRequest(`Missing 'collection' header of comma seperated ids`)
+  _collectionWhere({ header, opts }){
+    if (!header) throw new BadRequest(`No /<id> provided, assuming collection: \n But missing 'collection' header of comma seperated ids`)
     const ids = header.split(',').map(id=>parseInt(id.trim()))
-    const where = { ...opts.where, id: { [Op.in] : ids } };
-    return where;
+    return { ...opts.where, id: { [Op.in] : ids } };
   }
 
 
   resource(){
     const router = new Router();
-    router.post('/',this.action('create'))
-    router.get('/', this.action('index',{ index: true }))
-    router.patch('/:id', this.action('edit'))
-    router.patch('/', this.action('collectionEdit'))
-    router.get('/:id', this.action('show'))
-    router.delete('/:id',this.action('destroy') )
-    router.delete('/',this.action('collectionDestroy') )
+    router.post('/',this.action('collectionCreate'));
+    router.post('/',this.action('create'));
+    router.get('/', this.action('index',{ index: true }));
+    router.patch('/:id', this.action('edit'));
+    router.patch('/', this.action('collectionEdit'));
+    router.get('/:id', this.action('show'));
+    router.delete('/:id',this.action('destroy'));
+    router.delete('/',this.action('collectionDestroy'));
     return router;
   }
 
@@ -155,30 +154,42 @@ module.exports = class BaseResource {
     return this.model.build(body, opts)
   }
 
-  async collectionDestroy({ headers, body, user}, { opts }) {
-    const where = this._collectionWhere({ header: headers.collection, opts })
+  async collectionCreate({ headers, body }, { next }) {
+    if (!Array.isArray(body)) return next();
+    const sanitizedBody = body.map(o=>this.model.sanitizeParams(o));
     let result;
-    return {
-      save: async ()=> result = await this.scope(user).destroy({ where }),
-      serialize: ()=> ([ result ]) 
-    }
+    sanitizedBody.save = async () => result = await this.model.bulkCreate(sanitizedBody, { returning: true });
+    sanitizedBody.serialize = ()=> (get(result,1)) ?  result[1].map(i=>i.serialize()) : [];
+    return sanitizedBody;
   }
 
-  async collectionEdit({ headers, body, user}, { opts }) {
+  
+  async collectionDestroy({ headers, body, user }, { opts }) {
     const where = this._collectionWhere({ header: headers.collection, opts })
-    let save = ()=> this.scope(user).update(this.model.sanitizeParams(body), { where });
+    const instances = await this.scope(user).findAll(where);
+    const whereIds = { where: { id: { [Op.in]: instances.map(i=>i.id) } } };
     let result;
-    return {
-      save: async ()=> { result = await save(); },
-      serialize: ()=> result 
-    }
+    instances.save = async ()=> await result = this.model.destroy({ ...whereIds, returning: true })
+    instances.serialize = ()=> (get(result,1)) ?  result[1].map(i=>i.serialize()) : [];
+    return instances;
+  }
 
+  async collectionEdit({ headers, body, user }, { opts }) {
+    const where = this._collectionWhere({ header: headers.collection, opts })
+    const instances = await this.scope(user).findAll(where);
+    const whereIds = { where: { id: { [Op.in]: instances.map(i=>i.id) } } };
+    const sanitizedBody = this.model.sanitizeParams(obj);
+    let result;
+    instances.save = async ()=> await result = this.model.update(sanitizedBody, { ...whereIds, returning: true });
+    instances.serialize = ()=> (get(result,1)) ?  result[1].map(i=>i.serialize()) : [];
+    return instances;
   }
 
   async destroy({ user, params }, { opts }){
     const resource = await this.scope(user).findById(params.id, opts);
     if (!resource) throw new NotFound();
-    return { save: resource.destroy }
+    resource.save = resource.destroy;
+    return resource;
   }
 
 }

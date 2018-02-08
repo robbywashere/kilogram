@@ -6,10 +6,6 @@ module.exports = class BasePolicy {
     this.user = user;
   }
 
-  static scope({ user, model }){
-    return model
-  }
-
   show(){
     return true;
   }
@@ -30,8 +26,20 @@ module.exports = class BasePolicy {
     return true;
   }
 
-  default(){
+  collectionCreate(){
     return true;
+  }
+
+  collectionDestroy(){
+    return true;
+  }
+
+  collectionEdit(){
+    return true;
+  }
+
+  default(){
+    return false;
   }
 }
 

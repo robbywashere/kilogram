@@ -3,7 +3,7 @@ const cleanObj = require('../lib/cleanObj');
 const DB = require('../db');
 const OBJECTS = {};
 const INITS = {};
-const { isArray } = require('lodash');
+const { pick, isArray } = require('lodash');
 const { Model } = require('sequelize'); 
 const { logger } = require('../lib/logger')
 
@@ -43,26 +43,35 @@ function loadObject(object, registry) {
 
 
 
-  model.prototype._getSafe = function _getSafe(key) {
-    return (get(get(object.Properties,key),'omit')) ? undefined : this.get(key)
-  }
+
+  //Omit and Permit methods and Properties ;)
+
+  model.permitted = Object.entries(Properties).reduce((p,[k,v])=>{
+    if (v.permit) p[k] = true;
+    return p;
+  },{})
+
+  model.omitted = Object.entries(Properties).reduce((p,[k,v])=>{
+    if (v.omit) p[k] = true;
+    return p;
+  },{})
 
   model.sanitizeParams = function sanitizeParams(obj){
-    return Object.entries(obj).reduce((p,[k,v]) =>{
-      if (get(get(object.Properties,k),'permit')) p[k] = v;
-      return p;
-    },{})
+    return pick(obj,model.permitted);
   }
 
   model.prototype.permittedSet = function permittedSet(obj){
     return this.set(model.sanitizeParams(obj))
   }
 
+  model.prototype._getSafe = function _getSafe(key) {
+    return (model.omited[key]) ? undefined : this.get(key)
+  }
+
   function serialize(){
     const dv = clone(this.dataValues);
     return Object.entries(dv).reduce((p,[key,value])=>{
       if (Array.isArray(value)) {
-        //if array of instances or anything else
         p[key] = value.map(v => typeof v.serialize === "function" ? v.serialize() : this._getSafe(key))
       } else {
         p[key] = this._getSafe(key);
