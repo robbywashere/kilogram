@@ -3,10 +3,10 @@ const crypto = require('crypto');
 const { logger } = require('../lib/logger');
 const hashify = require('../server-lib/auth/hashify');
 const { STRING, JSON, DATE, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
-const { get, isArray } = require('lodash');
+const { pick, get, isArray } = require('lodash');
 const Promise = require('bluebird');
 const cryptoRandomString = require('crypto-random-string');
-const { isLoggedIn, genPasswordKey, randomKey, within24hrs } = require('./_helpers');
+const { genPasswordKey, randomKey } = require('./_helpers');
 
 module.exports = {
   Name: 'User',
@@ -17,27 +17,32 @@ module.exports = {
       unique: true,
       validate: {
         isEmail: true
-      }
+      },
     },
     verifyKey: {
       type: STRING,
-      defaultValue: randomKey
+      defaultValue: randomKey,
+      omit: true
     },
     passwordKey: {
       type: STRING,
-      defaultValue: genPasswordKey 
+      defaultValue: genPasswordKey,
+      omit: true
     },
     refreshToken: {
       defaultValue: randomKey,
       type: STRING,
+      omit: true
     },
     verified:{
       type: BOOLEAN,
       defaultValue: true,
+      omit: true
     },
     password: {
       defaultValue: randomKey,
       type: VIRTUAL,
+      omit: true,
       set: function(password){ 
         const salt = randomKey();
         this.setDataValue('passwordSalt', salt);
@@ -46,13 +51,16 @@ module.exports = {
     },
     passwordHash: {
       type: STRING,
+      omit: true
     },
     passwordSalt: {
       type: STRING,
+      omit: true
     },
     superAdmin: {
       type: BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
+      omit: true,
     },
 
   },
@@ -73,47 +81,19 @@ module.exports = {
       }
     },
   },
-  AuthorizeInstance:{
-    read: true,
-    list: true,
-    delete: function(user){
-      return user.superAdmin;
-    },
-    update: function(user){
-      return user.superAdmin;
-    },
-    create: function(){
-      return user.superAdmin
-    }
-  },
-  PolicyScopes:{
-    list: 'accountsScoped',
-    // read: 'accountsScoped',
-  },
-  Authorize: {
-    all: isLoggedIn
-  },
-  PolicyAttributes:{
-    all: function(user){
-      //if (user.superAdmin) { return true }
-      return  ['id','email', 'createdAt', 'updatedAt', 'superAdmin' ] //TODO?
-    }
-  },
-  PolicyAssert: true,
   ScopeFunctions: true, 
   Scopes: {
-    //default: { include: [ this.sequelize.models.Accounts ] }
     superAdmins: { where: { superAdmin: true } },
     accountsScoped: function(user) {     
       const { Account } = this.sequelize.models;
       if (!get(user,'Accounts.length')) {
         throw new Error('User record must include Account');
       }
-      return (user.superAdmin) ? {} :{  include: [ { model: Account,  where: { id: { [Op.in] : user.Accounts.map(a=>a.id) } } } ] } 
-
+      return { include: [ { model: Account,  where: { id: { [Op.in] : user.Accounts.map(a=>a.id) } } } ] } 
     } 
   },
   Methods:{
+
     igAccountIds: function(){
       try {
         const [ igAccountIds ] = this.Accounts.map(a=>a.IGAccounts.map(iga=>iga.id));
@@ -131,11 +111,12 @@ module.exports = {
     },
     verifyPassword: function (password) { return (this.passwordHash === hashify({ salt: this.passwordSalt, password })) },
     isAccountRole: function(accountId, role){
-      if (typeof this.Accounts === "undefined") {
-        throw new Error('User record must include Account');
+      try {
+        const vetter = (isArray(role)) ? role.includes.bind(role) : (x)=>(x===role);
+        return this.Accounts.some(acc=>( vetter(get(acc,'UserAccount.role')) && get(acc,'id') === accountId) );
+      } catch(e) {
+        return []
       }
-      const vetter = (isArray(role)) ? role.includes.bind(role) : (x)=>(x===role);
-      return this.Accounts.some(acc=>( vetter(get(acc,'UserAccount.role')) && get(acc,'id') === accountId) );
     }
   },
   StaticMethods: {

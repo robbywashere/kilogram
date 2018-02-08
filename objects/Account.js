@@ -51,7 +51,7 @@ module.exports = {
       else {
         return []
       }
-    
+
     }
   },
   PolicyAssert: true,
@@ -69,7 +69,7 @@ module.exports = {
     addUserAs: function(user,role){
       return this.addUser(user,{ through: { role }})
     },
-    async igAccountIds: function(){
+    igAccountIds: async function(){
       if (!this.IGAccounts) { await this.reloadWithIgAccounts() }
       return this.IGAccounts.map(iga=>iga.id)
     }
@@ -80,7 +80,6 @@ module.exports = {
   Init({ User, Account, IGAccount }){
     this.belongsToMany(User,{ through: 'UserAccount' })
     this.hasMany(IGAccount)
-    this.hasMany(Account)
     this.addScope('withIgAccounts', { include: [ IGAccount ] })
     this.addScope('withUsers', { include: [ User ] })
   },

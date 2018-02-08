@@ -12,14 +12,18 @@ class PostPolicy extends BasePolicy {
   async _accounts(user){
     const accountIds = this.user.accountIds();
     const accountMember = accountIds.includes(this.instance.AccountId);
-    const accountsIGIds = await this.instance.igAccountsIds()
+    const accountsIGIds = await this.instance.igAccountsIds();
     return accountMember && accountsIGIds.includes(this.instance.IGAccountId);
   }
 
   index(){
-    true
+    return true;
   }
-  async delete(){
+  async edit() {
+    return this._accounts(user);
+  }
+
+  async destroy(){
     return this._accounts(user);
   }
 
@@ -31,7 +35,6 @@ class PostPolicy extends BasePolicy {
     return this._accounts(user);
   }
 
-
 }
 
 
@@ -39,8 +42,10 @@ module.exports = function PostController(){
   const router = new Router();
   const resource = new Resource({ model: Post, policy: PostPolicy });
 
-  router.get('/', resource)
-  router.post('/')
-  router.patch('/:id')
-  router.delete('/:id')
+  router.get('/', resource.action('index'))
+  router.post('/', resource.action('create'))
+  router.patch('/:id', resource.action('update'))
+  router.delete('/:id', resource.action('destroy'))
+
+  return router;
 }

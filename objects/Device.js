@@ -35,6 +35,7 @@ module.exports = {
     online: {
       type: BOOLEAN,
       allowNull: false,
+      permit: true
     },
     enabled: {
       type: BOOLEAN,
@@ -46,8 +47,10 @@ module.exports = {
       allowNull: false,
     },
     adbId: {
+      unique: true,
       allowNull: false,
-      type: STRING
+      permit: true,
+      type: STRING,
     },
   },
   PolicyScopes: { },

@@ -1,4 +1,4 @@
-const _ = require('lodash');
+const { get, clone, camelCase } = require('lodash');
 const cleanObj = require('../lib/cleanObj');
 const DB = require('../db');
 const OBJECTS = {};
@@ -39,6 +39,41 @@ function loadObject(object, registry) {
 
   model._scopeFns = !!object.ScopeFunctions;
   // Scopes into instance Static functions
+  //
+
+
+
+  model.prototype._getSafe = function _getSafe(key) {
+    return (get(get(object.Properties,key),'omit')) ? undefined : this.get(key)
+  }
+
+  model.sanitizeParams = function sanitizeParams(obj){
+    return Object.entries(obj).reduce((p,[k,v]) =>{
+      if (get(get(object.Properties,k),'permit')) p[k] = v;
+      return p;
+    },{})
+  }
+
+  model.prototype.permittedSet = function permittedSet(obj){
+    return this.set(model.sanitizeParams(obj))
+  }
+
+  function serialize(){
+    const dv = clone(this.dataValues);
+    return Object.entries(dv).reduce((p,[key,value])=>{
+      if (Array.isArray(value)) {
+        //if array of instances or anything else
+        p[key] = value.map(v => typeof v.serialize === "function" ? v.serialize() : this._getSafe(key))
+      } else {
+        p[key] = this._getSafe(key);
+      }
+      if (p[key] === undefined) delete p[key]
+      return p;
+    },{})
+  }
+
+  model.prototype.serialize = serialize;
+
 
   // Static Methods
   Object.keys(object.StaticMethods||{}).forEach(k => {
@@ -53,13 +88,15 @@ function loadObject(object, registry) {
 }
 
 function initObjects(objectRegistry) {
+
   Object.keys(objectRegistry.objects).forEach( name => {
 
     let object = objectRegistry.objects[name];
 
     if (objectRegistry.inits && objectRegistry.inits[name]) objectRegistry.inits[name].bind(object)(objectRegistry.objects);
 
-    let scopes = _.get(object,'options.scopes');
+    let scopes = get(object,'options.scopes');
+
 
     if (typeof scopes !== "undefined" && object._scopeFns) {
       Object.keys(scopes).forEach( k=> {
@@ -78,7 +115,7 @@ function initObjects(objectRegistry) {
 
         // scopes prefixed with 'with', will be givin a reload<withScope> method
         if (k.substr(0,4) === "with") {
-          object.prototype[ _.camelCase(`reload ${k}`)] = function(opts) { return this.reload(scopes[k]) };
+          object.prototype[ camelCase(`reload ${k}`)] = function(opts) { return this.reload(scopes[k]) };
         }
 
         object[k] = fn.bind(object);
