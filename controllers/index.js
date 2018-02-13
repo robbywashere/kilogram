@@ -44,7 +44,7 @@ function loadPathControllers({ app, client }){
 Init.loadObjectControllers = loadObjectControllers
 function loadObjectControllers({app, sequelize = DB, objects = Objects}) {
   finale.initialize({
-    base: 'admin',
+    base: '/admin',
     app,
     sequelize
   })

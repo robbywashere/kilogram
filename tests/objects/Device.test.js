@@ -1,10 +1,8 @@
 
 const sinon = require('sinon');
 const assert = require('assert');
-const sync = require('../db/sync');
-const { Device } = require('../objects');
-//const SequelizeMock = require('sequelize-mock');
-//sinon.stub(DB,"$", new SequelizeMock())
+const sync = require('../../db/sync');
+const { Device } = require('../../objects');
 
 
 describe('Devices', function(){

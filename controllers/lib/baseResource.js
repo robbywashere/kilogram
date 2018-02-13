@@ -6,6 +6,9 @@ const { add, get, isUndefined } = require('lodash');
 const { Router } = require('express');
 const { Op } = require('sequelize');
 
+//TODO: add &scope= and &include
+//TODO: consider Model.setPolicy(policy) for Model.authorize() when doing include model
+//
 module.exports = class BaseResource {
 
   constructor({ model, scope = ()=>this.model, policy }){
@@ -26,6 +29,10 @@ module.exports = class BaseResource {
       });
       return p;
     },{})
+  }
+
+  static scope(scopeName){
+    return this.scope().scope(scopeName);
   }
 
   static page({ offset = 0, count = 100, page = 0 } = {}) {
@@ -77,7 +84,6 @@ module.exports = class BaseResource {
       try {
         if (typeof opts  === "function") opts = opts(req)
 
-        let instance;
         let transportFn = (isIndexAction) ? this._transportIndex : this._transport;
         let operators;
 
@@ -89,7 +95,7 @@ module.exports = class BaseResource {
           opts = { ...opts, limit, offset, order }
         }   
 
-        instance = await instanceFn.bind(this)(req,{ next, opts, req })
+        let instance = await instanceFn.bind(this)(req,{ next, opts, req })
         const policy = new this.policy({ instance, user: req.user });
         const policyFn = (policy[name]) ? policy[name].bind(policy) : policy.default;
 
@@ -113,7 +119,7 @@ module.exports = class BaseResource {
   }
 
   _collectionWhere({ header, opts }){
-    if (!header) throw new BadRequest(`No /<id> provided, assuming collection: \n But missing 'collection' header of comma seperated ids`)
+    if (!header) throw new BadRequest(`No /:id provided, assuming collection: \n But missing 'collection' header of comma seperated ids`)
     const ids = header.split(',').map(id=>parseInt(id.trim()))
     return { ...opts.where, id: { [Op.in] : ids } };
   }

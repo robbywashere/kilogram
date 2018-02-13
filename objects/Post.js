@@ -1,7 +1,7 @@
 const sequelize = require('sequelize');
 const DB = require('../db');
-const { isUndefined, get } = require('lodash');
-const { STRING, UUID, VIRTUAL, TEXT, DATE, Op } = sequelize;
+const { isUndefined, isNull, get } = require('lodash');
+const { STRING, UUID, VIRTUAL, TEXT, DATE, Op, ValidationError } = sequelize;
 const minioObj = require('../server-lib/minio/minioObject');
 const { isLoggedIn, isSuperAdmin } = require('./_helpers');
 const { ForbiddenError, BadRequestError, NotFoundError, FinaleError } = require('finale-rest').Errors;
@@ -35,24 +35,11 @@ module.exports = {
       return user.igAccountIds().includes(this.IGAccountId) && user.accountIds().includes(this.AccountId);
     },
   },
-  PolicyAssert: true,
-  Authorize: {
-    all: isLoggedIn 
-  },
-  PolicyScopes: {
-    all: 'userAccountScoped',
-  },
-  PolicyAttributes: {
-    all: function(user){
-      if (isSuperAdmin(user)) return true;
-      return ['AccountId', 'IGAccountId', 'text', 'postDate', 'id', 'photoUUID', 'PhotoId']
-    },
-  },
   Init({ Job, Photo, Account, IGAccount }){
     this.belongsTo(Account, { foreignKey: { allowNull: false }});
     this.belongsTo(IGAccount, { foreignKey: { allowNull: false }});
     this.hasOne(Job);
-    this.belongsTo(Photo, { foreignKey: { allowNull: false  } });
+    this.belongsTo(Photo);
     this.addScope('withJob', { include: [ Job ] } )
     this.addScope('due', { include: [ Job ], where: { 
       postDate: { [Op.lte]: sequelize.fn(`NOW`) },
@@ -63,18 +50,25 @@ module.exports = {
   ScopeFunctions: true,
   Hooks: {
     //TODO: this can all be done with one raw query and is not needed :(
-    beforeCreate: async function(instance){
-      //console.log(instance.authorize());
+    beforeBulkCreate: async function(instances) {
+      for (const instance of instances) {
+        await this.mapToPhoto(instance);
+      }
     },
-    beforeValidate: async function(instance){
+    beforeCreate: async function(instance){
       const { Photo } = this.sequelize.models;
+      const { photoUUID } = instance;
+      if (isUndefined(photoUUID) || isNull(photoUUID)) {
+        throw new ValidationError(`photoUUID cannot be ${(!isNull(photoUUID)) ? 'undefined' : 'null'}`); 
+      }
       if (isUndefined(instance.PhotoId)) {
-        const { photoUUID } = instance;
         const photo = await Photo.findOne({ where: { uuid: photoUUID }});
         if (photo){
           instance.dataValues.PhotoId = photo.id;
         } else {
-          throw new BadRequest(`Photo with UUID: ${photoUUID} not found`)
+          //throw new BadRequest(`Photo with UUID: ${photoUUID} not found`)
+          //
+          throw new ValidationError(`Photo with UUID: ${photoUUID} not found`); 
         }
       }
     }
@@ -116,6 +110,23 @@ module.exports = {
     }
   },
   StaticMethods: {
+    mapToPhoto: async function(instance){
+      const { Photo,} = this.sequelize.models;
+      const { photoUUID } = instance;
+      if (isUndefined(photoUUID) || isNull(photoUUID)) {
+        throw new ValidationError(`photoUUID cannot be ${(isUndefined(photoUUID)) ? 'undefined' : 'null'}`); 
+      }
+      if (isUndefined(instance.PhotoId)) {
+        const photo = await Photo.findOne({ where: { uuid: photoUUID }});
+        if (photo){
+          instance.dataValues.PhotoId = photo.id;
+        } else {
+          //throw new BadRequest(`Photo with UUID: ${photoUUID} not found`)
+          //
+          throw new ValidationError(`Photo with UUID: ${photoUUID} not found`); 
+        }
+      }
+    },
     createWithPhoto: async function(opts){
       return this.create({ 
         ...opts,

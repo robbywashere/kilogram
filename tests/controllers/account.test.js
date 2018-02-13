@@ -1,17 +1,17 @@
 
 const assert = require('assert');
 
-const { loadObjectControllers, } = require('../controllers');
+const { loadObjectControllers, } = require('../../controllers');
 
-const DB = require('../db');
+const DB = require('../../db');
 
-const { exprezz, ezUser } = require('./helpers');
+const { exprezz, ezUser } = require('../helpers');
 
-const dbSync = require('../db/sync');
+const dbSync = require('../../db/sync');
 
 const request = require('supertest');
 
-const { User, Account } = require('../objects');
+const { User, Account } = require('../../objects');
 
 describe('Account Controller', function(){
   before(()=>dbSync(true))
@@ -26,7 +26,7 @@ describe('Account Controller', function(){
     const acct = await Account.findAll({ include: [ User ] })
 
     const res = await request(app)
-      .get('/accounts?scope=withUsers')
+      .get('/admin/accounts?scope=withUsers')
       .expect(200)
 
     assert.equal(res.body[0].Users[0].email,'x@x.com')

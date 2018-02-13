@@ -1,8 +1,9 @@
 const sequelize = require('sequelize');
 const SEQ = require('../db');
 const { STRING,  TEXT, DATE, INTEGER, VIRTUAL, BOOLEAN, UUIDV4, UUID, Op } = sequelize;
-const { get } = require('lodash');
+const { get, isUndefined } = require('lodash');
 const uuidv4 = require('uuid/v4');
+const config = require('config');
 const minioObj = require('../server-lib/minio/minioObject');
 const { superAdmin } = require('./_helpers');
 
@@ -16,6 +17,7 @@ module.exports = {
     },
     uuid: {
       type: UUID,
+      defaultValue: UUIDV4
     },
     meta: {
       type: VIRTUAL,
@@ -39,7 +41,8 @@ module.exports = {
     },
     bucket: {
       type: STRING,
-      allowNull: false
+      defaultValue: config.MINIO_BUCKET
+
     },
     uploaded: {
       type: BOOLEAN,
@@ -49,8 +52,13 @@ module.exports = {
       type: TEXT,
     }
   },
-  AuthorizeInstance:{},
-  Policy: {
+  Hooks: {
+    beforeValidate: async function(instance){
+      const { uuid } = instance;
+      if (isUndefined(instance.objectName)) {
+        instance.dataValues.objectName = minioObj.create('v2',{ uuid });
+      }
+    }
   },
   Init({ Account }){
     this.belongsTo(Account)

@@ -39,18 +39,18 @@ async function createAccountUserPostJob(){
     email: 'test@test.com'
   });
   const account = await Account.create();
+  const photo = await Photo.create({ 
+      bucket: 'uploads',
+      objectName: minioObj.create('v2',{ payload: true })
+  });
   const igAccount = await IGAccount.create();
   let post = await Post.create({
     postDate: new Date(),
     UserId: user.id,
     AccountId: account.id,
     IGAccountId: igAccount.id,
-    Photo: {
-      bucket: 'uploads',
-      objectName: minioObj.create('v2',{ payload: true })
-    }
-  },{
-    include: [ Photo ]
+    photoUUID: photo.uuid,
+    Photo: photo
   })
 
   await post.initJob();
@@ -72,6 +72,10 @@ async function createAccountUserPost(){
     email: 'test@test.com',
     password: 'blah',
   });
+  const photo = await Photo.create({ 
+      bucket: 'uploads',
+      objectName: minioObj.create('v2',{ payload: true })
+  });
   const account = await Account.create();
   const igAccount = await IGAccount.create();
   let post = await Post.create({
@@ -79,12 +83,8 @@ async function createAccountUserPost(){
     UserId: user.id,
     AccountId: account.id,
     IGAccountId: igAccount.id,
-    Photo: {
-      bucket: 'uploads',
-      objectName: minioObj.create('v2',{ payload: true })
-    }
-  },{
-    include: [ Photo ]
+    photoUUID: photo.uuid,
+    PhotoId: photo.id
   })
   return { account, igAccount, user, post }
 }

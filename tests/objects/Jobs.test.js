@@ -1,9 +1,9 @@
-const { IGAccount, Account, Job, Post, Photo, User } = require('../objects');
+const { IGAccount, Account, Job, Post, Photo, User } = require('../../objects');
 const sinon = require('sinon');
 const assert = require('assert');
-const sync = require('../db/sync');
+const sync = require('../../db/sync');
 const Promise = require('bluebird');
-const { createAccountUserPostJob, createAccountUserPost, createUserPostJob } = require('./helpers');
+const { createAccountUserPostJob, createAccountUserPost, createUserPostJob } = require('../helpers');
 
 
 describe('objects/Jobs', function(){

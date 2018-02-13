@@ -1,6 +1,6 @@
 const assert = require('assert');
-const { User, Account } = require('../objects');
-const DBSync = require('../db/sync');
+const { User, Account } = require('../../objects');
+const DBSync = require('../../db/sync');
 const { Op } = require('sequelize');
 
 describe('User object', function(){

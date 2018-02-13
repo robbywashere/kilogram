@@ -39,22 +39,39 @@ function loadObject(object, registry) {
 
   model._scopeFns = !!object.ScopeFunctions;
   // Scopes into instance Static functions
+
+
+  //experimental authorize and set policy
   //
 
+  model.prototype.policy = function policy(policy){
+    this._policy = policy;
+  };
 
+  model.prototype.authorize = function authorize(action, user = this._user){
+    return this._policy(action, user);
+  }
+
+  //protect(()=>model.authorize('index',user),ForbiddenError)
+  model.prototype.protect = function protect(authFn, error = Error){
+    if (!authFn()) {
+      throw new error();
+    }
+  }
 
 
   //Omit and Permit methods and Properties ;)
 
-  model.permitted = Object.entries(Properties).reduce((p,[k,v])=>{
-    if (v.permit) p[k] = true;
-    return p;
-  },{})
+  function mapItted(name) {
+    Object.entries(object.Properties).reduce((p,[k,v])=>{
+      if (v[name]) p[k] = true;
+      return p;
+    },{})
+  }
 
-  model.omitted = Object.entries(Properties).reduce((p,[k,v])=>{
-    if (v.omit) p[k] = true;
-    return p;
-  },{})
+  model.omitted = mapItted('omit');
+
+  model.permitted = mapItted('permit');
 
   model.sanitizeParams = function sanitizeParams(obj){
     return pick(obj,model.permitted);
@@ -65,7 +82,7 @@ function loadObject(object, registry) {
   }
 
   model.prototype._getSafe = function _getSafe(key) {
-    return (model.omited[key]) ? undefined : this.get(key)
+    return (model.omitted[key]) ? undefined : this.get(key)
   }
 
   function serialize(){
