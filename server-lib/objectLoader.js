@@ -3,7 +3,7 @@ const cleanObj = require('../lib/cleanObj');
 const DB = require('../db');
 const OBJECTS = {};
 const INITS = {};
-const { pick, isArray } = require('lodash');
+const { pickBy, isArray } = require('lodash');
 const { Model } = require('sequelize'); 
 const { logger } = require('../lib/logger')
 
@@ -63,7 +63,7 @@ function loadObject(object, registry) {
   //Omit and Permit methods and Properties ;)
 
   function mapItted(name) {
-    Object.entries(object.Properties).reduce((p,[k,v])=>{
+    return Object.entries(object.Properties).reduce((p,[k,v])=>{
       if (v[name]) p[k] = true;
       return p;
     },{})
@@ -74,7 +74,7 @@ function loadObject(object, registry) {
   model.permitted = mapItted('permit');
 
   model.sanitizeParams = function sanitizeParams(obj){
-    return pick(obj,model.permitted);
+    return pickBy(obj,(v,k)=>model.permitted[k]);
   }
 
   model.prototype.permittedSet = function permittedSet(obj){
