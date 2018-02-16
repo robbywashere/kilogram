@@ -1,5 +1,5 @@
 const { Post } = require('../../objects');
-const Resource = require('../lib/resourceClass');
+const Resource = require('../lib/baseResource');
 const BasePolicy = require('../lib/basePolicy');
 
 class PostPolicy extends BasePolicy {

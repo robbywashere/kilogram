@@ -22,11 +22,7 @@ module.exports = {
     meta: {
       type: VIRTUAL,
       get: function(){
-        try {
-          return minioObj.parse(this.get('objectName'));
-        } catch(e){
-          return undefined // TODO? 
-        }
+        return minioObj.parse(this.get('objectName'));
       }
     },
     src: {
@@ -53,7 +49,7 @@ module.exports = {
     }
   },
   Hooks: {
-    beforeValidate: async function(instance){
+    beforeCreate: async function(instance){
       const { uuid } = instance;
       if (isUndefined(instance.objectName)) {
         instance.dataValues.objectName = minioObj.create('v2',{ uuid });

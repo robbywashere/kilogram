@@ -1,5 +1,5 @@
 const { Account, UserAccount, User } = require('../../objects');
-const Resource = require('../lib/resourceClass');
+const Resource = require('../lib/baseResource');
 const BasePolicy = require('../lib/basePolicy');
 
 const { Router }  = require('express');

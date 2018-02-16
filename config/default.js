@@ -1,5 +1,5 @@
-
-
+require('../lib/handleUnhandledRejections');
+const { logger } = require('../lib/logger');
 const path = require('path');
 const fs = require('fs');
 const cryptoRandomString = require('crypto-random-string');

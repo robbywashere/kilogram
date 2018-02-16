@@ -77,11 +77,8 @@ module.exports = class BaseResource {
   action(name,opts={}){
 
 
-    let isIndexAction = false;
-    if (typeof opts.index !== "undefined"){
-      isIndexAction = opts.index;
-      delete opts.index;
-    }
+    let isIndexAction = !!opts.index;
+    delete opts.index;
 
     const instanceFn = this[name];
     if (typeof instanceFn !== "function") throw new TypeError(`Action '${name}' is not a function`);
@@ -133,7 +130,7 @@ module.exports = class BaseResource {
           e instanceof ReferenceError ||
           e instanceof RangeError
         ) {
-          logger.error(e)
+          logger.error('Controller Error:',e)
         }
         if (e.name.substr(0,9) === 'Sequelize') {
           next(new BadRequest(e.message))
@@ -199,7 +196,7 @@ module.exports = class BaseResource {
   }
 
   async collectionCreate({ headers, body }, { next }) {
-    if (!Array.isArray(body)) throw new BadRequest(`Collection expects body to be of type 'Array[`) 
+    if (!Array.isArray(body)) throw new BadRequest(`Collection expects body to be of type 'Array'`) 
     const sanitizedBody = body.map(o=>this.model.sanitizeParams(o));
     let result;
     sanitizedBody.save = async () => result = await this.model.bulkCreate(sanitizedBody, { returning: true });

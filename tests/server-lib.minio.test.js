@@ -205,7 +205,7 @@ describe('MClient class', function(){
 
         let putRecord = {}
         const uuid = uuidv4();
-        const key = minioObj.create('v2',{ uuid });
+        const key = minioObj.create('v2',{ uuid, accountId: 1 });
         set(putRecord,'s3.object.key',key);
         set(putRecord,'s3.bucket.name','puttestBucket');
         set(putRecord,'eventName', 's3:ObjectCreated:Put');
@@ -231,7 +231,13 @@ describe('MClient class', function(){
         ee.emit('notification', putRecord);
         ee.emit('notification', delRecord);
 
-        assert(photoCreate.calledWith({ bucket: 'puttestBucket', objectName: key}))
+        assert.deepEqual(photoCreate.getCall(0).args[0],{ 
+          bucket: 'puttestBucket', 
+          objectName: key, 
+          uuid, 
+          AccountId: 1 
+        });
+
         assert(photoDelete.calledWith(key))
 
 

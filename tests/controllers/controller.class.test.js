@@ -64,7 +64,7 @@ describe('class controller',function(){
   beforeEach(async ()=>{
     await DBSync(true);
 
-    
+
     const resource = new BaseResource({ 
       model: TestObj, 
     })
@@ -91,7 +91,7 @@ describe('class controller',function(){
 
     assert(response.body[0])
     assert.equal(response.body[0].foo, 'bar');
-    
+
   });
 
   it(`should create new resource with POST '/'  `, async function(){
@@ -131,8 +131,8 @@ describe('class controller',function(){
 
 
   it(` should delete resources in bulk DELETE '/collection?ids=[...]'`, async function(){
-  
-  
+
+
     const tobjs = await TestObj.bulkCreate([{},{},{}], { returning : true });
 
     const ids  = tobjs.map(i=>i.id).sort();
@@ -146,8 +146,8 @@ describe('class controller',function(){
     const destroyedIds = response.body.map(i=>i.id).sort();
 
     assert.deepEqual(ids, destroyedIds);
-  
-  
+
+
   });
 
   it(`should patch a resource with PATCH /:id`, async function(){
@@ -163,8 +163,8 @@ describe('class controller',function(){
       .expect(200)
 
     assert.equal(response.body.foo, 'second')
-    
-  
+
+
   })
 
   it(`should BULK patch resources with PATCH /?ids=[...]`, async function(){
@@ -189,7 +189,7 @@ describe('class controller',function(){
     assert.equal(body[0].foo,'second')
     assert.equal(body[1].foo,'second')
     assert.equal(body[2].foo,'second')
-  
+
   })
 
 
@@ -200,7 +200,7 @@ describe('class controller',function(){
     assert(tobjs.length, 300);
     const response1 = await request(app)
       .get('/',{ page: 0 })
-    
+
     assert.equal(response1.body.length,100);
     assert.equal(response1.body[0].id,1);
     assert.equal(response1.body[99].id,100);
@@ -210,16 +210,16 @@ describe('class controller',function(){
       .get('/')
       .query({ page: 1 })
 
-    
+
     assert.equal(response2.body.length,100);
     assert.equal(response2.body[0].id,101);
     assert.equal(response2.body[99].id,200);
-  
+
     const response3 = await request(app)
       .get('/')
       .query({ page: 2 })
 
-    
+
     assert.equal(response3.body.length,100);
     assert.equal(response3.body[0].id,201);
     assert.equal(response3.body[99].id,300);
@@ -234,7 +234,7 @@ describe('class controller',function(){
     const response1 = await request(app)
       .get('/')
       .query({ page: 0, count: 50 })
-    
+
     assert.equal(response1.body.length,50);
     assert.equal(response1.body[0].id,1);
     assert.equal(response1.body[49].id,50);
@@ -244,11 +244,11 @@ describe('class controller',function(){
       .get('/')
       .query({ page: 1, count: 50 })
 
-    
+
     assert.equal(response2.body.length,50);
     assert.equal(response2.body[0].id,51);
     assert.equal(response2.body[49].id,100);
-  
+
   })
 
 
@@ -269,7 +269,7 @@ describe('class controller',function(){
     assert.equal(ids[0],10);
     assert.equal(ids[9],1);
 
- 
+
     const response2 = await request(app)
       .get('/')
       .query({ sort: 'id' })
@@ -278,7 +278,7 @@ describe('class controller',function(){
 
     assert.equal(ids2[0],1);
     assert.equal(ids2[9],10);
-  
+
   });
 
 
@@ -294,7 +294,7 @@ describe('class controller',function(){
     const response = await request(app)
       .get('/')
       .query({ scope: 'fooIsBar' })
-    .expect(200);
+      .expect(200);
 
     assert.equal(response.body.length,1);
     assert.equal(response.body[0].foo,'bar');
@@ -324,12 +324,12 @@ describe('class controller',function(){
 
     assert.equal(response1b.body.length, 0)
 
-  
+
     const response2 = await request(app)
       .get('/')
       .query({ $foo: { like: '%THIS%' } })
     assert.equal(response2.body.length, 1)
-  
+
 
     const response3 = await request(app)
       .get('/')
@@ -350,7 +350,85 @@ describe('class controller',function(){
 
   })
 
-
 })
+
+describe('controller class policy',function(){
+
+
+  class RestrictivePolicy extends BasePolicy {
+    index(){
+      return (this.user && !!this.user.superAdmin)
+    }
+  };
+
+
+
+  it('should only allow user.superAdmin === true to index a resource', async function(){
+
+
+    const resource = new BaseResource({ 
+      model: TestObj, 
+      policy: RestrictivePolicy
+    })
+
+    const router = new Router();
+
+    router.use(resource.resource())
+
+    app = exprezz();
+    app2 = exprezz({ superAdmin: true });
+
+    app.use(router);
+    app2.use(router);
+
+    await request(app)
+      .get('/')
+      .expect(403)
+
+    await request(app2)
+      .get('/')
+      .expect(200)
+  })
+
+
+  it.only('should allow instance level checks', async function(){
+
+
+    class MyResource extends BaseResource{
+      show(){
+        return { fooProperty: true } //returning mocked instance
+      }
+    }
+
+    class MyPolicy extends BasePolicy {
+      show(){
+        if (this.instance.fooProperty) {
+          return false;
+        }
+      }
+    }
+
+    const resource = new MyResource({
+      model: TestObj,
+      policy: MyPolicy
+    }) 
+
+    const router = new Router();
+
+    router.use(resource.resource())
+
+    app = exprezz();
+
+    app.use(router);
+
+    await request(app)
+      .get('/1')
+      .expect(403)
+
+  })
+
+
+});
+
 
 

@@ -1,5 +1,4 @@
 const { get, clone, camelCase } = require('lodash');
-const cleanObj = require('../lib/cleanObj');
 const DB = require('../db');
 const OBJECTS = {};
 const INITS = {};
