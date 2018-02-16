@@ -13,17 +13,18 @@ module.exports = {
   Properties:{
     objectName: {
       type: TEXT,
-      allowNull: false
+      allowNull: false,
+      set: function(val){
+        this.dataValues.meta = minioObj.parse(val);
+        return this.dataValues.objectName = val;
+      }
     },
     uuid: {
       type: UUID,
       defaultValue: UUIDV4
     },
     meta: {
-      type: VIRTUAL,
-      get: function(){
-        return minioObj.parse(this.get('objectName'));
-      }
+      type: sequelize.JSON,
     },
     src: {
       type: VIRTUAL,

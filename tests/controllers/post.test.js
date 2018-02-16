@@ -2,19 +2,19 @@
 
 const assert = require('assert');
 
-const { loadObjectControllers, } = require('../controllers');
+const { loadObjectControllers, } = require('../../controllers');
 
-const DB = require('../db');
+const DB = require('../../db');
 
-const { exprezz, ezUser } = require('./helpers');
+const { exprezz, ezUser } = require('../helpers');
 
-const dbSync = require('../db/sync');
+const dbSync = require('../../db/sync');
 
 const request = require('supertest');
 
-const { User, Photo, IGAccount, Account, Post } = require('../objects');
+const { User, Photo, IGAccount, Account, Post } = require('../../objects');
 
-const minioObj = require('../server-lib/minio/minioObject');
+const minioObj = require('../../server-lib/minio/minioObject');
 
 describe('Post Controller', function(){
   beforeEach(()=>dbSync(true))

@@ -51,7 +51,9 @@ function loadObjectControllers({app, sequelize = DB, objects = Objects}) {
 
   Object.keys(objects).map(k=> {
     const resource = finale.resource({ model: objects[k] });
+
     ['list','read','delete','update','create'].forEach(action => {
+
       resource[action].auth(function(req, res, context){
         if (!isSuperAdmin(req.user)) {
           throw new ForbiddenError(); 

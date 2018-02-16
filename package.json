@@ -77,7 +77,7 @@
     "db:mig:up": "node ./db/_migup.js",
     "tests:clr": "mocha  --require ./tests/setup.js ./tests/*.test.js --reporter mocha-clearscreen-reporter --watch",
     "tests:clr:verbose": "mocha --require ./tests/setup.js ./tests/*.test.js --reporter mocha-clearscreen-reporter --watch",
-    "tests": "mocha  --require ./tests/setup.js ./tests/*.test.js --watch",
+    "tests": "mocha  --require ./tests/setup.js ./tests/**/*.test.js --watch",
     "tests:nyc": " nyc mocha  --require ./tests/setup.js ./tests/*.test.js --watch",
     "tests:env": "mocha  --require ./tests/setup.js ./tests/nodeenv.test.js --watch",
     "tests:verbose": "mocha  --require ./tests/setup.js  ./tests/*.test.js --watch",

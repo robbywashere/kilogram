@@ -1,6 +1,7 @@
 const { Post } = require('../../objects');
 const Resource = require('../lib/baseResource');
 const BasePolicy = require('../lib/basePolicy');
+const { Router } = require('express');
 
 class PostPolicy extends BasePolicy {
 
@@ -39,6 +40,7 @@ class PostPolicy extends BasePolicy {
 
 
 module.exports = function PostController(){
+
   const router = new Router();
   const resource = new Resource({ model: Post, policy: PostPolicy });
 

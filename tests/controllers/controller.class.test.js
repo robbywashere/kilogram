@@ -391,7 +391,7 @@ describe('controller class policy',function(){
   })
 
 
-  it.only('should allow instance level checks', async function(){
+  it('should allow instance level checks', async function(){
 
 
     class MyResource extends BaseResource{

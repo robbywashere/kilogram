@@ -72,7 +72,7 @@ module.exports = function Auth(app) {
       const user = await User.withAccountsForId(id);
       if (!user) throw new Error('Invalid User/User does not exist');
       else {
-        user.setPolicy('read', user);
+        //user.setPolicy('read', user);
         cb(null, user);
       }
     } catch(e) {
@@ -91,7 +91,7 @@ module.exports = function Auth(app) {
     res.send({ user });
   });
   router.post('/auth',passport.authenticate('local'), function(req, res){
-    req.user.setPolicy('read', req.user);
+    //req.user.setPolicy('read', req.user);
     const user = req.user;
     res.send({ user });
   });
