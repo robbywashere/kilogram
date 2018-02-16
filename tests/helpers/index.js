@@ -60,11 +60,11 @@ async function createAccountUserPostJob(){
   return { account, igAccount, user, post, job }
 }
 
-async function ezUser(opts){
+async function ezUser(opts,moreOpts){
   return User.create(Object.assign({
     password: 'blah',
     email: 'test@test.com',
-  },opts))
+  },opts),moreOpts)
 }
 
 async function createAccountUserPost(){

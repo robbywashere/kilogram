@@ -50,10 +50,10 @@ module.exports = {
     }
   },
   Hooks: {
-    beforeCreate: async function(instance){
+    beforeValidate: async function(instance){
       const { uuid } = instance;
       if (isUndefined(instance.objectName)) {
-        instance.dataValues.objectName = minioObj.create('v2',{ uuid });
+        instance.set('objectName', minioObj.create('v2',{ uuid }));
       }
     }
   },

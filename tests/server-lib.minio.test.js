@@ -318,23 +318,24 @@ describe('MClient class', function(){
   describe('signedURL', function(){
 
     const sandbox = sinon.sandbox.create();
-    beforeEach(function(){
+
+    beforeEach(async function(){
+      await dbsync(true);
       sandbox.stub(uuid,'v4').callsFake(()=>'UUID');
-      return dbsync(true);
     })
     afterEach(function(){
       sandbox.restore();
     })
     it('should return a signed url', async function(){
 
-      const user = await ezUser();
+      const user = await ezUser({ Accounts: {} },{ include: [ objects.Account ] });
       const client = new MClient({
         client: { async presignedPutObject(){ return  'http://fakeurl/photo' } }
       });
 
       const router = Routes({ client })
 
-      await user.reloadWithAccounts();
+
       const app = exprezz(user);
 
       app.use(router);
@@ -345,7 +346,10 @@ describe('MClient class', function(){
         .send({ name: 'filename.jpg', AccountId: user.Accounts[0].id })
         .expect(200);
 
-      //assert.deepEqual(res.body,{ url: 'http://fakeurl/photo', uuid: 'UUID' })
+      assert.deepEqual(res.body,{ 
+        objectName: "v4:gqR1dWlkpFVVSUSpYWNjb3VudElkAQ__",
+        url: 'http://fakeurl/photo', 
+        uuid: 'UUID' })
 
     })
 

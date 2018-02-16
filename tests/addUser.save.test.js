@@ -2,7 +2,7 @@
 const { User, Account, UserAccount } = require('../objects');
 const dbSync = require('../db/sync');
 
-describe('Account addUser',function(){
+describe.skip('Account addUser',function(){
 
   beforeEach(()=>dbSync(true))
 

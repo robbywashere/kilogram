@@ -4,9 +4,11 @@ const assert = require('assert');
 
 const { loadObjectControllers, } = require('../../controllers');
 
+const PostController = require('../../controllers/post');
+
 const DB = require('../../db');
 
-const { exprezz, ezUser } = require('../helpers');
+const { exprezz, ezUser, appLogger } = require('../helpers');
 
 const dbSync = require('../../db/sync');
 
@@ -19,82 +21,66 @@ const minioObj = require('../../server-lib/minio/minioObject');
 describe('Post Controller', function(){
   beforeEach(()=>dbSync(true))
 
-  it('Should not only allow post creation for users not memeber of Account and IGAccount',async function(){
+
+  it('Should not only allow post creation for users not member of Account and subsequent IGAccount',async function(){
+
+    const user = await ezUser({ 
+      Accounts: { } }, { 
+        include: [ Account ] 
+      });
 
 
+    const badUser = await ezUser({ 
+      email: 'badUser@baduser.com',
+      Accounts: { } }, { 
+        include: [ Account ] 
+      });
 
-    const user = await User.create({ superAdmin: false, password: 'x', email: 'x@x.com', Accounts: { } }, { include: [ Account ] })
+    const igAccount = await IGAccount.create();
 
-    const igAccount1 = await IGAccount.create();
-    const igAccount2 = await IGAccount.create();
+    const photo = await Photo.create();
 
-    const objectName = minioObj.create('v4',{ uuid: 'UUID', accountId: user.Accounts[0].id });
+    const app = exprezz(badUser);
 
-    const photo = await Photo.create({ objectName, bucket: 'uploads' });
+    app.use(PostController());
 
-    const photoUUID = photo.uuid;
-
-    //await user.accounts[0].addigaccount(igaccount1);
-    // await user.accounts[0].addigaccount(igaccount2);
-
-    await user.reloadWithAccounts(); 
-
-    const app = exprezz(user);
-
-    loadObjectControllers({ app, sequelize: DB, objects: { Post }})
-
-    console.log(await Post.findAll().map(p=>p.toJSON()))
-
-    const AccountId = user.Accounts[0].id
-    const IGAccountId = igAccount1.id;
-    const UserId = user.id;
-    const postDate = new Date();
-    const text = 'blah';
     const res = await request(app)
-      .post('/posts')
-      .send({ AccountId, postDate, text, IGAccountId, UserId, objectName, photoUUID })
+      .post('/')
+      .send({ 
+        AccountId: user.Accounts[0].id, 
+        postDate: new Date(), 
+        IGAccountId: igAccount.id,
+        photoUUID: photo.uuid
+      })
       .expect(403)
 
 
-    const posts = await Post.findAll();
-
-    assert(!posts.length);
-
   })
 
-  it('Should only allow post creation for users not memeber of Account and IGAccount',async function(){
+  it('Should only allow post creation for users of member of Account and IGAccount',async function(){
 
 
-    const user = await User.create({ superAdmin: false, password: 'x', email: 'x@x.com', Accounts: { } }, { include: [ Account ] })
+    const user = await ezUser({ 
+      Accounts: { } }, { 
+        include: [ Account ] 
+      });
 
-    const objectName = minioObj.create('v4',{ uuid: 'UUID', accountId: 1 });
+    const igAccount = await IGAccount.create();
 
-    const photo = await Photo.create({ objectName, bucket: 'uploads' });
-
-    const igAccount1 = await IGAccount.create();
-    const igAccount2 = await IGAccount.create();
-
-    await user.Accounts[0].addIGAccount(igAccount1);
-
-    await user.reloadWithAccounts(); 
+    const photo = await Photo.create();
 
     const app = exprezz(user);
 
-    loadObjectControllers({ app, sequelize: DB, objects: { Post }})
+    app.use(PostController());
 
-
-
-    const AccountId = user.Accounts[0].id
-    const IGAccountId = igAccount1.id;
-    const UserId = user.id;
-    const postDate = new Date();
-    const text = 'blah';
     const res = await request(app)
-      .post('/posts')
-      .send({ AccountId, postDate, text, IGAccountId, photoUUID: photo.uuid })
-      .expect(201)
-
-    const post = await Post.findById(1,{ include: [ Photo ] })
-    console.log(post.Photo.get('meta'));
+      .post('/')
+      .send({ 
+        AccountId: user.Accounts[0].id, 
+        postDate: new Date(), 
+        IGAccountId: igAccount.id,
+        photoUUID: photo.uuid
+      })
+      .expect(200)
   })
 })

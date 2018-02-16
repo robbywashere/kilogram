@@ -35,7 +35,7 @@ describe('engine' , function(){
 
     jobRunStub = sandbox.stub(runner, 'JobRun').returns(async ()=>{
       await Promise.delay(200);
-      return {success: true }
+      return { success: true }
     });
 
 

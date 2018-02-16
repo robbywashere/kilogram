@@ -1,53 +1,40 @@
 const { Post } = require('../../objects');
 const Resource = require('../lib/baseResource');
-const BasePolicy = require('../lib/basePolicy');
+const AuthPolicy = require('../lib/authPolicy');
 const { Router } = require('express');
 
-class PostPolicy extends BasePolicy {
+class PostPolicy extends AuthPolicy {
 
-
-  static scope({ model, user }){
-    return model.userScoped(user);
-  }
-
-  async _accounts(user){
+  async _accounts(){
     const accountIds = this.user.accountIds();
-    const accountMember = accountIds.includes(this.instance.AccountId);
-    const accountsIGIds = await this.instance.igAccountsIds();
-    return accountMember && accountsIGIds.includes(this.instance.IGAccountId);
+    return accountIds.includes(this.instance.AccountId);
   }
 
   index(){
     return true;
   }
-  async edit() {
-    return this._accounts(user);
+  edit() {
+    return this._accounts();
   }
 
-  async destroy(){
-    return this._accounts(user);
+  destroy(){
+    return this._accounts();
   }
 
-  async show(){
-    return this._accounts(user);
+  show(){
+    return this._accounts();
   }
 
-  async create(){ 
-    return this._accounts(user);
+  create(){ 
+    return this._accounts();
   }
 
 }
 
 
 module.exports = function PostController(){
-
   const router = new Router();
   const resource = new Resource({ model: Post, policy: PostPolicy });
-
-  router.get('/', resource.action('index'))
-  router.post('/', resource.action('create'))
-  router.patch('/:id', resource.action('update'))
-  router.delete('/:id', resource.action('destroy'))
-
+  router.use(resource.resource());
   return router;
 }

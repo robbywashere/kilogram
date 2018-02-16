@@ -1,7 +1,7 @@
 
 module.exports = class BasePolicy {
 
-  constructor({ instance, user }){
+  constructor({ instance, user }={}){
     this.instance = instance;
     this.user = user;
   }

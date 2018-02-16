@@ -1,5 +1,5 @@
 
-const { Forbidden, BadRequest, Unauthorize, NotFound } = require('http-errors');
+const { Forbidden, BadRequest, Unauthorized, NotFound } = require('http-errors');
 
 const demand = require('../../lib/demand')
 const { logger } = require('../../lib/logger');
@@ -108,13 +108,13 @@ module.exports = class BaseResource {
           reqOpts = { ...reqOpts, limit, offset, order }
         }   
 
-         
 
-      
+
+
         reqOpts.scope = this.scope;
         if (req.query.scope) {
-            this.model.scope(req.query.scope);
-            reqOpts.scope = (user)=>this.scope(user).scope(req.query.scope); //this.model.scope(req.query.scope)
+          this.model.scope(req.query.scope);
+          reqOpts.scope = (user)=>this.scope(user).scope(req.query.scope); //this.model.scope(req.query.scope)
         }
         //this.constructor.scope(req.query.scope)
 
