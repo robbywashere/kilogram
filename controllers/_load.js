@@ -24,6 +24,7 @@ function parsePaths(dir) {
   const roots = readdirSync(dir) //get directories
     .filter(f=>lstatSync(join(dir, f)).isDirectory())
     .filter(f=>f !== "lib") //filter out lib dir
+
   roots.forEach(root=>{
     const files = readdirSync(join(dir,root))
       .filter(f=>lstatSync(join(dir,root, f)).isFile())
@@ -38,9 +39,9 @@ function parsePaths(dir) {
 
 
 
-function load({ paths, app, client, prefix= '/' }){
+function load({ paths, app, client, prefix= '/', requireFn = require }){
   paths.forEach( ({ path, endpoint })=>{
-    const controller = require(path)({ app, client });  
+    const controller = requireFn(path)({ app, client });  
     if (controller.prototype.constructor.name === 'router') {
       app.use(urlJoin(prefix,endpoint), controller);
     } else {
@@ -51,4 +52,4 @@ function load({ paths, app, client, prefix= '/' }){
 
 
 
-module.exports = { load, parsePaths } 
+module.exports = { load, parsePaths, endpoint, isCntrlFile } 
