@@ -19,42 +19,6 @@ module.exports = {
   },
   Hooks: {
   },
-  AuthorizeInstance: {
-    all: function(user){
-      return !!user.superAdmin
-    },
-    create: function(user){
-      return (user.isAccountRole(this.id,"admin"))
-    },
-    update: function(user){
-      return (user.isAccountRole(this.id,"admin"))
-    },
-    delete: function(user){
-      return (user.isAccountRole(this.id,"admin"))
-    },
-    read: function(user){
-      return (user.isAccountRole(this.id,["member","admin"]))
-    },
-    list: function(user){
-      return (user.isAccountRole(this.id,["member","admin"]))
-    }
-  },
-  Authorize: {
-    all: isLoggedIn
-  },
-  PolicyScopes:{
-    all: 'userScoped',
-  },
-  PolicyAttributes:{
-    all: function(user){
-      if (!!user.superAdmin) return ['name', 'enabled','id','Users','createdAt','updatedAt','IGAccounts']
-      else {
-        return []
-      }
-
-    }
-  },
-  PolicyAssert: true,
   ScopeFunctions: true, 
   Scopes: {
     // withIGAccounts: { include: [ this.sequelize.models.IGAccount ] },

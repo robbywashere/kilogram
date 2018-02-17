@@ -12,7 +12,8 @@ const basePolicy = require('./basePolicy');
 //
 module.exports = class BaseResource {
 
-  constructor({ model = demand('model'), scope = ()=>this.model, policy= basePolicy }){
+  constructor({ model = demand('model'), scope = ()=>this.model, policy = basePolicy }){
+
     this.model = model;
     this.scope = scope;
     this.policy = policy;
@@ -81,7 +82,7 @@ module.exports = class BaseResource {
     delete opts.index;
 
     const instanceFn = this[name];
-    if (typeof instanceFn !== "function") throw new TypeError(`Action '${name}' is not a function`);
+    if (typeof instanceFn !== "function") throw new TypeError(`Controller action '${name}' is not a function`);
     return async (req, res, next) => {
 
       let reqOpts = cloneDeep(opts);
@@ -113,13 +114,14 @@ module.exports = class BaseResource {
 
         reqOpts.scope = this.scope;
         if (req.query.scope) {
-          this.model.scope(req.query.scope);
-          reqOpts.scope = (user)=>this.scope(user).scope(req.query.scope); //this.model.scope(req.query.scope)
+          this.model.scope(req.query.scope); //does nothing but will throw error if scope doesn't exist
+          reqOpts.scope = (user)=>this.scope(user).scope(req.query.scope); 
         }
         //this.constructor.scope(req.query.scope)
 
         let instance = await instanceFn.bind(this)(req,{ opts: reqOpts, req })
-        const policy = new this.policy({ instance, user: req.user });
+        const reqParams = Object.assign({ },req.params, req.body);
+        const policy = new this.policy({ instance, user: req.user, params: reqParams  });
         const policyFn = (policy[name]) ? policy[name].bind(policy) : policy.default;
 
         if (await policyFn())  return await transportFn({ opts: reqOpts, req, res, instance });
@@ -130,7 +132,7 @@ module.exports = class BaseResource {
           e instanceof ReferenceError ||
           e instanceof RangeError
         ) {
-          logger.error('Controller Error:',e)
+          logger.error('Controller Error:',e) // Programmer error - Durp!
         }
         if (e.name.substr(0,9) === 'Sequelize') {
           next(new BadRequest(e.message))

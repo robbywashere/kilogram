@@ -17,6 +17,31 @@ const BasePolicy = require('../../controllers/lib/basePolicy');
 
 const { Forbidden, BadRequest, Unauthorize, NotFound } = require('http-errors');
 
+class AllowAllPolicy extends BasePolicy {
+
+  index(){
+    return true;
+  }
+  show(){
+    return true;
+  }
+  edit(){
+    return true;
+  }
+  create(){
+    return true;
+  }
+  collectionCreate(){
+    return true;
+  }
+  collectionDestroy(){
+    return true;
+  }
+  collectionEdit(){
+    return true;
+  }
+}
+
 
 const testObj = {
   Name: 'TestObj',
@@ -67,6 +92,7 @@ describe('class controller',function(){
 
     const resource = new BaseResource({ 
       model: TestObj, 
+      policy: AllowAllPolicy
     })
 
     const router = new Router();
@@ -352,7 +378,7 @@ describe('class controller',function(){
 
 })
 
-describe('controller class policy',function(){
+describe('controller class polcy',function(){
 
 
   class RestrictivePolicy extends BasePolicy {

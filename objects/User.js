@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const { logger } = require('../lib/logger');
 const hashify = require('../server-lib/auth/hashify');
 const { STRING, JSON, DATE, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
-const { pick, get, isArray } = require('lodash');
+const { pick, get, isUndefined, isArray } = require('lodash');
 const Promise = require('bluebird');
 const cryptoRandomString = require('crypto-random-string');
 const { genPasswordKey, randomKey } = require('./_helpers');
@@ -110,12 +110,15 @@ module.exports = {
       }
     },
     verifyPassword: function (password) { return (this.passwordHash === hashify({ salt: this.passwordSalt, password })) },
-    isAccountRole: function(accountId, role){
+    isAccountRole: async function(accountId, role){
       try {
+        if (!get(this,'Accounts.length') || isUndefined(this.Accounts[0].UserAccount)) {
+          await this.reloadWithAccounts();
+        }
         const vetter = (isArray(role)) ? role.includes.bind(role) : (x)=>(x===role);
         return this.Accounts.some(acc=>( vetter(get(acc,'UserAccount.role')) && get(acc,'id') === accountId) );
       } catch(e) {
-        return []
+        return false;
       }
     }
   },

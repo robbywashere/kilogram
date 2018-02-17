@@ -6,10 +6,10 @@ const { Router }  = require('express');
 
 class AccountPolicy extends BasePolicy {
 
-  static scope({ model, user }){
-    return model.userScoped(user)
-  }
 
+  static scope(user){
+    return Account.userScopedFn(user);
+  }
   _adminOnly(){
     return this.user.isAccountRole(this.instance.id,"admin")
   }
@@ -31,8 +31,12 @@ class AccountPolicy extends BasePolicy {
   create(){
     return false
   }
-  addUser(){
-    return this._adminOnly();
+  async addUser(){
+   return await this._adminOnly();
+  }
+  async removeUser(){
+    if (this.params.userId === this.user.id) return false;
+   return await this._adminOnly();
   }
 
 }
@@ -40,31 +44,52 @@ class AccountPolicy extends BasePolicy {
 
 class AccountResource extends Resource {
 
-  addUser({ user, params }){
-    const { id, userId, role } = params;
+  async _findUser(id, scope = User) {
+    const user = scope.findById(id);
+    if (!user) throw new NotFound('User not found');
+    return user;
+  }
+
+  async _findAccount(user, id){
+    const account = await this.scope(user).findById(id);
+    if (!account) throw new NotFound('Account not found');
+    return account;
+  }
+
+  async removeUser({ user, params }){
+    let { id, userId } = params;
+    const account = await this._findAccount(user,id);
+    const removableUser = await this._findUser(userId,User.accountsScopedFn(user));
+    account.save = () => account.removeUser(removableUser);
+    return account;
+
+  }
+
+  async addUser({ user, params }){
+    let { id, userId, role } = params;
+
     role = (role === "admin") ? "admin" : "member";
-    const resource = await this.scope(user).findById(id);
 
-    if (!resource) throw new NotFound('Account not found');
+    const account = await this._findAccount(user,id);
 
-    const additionalUser = await User.findById(userId);
+    const additionalUser = await this._findUser(userId);
 
-    if (!addiontalUser) throw new NotFound('User not found');
+    account.save = ()=> account.addUser(additionalUser, { through: { role } });
 
-    account.save = ()=> account.addUser(additionalUser, { through: role });
-
-    return resource;
+    return account;
   }
 
 }
 
 module.exports = function AccountController(){
   const router = new Router();
-  new Resource({ model: Account, policy: AccountPolicy, scope: AccountPolicy.scope });
+  const resource = new AccountResource({ model: Account, policy: AccountPolicy, scope: AccountPolicy.scope });
   router.get('/', resource.action('index'))
   router.get('/:id', resource.action('show'))
   router.post('/', resource.action('create'))
-  router.patch('/:id', resource.action('update'))
+  router.patch('/:id', resource.action('edit'))
   router.delete('/:id', resource.action('destroy'))
   router.post('/:id/user/:userId/:role', resource.action('addUser'))
+  router.delete('/:id/user/:userId', resource.action('removeUser'))
+  return router;
 }
