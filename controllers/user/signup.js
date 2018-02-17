@@ -21,12 +21,15 @@ const { genPasswordKey } = require('../../objects/_helpers');
 const querystring = require('querystring');
 
 
+const requireParams = require('../lib/requireParams');
+
 module.exports = function(){
   const router = new Router();
 
   router.post('/new', async (req, res, next) => {
     try {
       const { email, password } = req.body;
+      requireParams(['email','password'],req.body);
       const user = await User.create({ email, password, verified: false });
       const verifyQuery = querystring.stringify({ verifyKey: user.verifyKey });
       const url = ourUrl('user_signup','verify',verifyQuery);
@@ -41,8 +44,8 @@ module.exports = function(){
 
   router.put('/verify', async (req, res, next) => {
     try {
+      requireParams(['verifyKey'],req.body);
       const { verifyKey } = req.body;
-      if (!verifyKey) throw new BadRequest('missing verifyKey');
       await User.update({ verified: true },{ where: { verifyKey, verified: false } });
       res.sendStatus(200)
     } catch(err) {

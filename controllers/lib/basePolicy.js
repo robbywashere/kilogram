@@ -6,37 +6,37 @@ module.exports = class BasePolicy {
     this.user = user;
   }
 
-  show(){
-    return true;
+    /*show(){
+    return false;
   }
 
   index(){
-    return true;
+    return false;
   }
 
   edit(){
-    return true;
+    return false;
   }
 
   create(){
-    return true;
+    return false;
   }
 
   destroy(){
-    return true;
+    return false;
   }
 
   collectionCreate(){
-    return true;
+    return false;
   }
 
   collectionDestroy(){
-    return true;
+    return false;
   }
 
   collectionEdit(){
-    return true;
-  }
+    return false;
+  }*/
 
   default(){
     return false;

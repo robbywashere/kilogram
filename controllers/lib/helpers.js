@@ -1,6 +1,0 @@
-
-function sanitizeParams([]){
-
-}
-
-module.exports = {}

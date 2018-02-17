@@ -1,8 +1,9 @@
 const { User } = require('../../objects');
 const Resource = require('../lib/resourceClass');
 const BasePolicy = require('../lib/basePolicy');
+const AuthPolicy = require('../lib/authPolicy');
 
-class UserPolicy extends BasePolicy {
+class UserPolicy extends AuthPolicy {
 
 
   index(){
