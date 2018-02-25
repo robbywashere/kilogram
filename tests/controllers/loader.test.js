@@ -6,7 +6,7 @@ const sinon = require('sinon');
 const { Router } = require('express');
 const assert = require('assert');
 
-describe('_load.js', function(){
+describe.only('_load.js', function(){
 
   it('should load a given path into app with MClient and prefix', function(){
 
@@ -49,26 +49,16 @@ describe('_load.js', function(){
     let stub1;
     let lstatStub;
 
-    before(()=>{
-
-      stub1 = sinon.stub(fs,'readdirSync')
-        .onCall(0)
-        .returns(['user','account'])
-        .returns(['index.js','.file.js'])
+    stub1 = sinon.stub(fs,'readdirSync')
+      .onCall(0)
+      .returns(['user','account'])
+      .returns(['index.js','.file.js'])
 
 
-      lstatStub = sinon.stub(fs,'lstatSync').returns({ 
-        isDirectory: ()=> true,
-        isFile: ()=> true
-      })
-
+    lstatStub = sinon.stub(fs,'lstatSync').returns({ 
+      isDirectory: ()=> true,
+      isFile: ()=> true
     })
-    after(()=>{
-      stub1.restore();
-      lstatStub.restore();
-
-    })
-
 
     const result = parsePaths('/Absolute/Root/');
 
@@ -101,6 +91,11 @@ describe('_load.js', function(){
         path: '/Absolute/Root/account/action.js',
         endpoint: '/account/action' } 
     ])
+
+
+
+    stub1.restore();
+    lstatStub.restore();
 
 
   });
