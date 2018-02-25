@@ -10,6 +10,14 @@ const basePolicy = require('./basePolicy');
 
 //TODO: consider Model.setPolicy(policy) for Model.authorize() when doing include model
 //
+
+class EmptyCollection { //TODO ????
+  async save(){ return undefined }
+  serialize(){
+    return [];
+  }
+}
+
 module.exports = class BaseResource {
 
   constructor({ model = demand('model'), scope = ()=>this.model, policy = basePolicy }){
@@ -128,16 +136,17 @@ module.exports = class BaseResource {
         else throw new Forbidden();
 
       } catch(e) {
-        if (e instanceof TypeError || 
-          e instanceof ReferenceError ||
-          e instanceof RangeError
-        ) {
-          logger.error('Controller Error:',e) // Programmer error - Durp!
+        const errType = get(e,'constructor.name');
+        if ( errType === "ServerError" || errType === "ClientError") {
+          next(e); 
         }
-        if (e.name.substr(0,9) === 'Sequelize') {
+        else if (e instanceof TypeError || e instanceof ReferenceError ||e instanceof RangeError) {
+          logger.error(`Controller Error '${get(this,'constructor.name')}':`,e.message) //TODO: Programmer error - Durp!
+          next(new InternalServerError(e));
+        } else if (e.name.substr(0,9) === 'Sequelize') {
           next(new BadRequest(e.message))
         } else {
-          next(e)
+          next(e) //TODO: ¯\_(ツ)_/¯
         }
       }
     }
@@ -217,10 +226,11 @@ module.exports = class BaseResource {
 
     const instances = await scope(user).findAll({ where });
 
+    if (!instances.length) return new EmptyCollection();
+
     const whereIds = { where: { id: { [Op.in]: instances.map(i=>i.id) } } };
 
     let result;
-
 
     instances.save = async ()=> result = await this.model.destroy({ ...whereIds });
     instances.serialize = ()=> {
@@ -233,6 +243,7 @@ module.exports = class BaseResource {
     const scope = opts.scope;
     const where = this.constructor.collectionWhere({ ids: query.ids, opts })
     const instances = await scope(user).findAll({ where });
+    if (!instances.length) return new EmptyCollection();
     const whereIds = { where: { id: { [Op.in]: instances.map(i=>i.id) } } };
     const sanitizedBody = this.model.sanitizeParams(body);
     let result;
@@ -244,7 +255,7 @@ module.exports = class BaseResource {
   async destroy({ user, params }, { opts }){
     const scope = opts.scope;
     const resource = await scope(user).findById(params.id, opts);
-    if (!resource) throw new NotFound();
+    if (!instances.length) return new EmptyCollection();
     resource.save = resource.destroy;
     return resource;
   }

@@ -1,7 +1,8 @@
 
 const basePolicy = require('./basePolicy');
 const { get } = require('lodash');
-const { Forbidden, BadRequest, Unauthorized, NotFound } = require('http-errors');
+const { Forbidden, Unauthorized } = require('http-errors');
+const { logger } = require('../../lib/logger');
 
 module.exports = class AuthPolicy extends basePolicy {
   constructor(...args){
@@ -10,7 +11,7 @@ module.exports = class AuthPolicy extends basePolicy {
       throw new Unauthorized()
     } 
     if (!get(this,'user.Accounts.length')) {
-      throw new Forbidden('User is not an Account member')
+      throw new Forbidden('User is not an Account member');    
     } 
   }
 }

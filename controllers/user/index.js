@@ -34,7 +34,6 @@ module.exports = function UserController(){
   const router = new Router();
   const resource = new Resource({ model: User, policy: UserPolicy, scope: User.accountsScoped });
 
-
   router.get('/:id/accounts', resource.action('show',{ 
     include: [ Account ]
   }));

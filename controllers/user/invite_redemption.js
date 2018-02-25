@@ -6,8 +6,6 @@ const { UserRecovery, UserInvite, User } = require('../../objects');
 
 const emailer = require('../../server-lib/emailer');
 
-const { logger } = require('../../lib/logger');
-
 const handler = require('../../lib/handler');
 
 const { get } = require('lodash');

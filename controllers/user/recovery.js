@@ -6,8 +6,6 @@ const { UserRecovery, User } = require('../../objects');
 
 const emailer = require('../../server-lib/emailer');
 
-const { logger } = require('../../lib/logger');
-
 const { get } = require('lodash');
 
 const { userRecoveryEmail } = require('../../emails');
@@ -26,7 +24,6 @@ module.exports = function(){
       await recoveryEmail.send({ msg: userRecoveryEmail({ key: user.passwordKey }), to: user.email });
       res.sendStatus(200)
     } catch(err) {
-      logger.error(err);
       next(err);
     }
   })
@@ -38,7 +35,6 @@ module.exports = function(){
       await User.recover({ password, passwordKey, email });
       res.sendStatus(200);
     } catch(err) {
-      logger.error(err);
       next(err);
     }
   });

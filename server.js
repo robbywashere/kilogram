@@ -4,6 +4,7 @@ const { parse } = require('url');
 const fs = require('fs');
 const config = require('config');
 const { logger } = require('./lib/logger');
+const logServerErrors = (require('./controllers/lib/logServerErrors'))(logger.error);
 const finale = require('finale-rest');
 const DB = require('./db');
 const Promise = require('bluebird');
@@ -55,9 +56,10 @@ Promise.all([syncDb(false), client.init() ]).then(function(){
 
 
 app.use(function(err, req, res, next) {
-  logger.error(err);
-  res.status(err.statusCode || 500)
-    .send(err.msg || err.toString());
+  err.statusCode = (typeof get(err,'statusCode') !== "undefined") ? err.statusCode : 500;
+  logServerErrors(err);
+  res.status(err.statusCode)
+    .send(err);
 });
 
 

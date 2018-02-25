@@ -158,7 +158,6 @@ describe('class controller',function(){
 
   it(` should delete resources in bulk DELETE '/collection?ids=[...]'`, async function(){
 
-
     const tobjs = await TestObj.bulkCreate([{},{},{}], { returning : true });
 
     const ids  = tobjs.map(i=>i.id).sort();
@@ -175,6 +174,22 @@ describe('class controller',function(){
 
 
   });
+  it(` should return empty collection when deleting resources in bulk DELETE that do not exist'/collection?ids=[...]'`, async function(){
+
+    const tobjs = await TestObj.bulkCreate([{},{},{}], { returning : true });
+
+    const ids  = [99,100,101]; 
+
+    assert(ids.length === 3);
+
+    const response = await request(app)
+      .delete('/collection')
+      .query({ ids })
+
+    assert.equal(response.body.length, 0);
+
+  });
+
 
   it(`should patch a resource with PATCH /:id`, async function(){
 
@@ -215,9 +230,28 @@ describe('class controller',function(){
     assert.equal(body[0].foo,'second')
     assert.equal(body[1].foo,'second')
     assert.equal(body[2].foo,'second')
-
   })
 
+
+  it(`should return empty array when BULK patch resources with PATCH with ids that do not exist /?ids=[...]`, async function(){
+
+
+    const tobjs = await TestObj.bulkCreate([{ foo: 'first'},{ foo: 'first'},{ foo: 'first'}], { returning: true });
+
+
+    const ids = [99,100,101] 
+    assert(ids.length, 3);
+
+    const response = await request(app)
+      .patch(`/collection`)
+      .query({ ids })
+      .send({ foo: 'second' })
+      .expect(200)
+
+    const { body } = response;
+
+    assert.equal(body.length, 0);
+  })
 
   it(`should paginate 100 per page (default) resources with GET '/?page=<n>' `, async function(){
 

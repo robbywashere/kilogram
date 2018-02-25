@@ -6,8 +6,6 @@ const { User } = require('../../objects');
 
 const emailer = require('../../server-lib/emailer');
 
-const { logger } = require('../../lib/logger');
-
 const { get } = require('lodash');
 
 const config = require('config');
@@ -37,7 +35,6 @@ module.exports = function(){
       await verifyEmail.send({ msg: userVerifyEmail({ url }), to: user.email });
       res.sendStatus(200)
     } catch(err) {
-      logger.error(err);
       next(err);
     }
   });
@@ -49,7 +46,6 @@ module.exports = function(){
       await User.update({ verified: true },{ where: { verifyKey, verified: false } });
       res.sendStatus(200)
     } catch(err) {
-      logger.error(err);
       next(err);
     }
   })
