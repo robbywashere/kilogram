@@ -6,7 +6,7 @@ const sinon = require('sinon');
 const { Router } = require('express');
 const assert = require('assert');
 
-describe.only('_load.js', function(){
+describe('_load.js', function(){
 
   it('should load a given path into app with MClient and prefix', function(){
 
