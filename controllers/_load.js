@@ -4,6 +4,7 @@ const fs =require('fs');
 const { get, fromPairs } = require('lodash');
 const urlJoin = require('url-join');
 const path = require('path');
+const { logger } = require('../lib/logger');
 
 
 function isCntrlFile(filename) {
@@ -39,11 +40,21 @@ function parsePaths(dir) {
 
 
 
-function load({ paths, app, client, prefix= '/', requireFn = require }){
+function load({ paths, app, minioClient, prefix= '/', requireFn = require }){
   paths.forEach( ({ path, endpoint })=>{
-     const controller = requireFn(path)({ app, client });  
+    const route = requireFn(path);
+    const controller = route({ app, minioClient });  
+    const URL = urlJoin('/',prefix,endpoint);
+    logger.debug(`Loading controller : ${route.name} : ${ URL }`);
     if (controller.prototype.constructor.name === 'router') {
-      app.use(urlJoin(prefix,endpoint), controller);
+      app.use(URL, async function(req, res, next){
+        try {
+          await controller(req,res,next);
+        } catch(e){
+          console.log(e);
+          next(e);
+        }
+      });
     } else {
       logger.debug(`${path} export not instance of express.Router, skipping ...`);
     } 

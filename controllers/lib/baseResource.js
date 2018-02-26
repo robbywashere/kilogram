@@ -11,7 +11,7 @@ const basePolicy = require('./basePolicy');
 //TODO: consider Model.setPolicy(policy) for Model.authorize() when doing include model
 //
 
-class EmptyCollection { //TODO ????
+class EmptyCollection { //TODO should probably make class wrappers for everything which is returned - save()'d serialize()'d
   async save(){ return undefined }
   serialize(){
     return [];
@@ -20,7 +20,7 @@ class EmptyCollection { //TODO ????
 
 module.exports = class BaseResource {
 
-  constructor({ model = demand('model'), scope = ()=>this.model, policy = basePolicy }){
+  constructor({ model = demand('model'), scope = ()=>this.model, policy = demand('policy')}){
 
     this.model = model;
     this.scope = scope;
@@ -82,6 +82,9 @@ module.exports = class BaseResource {
   }
 
 
+  beforeAction(req){ 
+    return this.policy.authorizeRequest(req); //TODO: this should be decoupled
+  }
 
   action(name,opts={}){
 
@@ -91,11 +94,15 @@ module.exports = class BaseResource {
 
     const instanceFn = this[name];
     if (typeof instanceFn !== "function") throw new TypeError(`Controller action '${name}' is not a function`);
+
     return async (req, res, next) => {
 
-      let reqOpts = cloneDeep(opts);
-
       try {
+
+
+      let reqOpts = cloneDeep(opts); //TODO: no cloning, this should be newing or something
+
+        await (opts.beforeAction || this.beforeAction.bind(this))(req); //TODO: shame
         if (typeof reqOpts  === "function") reqOpts = reqOpts(req)
 
         let transportFn = (isIndexAction) ? this._transportIndex : this._transport;
@@ -119,8 +126,7 @@ module.exports = class BaseResource {
 
 
 
-
-        reqOpts.scope = this.scope;
+        reqOpts.scope = reqOpts.scope || this.scope;
         if (req.query.scope) {
           this.model.scope(req.query.scope); //does nothing but will throw error if scope doesn't exist
           reqOpts.scope = (user)=>this.scope(user).scope(req.query.scope); 
@@ -132,22 +138,18 @@ module.exports = class BaseResource {
         const policy = new this.policy({ instance, user: req.user, params: reqParams  });
         const policyFn = (policy[name]) ? policy[name].bind(policy) : policy.default;
 
-        if (await policyFn())  return await transportFn({ opts: reqOpts, req, res, instance });
+        if (await policyFn()) return await transportFn({ opts: reqOpts, req, res, instance });
         else throw new Forbidden();
 
       } catch(e) {
-        const errType = get(e,'constructor.name');
-        if ( errType === "ServerError" || errType === "ClientError") {
-          next(e); 
+        if (get(e,'constructor.name') === "ClientError") {
+          return next(e);
         }
-        else if (e instanceof TypeError || e instanceof ReferenceError ||e instanceof RangeError) {
-          logger.error(`Controller Error '${get(this,'constructor.name')}':`,e.message) //TODO: Programmer error - Durp!
-          next(new InternalServerError(e));
-        } else if (e.name.substr(0,9) === 'Sequelize') {
-          next(new BadRequest(e.message))
-        } else {
-          next(e) //TODO: ¯\_(ツ)_/¯
-        }
+        if ((e.name.substr(0,9) === 'Sequelize') || (get(e,'constructor.name') === "ClientError")) {
+          return next(new BadRequest(e.message))
+        } 
+        logger.debug(`Controller Error in '${get(this,'constructor.name')}':`,e);
+        return next(e);
       }
     }
   }

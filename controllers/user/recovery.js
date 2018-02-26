@@ -13,7 +13,7 @@ const { userRecoveryEmail } = require('../../emails');
 const { genPasswordKey } = require('../../objects/_helpers');
 
 
-module.exports = function(){
+module.exports = function UserRecoveryController(){
   const router = new Router();
   router.post('/:email', async (req, res, next) => {
     try {

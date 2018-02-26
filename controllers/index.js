@@ -28,17 +28,18 @@ const { isSuperAdmin } = require('../objects/_helpers');
 
 
 
+//TODO: once finale is removed, should be exporting routers vs injecting app
 
-function Init({ app, sequelize = DB, client = demand('client'), objects = Objects }){
+function Init({ app, sequelize = DB, minioClient = demand('minioClient'), objects = Objects }){
   loadObjectControllers({ app, sequelize, objects })
-  loadPathControllers({ app, client });
+  loadPathControllers({ app, minioClient });
   return app;
 }
 
 Init.loadPathControllers = loadPathControllers;
-function loadPathControllers({ app, client }){
+function loadPathControllers({ app, minioClient }){
   const paths = parsePaths(__dirname);
-  load({ paths, app, client, prefix: 'api' })
+  load({ paths, app, minioClient, prefix: 'api' })
 }
 
 Init.loadObjectControllers = loadObjectControllers
@@ -53,7 +54,6 @@ function loadObjectControllers({app, sequelize = DB, objects = Objects}) {
     const resource = finale.resource({ model: objects[k] });
 
     ['list','read','delete','update','create'].forEach(action => {
-
       resource[action].auth(function(req, res, context){
         if (!isSuperAdmin(req.user)) {
           throw new ForbiddenError(); 
@@ -62,6 +62,11 @@ function loadObjectControllers({app, sequelize = DB, objects = Objects}) {
           return context.continue();
         }
       })
+      resource[action].error = function(req, res, error) {
+        logger.error(error);
+        res.status(error.status);
+        res.send(err);
+      }
     })
   });
 }

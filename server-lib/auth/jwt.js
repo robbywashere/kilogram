@@ -8,13 +8,11 @@ const { Account, User } = require('../../objects');
 const handler = require('../../lib/handler');
 const { Unauthorized } = require('http-errors');
 
-const EXPIRE = (minutes = 60) => Math.floor(Date.now() / 1000) + (minutes * 60);
-
 module.exports = function JWT(app){
 
   const router = new Router();
 
-  app.use(require('body-parser').json());
+  if (typeof app !== "undefined") app.use(require('body-parser').json());
 
   router.post('/auth',handler(async function(req, res, next){
 
@@ -35,7 +33,7 @@ module.exports = function JWT(app){
         email,
         superAdmin,
         Accounts,
-        exp: EXPIRE()
+        exp: config.get('SESSION_EXPIRE')
       },config.get('APP_SECRET'));
 
       res.send({ token })
@@ -46,7 +44,7 @@ module.exports = function JWT(app){
 
   router.use(jwt({ secret: config.get('APP_SECRET') }))
 
-  //deserialize
+  //deserialize //TODO ???
     /*router.use(async function(req, res, next){
     try {
       const user = await User.findById(req.user.id, { include: [ Account ]});

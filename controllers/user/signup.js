@@ -21,7 +21,7 @@ const querystring = require('querystring');
 
 const requireParams = require('../lib/requireParams');
 
-module.exports = function(){
+module.exports = function UserSignUpController(){
   const router = new Router();
 
   router.post('/new', async (req, res, next) => {

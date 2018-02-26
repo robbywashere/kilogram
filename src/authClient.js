@@ -29,12 +29,13 @@ export const jwtAuthClient = async (type, params) => {
   if (type === AUTH_ERROR) {
     const { status } = params;
     if (status === 401 || status === 403) {
-      return Promise.reject();
+      throw new Error('AUTH_ERROR');
     }
   } 
   if (type === AUTH_CHECK) {
-        return localStorage.getItem('token') ? Promise.resolve() : Promise.reject();
-    }
+    if (localStorage.getItem('token')) return;
+    throw new Error('AUTH_CHECK') ;
+  }
   if (type === AUTH_LOGOUT) {
     return axios.delete('/auth');
   }

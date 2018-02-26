@@ -6,6 +6,9 @@ module.exports = class BasePolicy {
     this.instance = instance;
     this.user = user;
   }
+  static authorizeRequest(req){
+    //no-op
+  }
 
     /*show(){
     return false;

@@ -6,11 +6,11 @@ const { removeObject,
   signedURL } = require('../../server-lib/minio/middlewares');
 
 
-module.exports = function({ client = demand('client') }) {
+module.exports = function MinioController({ minioClient = demand('minioClient') }) {
   const router = new Router();
-  router.get('/objects', listObjects({ client }))
-  router.delete('/objects', removeObject({ client }));
-  router.post('/uploads', signedURL({ client }))
+  router.get('/objects', listObjects({ minioClient }))
+  router.delete('/objects', removeObject({ minioClient }));
+  router.post('/uploads', signedURL({ minioClient }))
   return router;
 }
 

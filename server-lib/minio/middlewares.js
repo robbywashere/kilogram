@@ -6,12 +6,12 @@ const { BadRequest, Unauthorized } = require('http-errors');
 
 
 //TODO: dont think this is even needed ?
-function removeObject({ client = demand('client') }){
+function removeObject({ minioClient = demand('minioClient') }){
   return async (req, res, next) => { 
     try {
       const name = get(req,'query.name');
       if (!name) throw new BadRequest('object name not specified');
-      res.send(await client.removeObject({ name }));
+      res.send(await minioClient.removeObject({ name }));
     } catch(e) {
       next(e);
     }
@@ -19,10 +19,10 @@ function removeObject({ client = demand('client') }){
 
 }
 
-function listObjects({ client = demand('client') }){
+function listObjects({ minioClient = demand('minioClient') }){
   return async (req, res, next) => { 
     try {
-      res.send(await client.listObjectsWithSURLs());
+      res.send(await minioClient.listObjectsWithSURLs());
     } catch(e) {
       next(e);
     }
@@ -30,7 +30,7 @@ function listObjects({ client = demand('client') }){
 }
 
 
-function signedURL({ client = demand('client') }){
+function signedURL({ minioClient = demand('minioClient') }){
   return async (req, res, next) => {
     try { 
 
@@ -42,7 +42,7 @@ function signedURL({ client = demand('client') }){
 
       if (typeof get(req,'user.accountIds') !== "function" || !req.user.accountIds().includes(AccountId)) throw new Unauthorized('User not authorized for given AccountId');
 
-      const { uuid, url, objectName } = await client.newPhoto({ accountId: AccountId });
+      const { uuid, url, objectName } = await minioClient.newPhoto({ accountId: AccountId });
       res.send({ uuid, url, objectName });
     } catch(e) {
       next(e);

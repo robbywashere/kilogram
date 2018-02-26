@@ -11,7 +11,6 @@ try {
 }
 
 module.exports = {
-  LOG_LEVEL: 3,
   BASE_URL: process.env.BASE_URL || 'http://localhost',
   S3_ACCESS_KEY: process.env.S3_ACCESS_KEY || minioConfig.S3_ACCESS_KEY,
   S3_SECRET_KEY: process.env.S3_SECRET_KEY || minioConfig.S3_SECRET_KEY,

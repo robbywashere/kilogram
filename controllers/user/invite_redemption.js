@@ -11,7 +11,7 @@ const handler = require('../../lib/handler');
 const { get } = require('lodash');
 
 
-module.exports = function (){
+module.exports = function UserInviteRedemptionController(){
   const router = new Router();
   router.put('/', handler(async (req, res) => {
     const { key } = req.body;

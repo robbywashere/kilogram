@@ -14,14 +14,17 @@ import { sessionClient } from './authClient';
 
 const http = (u, o = {}) => fetchJson(u, { ...o, credentials: 'include' });
 
+const prefix = 'admin';
+const location = `${window.location.origin}/${prefix}`;
+
 const App = () => (
-  <Admin restClient={epilogueClient(window.location.origin, http )} authClient={sessionClient} >
-    <Resource name="admin/devices" name='Devices' list={DeviceList} />
-    <Resource name="admin/jobs" name='Jobs' list={JobList} />
-    <Resource name="admin/accounts"  name='Accounts' list={AccountList} />
-    <Resource name="admin/users" name='Users' list={UserList} />
-    <Resource name="admin/photos" name='Photos' list={PhotoList} />
-    <Resource name="admin/bucketevents" name='Bucket Events' list={BucketEventList} />
+  <Admin restClient={epilogueClient(location, http )} authClient={sessionClient} >
+    <Resource name="devices" label='Devices' list={DeviceList} />
+    <Resource name="jobs" label='Jobs' list={JobList} />
+    <Resource name="accounts"  label='Accounts' list={AccountList} />
+    <Resource name="users" label='Users' list={UserList} />
+    <Resource name="photos" label='Photos' list={PhotoList} />
+    <Resource name="bucketevents" label='Bucket Events' list={BucketEventList} />
   </Admin>
 );
 
