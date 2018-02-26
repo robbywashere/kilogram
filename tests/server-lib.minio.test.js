@@ -333,7 +333,7 @@ describe('MClient class', function(){
         client: { async presignedPutObject(){ return  'http://fakeurl/photo' } }
       });
 
-      const router = Routes({ client })
+      const router = Routes({ minioClient: client })
 
 
       const app = exprezz(user);
@@ -360,7 +360,7 @@ describe('MClient class', function(){
         client: { async presignedPutObject(){ return  'http://fakeurl/photo' } }
       });
 
-      const router = Routes({ client })
+      const router = Routes({ minioClient: client })
 
       const app = exprezz();
 

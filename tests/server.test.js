@@ -23,7 +23,7 @@ beforeEach(syncDB);
           listObjects: sinon.stub().returns(streamify([{},{},{}]))
         }
         const mc = new MClient({ bucket, client });
-        app.use(Routes({ client: mc }))
+        app.use(Routes({ minioClient: mc }))
         const  expectation = [ { bucketName: 'testbucket', url: 'http://fakeurl/object' },
           { bucketName: 'testbucket', url: 'http://fakeurl/object' },
           { bucketName: 'testbucket', url: 'http://fakeurl/object' } ]
@@ -52,7 +52,7 @@ beforeEach(syncDB);
           removeObject: sinon.mock().returns(Promise.resolve())
         }
         const mc = new MClient({ bucket, client });
-        app.use(Routes({ client: mc }))
+        app.use(Routes({ minioClient: mc }))
 
         const response = await request(app).delete('/objects?name=photo.jpg').expect(200)
 

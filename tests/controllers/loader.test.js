@@ -19,7 +19,7 @@ describe('_load.js', function(){
     const params = { 
       paths: [{ path: 'someFile', endpoint: '/endpoint'}],
       app: appSpy,
-      client: true,
+      minioClient: true,
       prefix: '/prefix',
       requireFn: sinon.stub().returns(routerStub)
     };
@@ -28,7 +28,7 @@ describe('_load.js', function(){
 
     assert(params.requireFn.calledWith('someFile'))
 
-    assert(routerStub.calledWith({ app: params.app, client: true }))
+    assert(routerStub.calledWith({ app: params.app, minioClient: true }))
 
     assert(params.app.use.calledWith('/prefix/endpoint',router));
 
