@@ -10,6 +10,7 @@ const basePolicy = require('./basePolicy');
 
 //TODO: consider Model.setPolicy(policy) for Model.authorize() when doing include model
 //
+//TODO: Scope shouldn't be a function, perhaps scope should be an overridable class?
 
 class EmptyCollection { //TODO should probably make class wrappers for everything which is returned - save()'d serialize()'d
   async save(){ return undefined }
@@ -37,7 +38,9 @@ module.exports = class BaseResource {
         let parsedValue = opValue;
         try {
           parsedValue = JSON.parse(opValue); //TODO: THIS COULD BE DUMB
-        } catch(e){ /*skip*/ }
+        } catch(e){  
+          if (!(e instanceof SyntaxError)) throw e;
+        }
         const opSymbol = Op[opKey]
         if (opSymbol) {
           p[k] = { ...p[k], [opSymbol] : parsedValue } 
@@ -83,7 +86,7 @@ module.exports = class BaseResource {
 
 
   beforeAction(req){ 
-    return this.policy.authorizeRequest(req); //TODO: this should be decoupled
+    return this.policy.authorizeRequest(req); //TODO: is this too tight of coupling?
   }
 
   action(name,opts={}){

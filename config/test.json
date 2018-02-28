@@ -1,6 +1,0 @@
-{
-  "NODE_ENV": "test",
-  "BASE_URL": "http://localhost",
-  "S3_ACCESS_KEY" : "xxx",
-  "S3_SECRET_KEY":"xxx"
-}

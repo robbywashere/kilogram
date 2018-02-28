@@ -5,6 +5,7 @@ const logServerErrors = (require('./controllers/lib/logServerErrors'))(logger.er
 module.exports = function (err, req, res, next) {
   err.status = (typeof get(err,'status') !== "undefined") ? err.status : 500;
   logServerErrors(err);
+  console.log(err);
   res.status(err.status)
     .send(err);
 }

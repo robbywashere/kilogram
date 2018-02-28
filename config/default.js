@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { isInteger } = require('lodash');
 const cryptoRandomString = require('crypto-random-string');
-
+const minioConfig = require('./LoadMinioConfig')();
 
 if (!fs.existsSync(path.join(__dirname,'..','.env')) && process.env.NODE_ENV === 'development') {
   console.error(`**** \n ERROR: Cannot locate .env file! \n ***`);
@@ -11,23 +11,21 @@ if (!fs.existsSync(path.join(__dirname,'..','.env')) && process.env.NODE_ENV ===
 require('dotenv').config(); // eslint-disable-line import/no-extraneous-dependencies
 
 function logLevel(level = 99) { 
-  console.log(level);
-    const L = parseInt(level);
-    if (!isInteger(L)) throw new TypeError('Unable to parse LOG_LEVEL to integer, check configuration');
-    return L;
+  const L = parseInt(level);
+  if (!isInteger(L)) throw new TypeError('Unable to parse LOG_LEVEL to integer, check configuration');
+  return L;
 
 }
 
 function session_exp(minutes = 60) {
-    const min = parseInt(minutes);
-    if (!isInteger(min)) throw new TypeError('Unable to parse minutes to integer, check configuration for SESSION_EXPIRE_MINUTES');
-    return Math.floor(Date.now() / 1000) + (min * 60);
+  const min = parseInt(minutes);
+  if (!isInteger(min)) throw new TypeError('Unable to parse minutes to integer, check configuration for SESSION_EXPIRE_MINUTES');
+  return Math.floor(Date.now() / 1000) + (min * 60);
 }
 
 module.exports = {
   DB_ENC_KEY: process.env.DB_ENC_KEY,
   NODE_ENV: process.env.NODE_ENV,
-  PYTHON_PATH: process.env.PYTHON_PATH,
   PORT: process.env.PORT,
   LOG_LEVEL: logLevel(process.env.LOG_LEVEL),
   MINIO_ENDPOINT: process.env.MINIO_ENDPOINT, 
@@ -37,4 +35,9 @@ module.exports = {
   MINIO_TMP_DIR: process.env.MINIO_TMP_DIR || '/tmp',
   APP_SECRET: process.env.APP_SECRET || cryptoRandomString(128),
   SESSION_EXPIRE: session_exp(process.env.SESSION_EXPIRE_MINUTES),
+  BASE_URL: process.env.BASE_URL || 'http://localhost',
+  S3_ACCESS_KEY: process.env.S3_ACCESS_KEY || minioConfig.S3_ACCESS_KEY,
+  S3_SECRET_KEY: process.env.S3_SECRET_KEY || minioConfig.S3_SECRET_KEY,
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  PYTHON_PATH: process.env.PYTHON_PATH || '/usr/bin/local/python',
 };

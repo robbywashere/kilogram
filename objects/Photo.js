@@ -21,7 +21,8 @@ module.exports = {
     },
     uuid: {
       type: UUID,
-      defaultValue: UUIDV4
+      defaultValue: UUIDV4,
+      unique: true
     },
     meta: {
       type: sequelize.JSON,

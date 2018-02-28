@@ -3,6 +3,9 @@ const demand = require('../../lib/demand');
 const bson = require('bson');
 const msgpack = require('msgpack-lite');
 
+const DELIMITER = '_';
+//$-_.+!*'()
+
 const BASS64CIPH = [['=','_'],['/','-'],['+','.']];
 
 class bass64 {
@@ -128,16 +131,15 @@ function create(version, ...args) {
   if (typeof schemas[version] === 'undefined'){
     throw new Error(`version schema ${version} does not exist`)
   }
-  return `${version}:${schemas[version].create(...args)}`;
+  return `${version}${DELIMITER}${schemas[version].create(...args)}`;
 }
 
 function parse(objectname){
-  const [version, name] = objectname.split(':');
+  const [version, name ] = objectname.split(DELIMITER);
   if (typeof schemas[version] === 'undefined'){
     throw new Error(`version schema ${version} does not exist or it is malformed objectname`)
   }
-  return schemas[version].parse(name);
-
+  return schemas[version].parse([].concat(name).join(DELIMITER));
 }
 
 module.exports = { ...schemas, schemas, parse, create }

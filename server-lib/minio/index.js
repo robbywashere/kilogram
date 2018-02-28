@@ -16,7 +16,7 @@ const { removeObject,
   signedURL } = require('./middlewares');
 
 
-const ClientConfig =  {
+const ClientConfig =  ()=> ({ //TODO leverage / move to config/default.js
   endPoint: config.get('MINIO_ENDPOINT'),
   bucket: config.get('MINIO_BUCKET'),
   port: parseInt(config.get('MINIO_PORT')),
@@ -24,7 +24,7 @@ const ClientConfig =  {
   accessKey: config.get('S3_ACCESS_KEY'),
   secretKey: config.get('S3_SECRET_KEY'),
   tmpDir: config.get('MINIO_TMP_DIR'),
-}
+});
 
 
 function WrapMinioClient(client = demand('client instance/client.prototype'), opts = {}){
@@ -66,7 +66,7 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
 //
 
 class MClient {
-  constructor({ bucket = ClientConfig.bucket, region='us-east-1', config = ClientConfig, client }={}){
+  constructor({ bucket = ClientConfig().bucket, region='us-east-1', config = ClientConfig(), client }={}){ //TODO bucket should just go off of 'config' not be passed diff
     this.config = config;
     this.bucket = bucket;
     this.region = region;

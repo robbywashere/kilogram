@@ -47,14 +47,7 @@ function load({ paths, app, minioClient, prefix= '/', requireFn = require }){
     const URL = urlJoin('/',prefix,endpoint);
     logger.debug(`Loading controller : ${route.name} : ${ URL }`);
     if (controller.prototype.constructor.name === 'router') {
-      app.use(URL, async function(req, res, next){
-        try {
-          await controller(req,res,next);
-        } catch(e){
-          console.log(e);
-          next(e);
-        }
-      });
+      app.use(URL,controller);
     } else {
       logger.debug(`${path} export not instance of express.Router, skipping ...`);
     } 

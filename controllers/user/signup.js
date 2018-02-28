@@ -24,7 +24,7 @@ const requireParams = require('../lib/requireParams');
 module.exports = function UserSignUpController(){
   const router = new Router();
 
-  router.post('/new', async (req, res, next) => {
+  router.post('/', async (req, res, next) => {
     try {
       const { email, password } = req.body;
       requireParams(['email','password'],req.body);

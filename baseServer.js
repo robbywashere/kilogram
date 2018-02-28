@@ -41,7 +41,9 @@ module.exports = async function({
 
 
     logger.debug('Syncing DB and initializing minioClient')
-    await Promise.all([syncDb(false), minioClient.init() ]);
+    await syncDb(false);
+
+    app.minioEventListener = await minioClient.init();
     return app;
 
   } catch(e) {

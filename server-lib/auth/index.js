@@ -88,11 +88,12 @@ module.exports = function Auth(app) {
   router.get('/auth',function(req, res, next){
     const user = req.user;
     if (!user) { return next(new Forbidden()) }
-    res.send({ user });
+    res.send({ user: user.serialize() });
   });
   router.post('/auth',passport.authenticate('local'), function(req, res){
     //req.user.setPolicy('read', req.user);
     const user = req.user;
+    res.status(201);
     res.send({ user });
   });
   router.delete('/auth', (req,res) => {

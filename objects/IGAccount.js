@@ -3,23 +3,23 @@ const crypto = require('crypto');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { isLoggedIn } = require('./_helpers');
 
+//TODO unique true composite key constraint { AccountId, username }
 module.exports = {
   Name: 'IGAccount',
+
   Properties:{
     password: {
-      type: STRING
+      type: STRING,
+      allowNull: false,
+      omit: true,
     },
     username: {
-      type: STRING
+      type: STRING,
+      allowNull: false,
+      unique: 'igaccount_account'
+      //permit: false,
     },
   },
-  PolicyScopes:{},
-  Authorize: {
-    all: isLoggedIn
-  },
-  AuthorizeInstance:{},
-  PolicyAttributes:{},
-  PolicyAssert: true,
   Scopes: {
   },
   Methods:{

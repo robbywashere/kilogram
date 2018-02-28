@@ -7,8 +7,8 @@ describe('logger', function(){
 
   it('should set log level',function(){
 
-    setLogLevel(levels.ERROR);
-    assert.equal(getLogLevel(),levels.ERROR);
+    setLogLevel(99);
+    assert.equal(getLogLevel(),99);
 
     setLogLevel(levels.STATUS);
     assert.equal(getLogLevel(),levels.STATUS);
