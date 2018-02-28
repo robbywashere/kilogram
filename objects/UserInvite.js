@@ -12,9 +12,6 @@ module.exports = {
       type: STRING,
       defaultValue: ()=> cryptoRandomString(32)
     },
-    password: {
-      type: VIRTUAL,
-    },
     email: {
       type: STRING,
       allowNull: false,
@@ -59,6 +56,7 @@ module.exports = {
           user = await $.User.create({
             email,
             verified: false,
+            password: cryptoRandomString(32),
             Accounts: [ Account ],
           },{ include: [ $.Account ] });
         }

@@ -342,12 +342,12 @@ describe('MClient class', function(){
 
 
       const res = await request(app)
-        .post('/uploads')
+        .post('/url')
         .send({ name: 'filename.jpg', AccountId: user.Accounts[0].id })
         .expect(200);
 
       assert.deepEqual(res.body,{ 
-        objectName: "v4:gqR1dWlkpFVVSUSpYWNjb3VudElkAQ__",
+        objectName: "v4_gqR1dWlkpFVVSUSpYWNjb3VudElkAQ__",
         url: 'http://fakeurl/photo', 
         uuid: 'UUID' })
 
@@ -368,7 +368,7 @@ describe('MClient class', function(){
 
 
       const res = await request(app)
-        .post('/uploads')
+        .post('/url')
         .send({ name: 'filename.jpg', AccountId: 1 })
         .expect(401)
 

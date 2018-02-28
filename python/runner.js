@@ -53,7 +53,7 @@ async function JobRun({ job = demand('job'), photo = demand('photo'), post = dem
       args: {
         username: igAccount.username, 
         password: igAccount.password,
-        desc: post.desc,
+        desc: post.text,
         localfile
       } 
     });
@@ -69,6 +69,7 @@ async function JobRun({ job = demand('job'), photo = demand('photo'), post = dem
   } catch(error) {
     await job.update({ inprog: false, finish: false, outcome: { success: false, error: error.toString() }});
     //TODO: await BotchedJob.new(job,{ cmd, args, error, adbId: device.adbId })
+    //.catch(logger.critical(`FAILED TO LOG BOTCHED JOB`,`{ cmd, args, error, adbId: device.adbId }`))
     if (throws) throw error;
   } finally {
     //TODO rm localfile

@@ -10,7 +10,7 @@ const signup = require('../../controllers/user/signup')
 
 const recovery = require('../../controllers/user/recovery');
 
-describe('User concerns', function(){
+describe('User actions', function(){
 
 
 
@@ -25,7 +25,7 @@ describe('User concerns', function(){
     app.use(signup());
 
     const res1 = await request(app)
-      .post('/new')
+      .post('/')
       .send({ 
         email: 'newuser@blah.com',
         password: 'blah'
@@ -87,23 +87,28 @@ describe('User concerns', function(){
   })
 
 
-  it(`should respond do PUT '/' user invite of specified key creating a User with a password Key if one does not exist`, async function(){
+  it(`User not created by person, but is created by invite - should respond do PUT '/' user invite of specified key creating a User with a password Key if one does not exist`, async function(){
 
+
+    const email = 'myWackyEmail@example.com';
+    const password = 'myWackyNewPassword';
 
     const account = await Account.create({});
     const ui = await UserInvite.create({
-      email: 'x@x.com',
+      email,
       AccountId: account.id,
     });
 
     const app = exprezz();
 
-    app.use(inviteRedemption());
+    app.use('/invite',inviteRedemption());
+
+    app.use('/recovery',recovery());
 
     appLogger(app);
 
     const res = await request(app)
-      .put('/')
+      .put('/invite')
       .send({
         key: ui.key
       })
@@ -114,6 +119,17 @@ describe('User concerns', function(){
     const user = await User.findOne({ where: { passwordKey: key } })
 
     assert(user);
+
+
+    const res2 = await request(app)
+      .put('/recovery')
+      .send({ password, email, passwordKey: key })
+      .expect(200);
+
+    await user.reload();
+
+    assert(user.verifyPassword(password));
+
   })
 
   it(`should respond do PUT '/' user invite of specified key for existing user`, async function(){
@@ -145,7 +161,12 @@ describe('User concerns', function(){
       })
       .expect(200)
 
-    assert(!res.body.key);
+    await existingUser.reloadWithAccounts();
+
+    assert(!res.body.key); //key does not come in response since user is already verified
+
+
+
 
 
   })

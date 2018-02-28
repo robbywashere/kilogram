@@ -31,19 +31,23 @@ function exprezz(user = {}){
   return app;
 }
 
+function newIGAccount(user){
+  return IGAccount.create({ username: 'xxx', password: 'password', AccountId: user.Accounts[0].id });
+}
 async function createAccountUserPostJob(){
 
 
   const user = await User.create({
     password: 'blah',
-    email: 'test@test.com'
-  });
-  const account = await Account.create();
+    email: 'test@test.com',
+    Accounts: {},
+  },{ include: [ Account ]});
+  const account = user.Accounts[0];
   const photo = await Photo.create({ 
       bucket: 'uploads',
       objectName: minioObj.create('v2',{ payload: true })
   });
-  const igAccount = await IGAccount.create();
+  const igAccount = await newIGAccount(user);
   let post = await Post.create({
     postDate: new Date(),
     UserId: user.id,
@@ -60,24 +64,25 @@ async function createAccountUserPostJob(){
   return { account, igAccount, user, post, job }
 }
 
-async function ezUser(opts,moreOpts){
+function ezUser(opts,moreOpts){
   return User.create(Object.assign({
     password: 'blah',
     email: 'test@test.com',
   },opts),moreOpts)
 }
 
+function ezUserAccount(){
+  return ezUser({ Accounts: {} },{ include: [ Account ]});
+}
+
 async function createAccountUserPost(){
-  const user = await User.create({
-    email: 'test@test.com',
-    password: 'blah',
-  });
+  const user = await ezUserAccount();
   const photo = await Photo.create({ 
       bucket: 'uploads',
       objectName: minioObj.create('v2',{ payload: true })
   });
-  const account = await Account.create();
-  const igAccount = await IGAccount.create();
+  const account = user.Accounts[0];
+  const igAccount = await newIGAccount(user);
   let post = await Post.create({
     postDate: new Date(),
     UserId: user.id,
@@ -91,13 +96,9 @@ async function createAccountUserPost(){
 
 async function createAccountUserPostJob2(){
 
-  const account = await Account.create();
-  const igaccount = await IGAccount.create();
-
-  const user = await User.create({
-    email: 'test@test.com',
-    password: 'blah',
-  });
+  const user = await ezUserAccount();
+  const account = user.Accounts[0];
+  const igaccount = await newIGAccount(user);
   let post = await Post.create({
     postDate: new Date(),
     AccountId: account.id,
@@ -117,10 +118,7 @@ async function createAccountUserPostJob2(){
 }
 
 async function createUserPostJob(){
-  const user = await User.create({
-    email: 'test@test.com',
-    password: 'blah',
-  });
+  const user = await ezUserAccount();
   let post = await Post.create({
     postDate: new Date(),
     UserId: user.id,
@@ -137,4 +135,4 @@ async function createUserPostJob(){
   return post;
 }
 
-module.exports =  { ezUser, fixtures, createAccountUserPostJob, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz, appLogger  }
+module.exports =  { ezUser, ezUserAccount, fixtures, createAccountUserPostJob, newIGAccount, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz, appLogger  }

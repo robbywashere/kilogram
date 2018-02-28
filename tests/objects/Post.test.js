@@ -7,7 +7,7 @@ const assert = require('assert');
 const sequelize = require('sequelize');
 const sync = require('../../db/sync');
 const Promise = require('bluebird');
-const { ezUser, createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('../helpers');
+const { ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('../helpers');
 const { constant, times } = require('lodash');
 const minioObj = require('../../server-lib/minio/minioObject');
 
@@ -40,11 +40,11 @@ describe('objects/Post', function(){
   it('should create jobs for all outstanding posts with .initJobs', async function(){
 
 
-    const account = await Account.create({});
-    const igaccount = await IGAccount.create({});
+    const user = await ezUserAccount();
+    const account = user.Accounts[0];
+    const igaccount = await newIGAccount(user);
     const photo = await Photo.create({});
 
-    const user = await ezUser();
     const props = {
       postDate: sequelize.fn('NOW'),
       UserId: user.id,

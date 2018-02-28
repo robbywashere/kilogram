@@ -8,6 +8,7 @@ const config = require('config');
 const kill  = require('tree-kill');
 const assert = require('assert');
 const rimraf = require('rimraf');
+const Promise = require('bluebird');
 const request = require('request-promise');
 const { Job, Photo, IGAccount } = require('../../objects');
 const { statSync, createReadStream, readdirSync } = require('fs');
@@ -49,13 +50,12 @@ function runMinio(){
   //minio server "$HOME/minio-data/"
   //
   const minio = spawn('minio', ['server', './.minio-test-data']);
-  console.log('minio up')
   minio.stdout.on('data', (data) => {
-    console.log(`stdout: ${data}`);
+    //>   console.log(`stdout: ${data}`);
   });
 
   minio.stderr.on('data', (data) => {
-    console.error(`stderr: ${data}`);
+    //>   console.error(`stderr: ${data}`);
   });
 
   minio.on('close', (code) => {
@@ -64,7 +64,7 @@ function runMinio(){
   return minio; 
 }
 
-describe.only('End To End Test 👍 ',function(){
+describe('End To End Test 👍 ',function(){
 
 
   let minio;
@@ -105,7 +105,7 @@ describe.only('End To End Test 👍 ',function(){
 
     await new Promise(R=>{
       SERVER = APP.listen(FREE_PORT,()=>{
-        console.log(`server listening on : ${FREE_PORT}`)
+        console.log(`Server listening on : ${FREE_PORT}`)
         R();
       });
     });
@@ -136,7 +136,6 @@ describe.only('End To End Test 👍 ',function(){
 
     assert(url);
 
-    //TODO: test this, errors seem to be repeating for somereason
     const res5 = await request.put({
       uri: url,
       headers :{ 
@@ -149,18 +148,14 @@ describe.only('End To End Test 👍 ',function(){
 
     assert(readdirSync(BUCKETPATH).includes(objectName));
 
-    const allPhotos = await Photo.findAll();
+    //await Promise.delay(1000);
 
-
-    try {
-      assert(allPhotos.find(p=> p.objectName === objectName));
-    } catch(e){
-      console.log('Photo mismatch');
-      console.log('Photos in DB',(await Photo.findAll()).map(p=>p.toJSON()))
-
-      console.log('Photos in DIR',readdirSync(BUCKETPATH))
-
+    let retry =0;
+    while (!(await Photo.findAll()).length && retry++ <= 3){
+      console.log(`try ${retry} Photo not in DB retrying in 1 sec....`);
+      await Promise.delay(1000);
     }
+
 
     const photoFile = path.join(BUCKETPATH,objectName)
 
@@ -187,7 +182,6 @@ describe.only('End To End Test 👍 ',function(){
       photoUUID: uuid
     }, { jar })
 
-    
 
     const post = res7.body;
 
@@ -199,18 +193,17 @@ describe.only('End To End Test 👍 ',function(){
 
     assert(jobs.length,1);
 
-    const doJob = await Job.popJob();
-
-    await doJob.reloadWithAll();
+    const doJob = await (await Job.popJob()).reloadWithAll();
 
     const fullJob = doJob.toJSON();
-
 
     assert.equal(fullJob.Post.id,post.id);
     assert.equal(fullJob.IGAccount.username,igaccount.username);
     assert.equal(fullJob.IGAccount.id,igaccount.id);
     assert.equal(fullJob.Post.Photo.objectName, objectName);
 
+
+    //Req.post('/api/user/invite_')
 
 
 

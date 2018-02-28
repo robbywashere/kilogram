@@ -1,4 +1,5 @@
 
+process.env.NODE_ENV = 'test'; // TODO ?
 const { JobRun, Agent, pullRemoteObject } = require('../python/runner');
 
 const PythonShell = require('python-shell');
@@ -26,6 +27,8 @@ describe('jobs/', function(){
   afterEach(()=>minioStub.restore())
   */
 
+  beforeEach(()=>sync(true))
+
   describe('function JobRun', function(){
     it(`should run a job via sending a 'full_dance' cmd sent to python bridge and properly respond to errors`, async function(){
 
@@ -42,7 +45,7 @@ describe('jobs/', function(){
         password: 'password' 
       }
       const post = {
-        desc: "#description"
+        text: "#description"
       }
       const agent = {
         exec: execSpy
@@ -101,7 +104,7 @@ describe('jobs/', function(){
         password: 'password' 
       }
       const post = {
-        desc: "#description"
+        text: "#description"
       }
       const agent = {
         exec: execSpy

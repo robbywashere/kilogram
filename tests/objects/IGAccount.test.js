@@ -15,7 +15,8 @@ describe('IGAccount object',function(){
     const account =  await Account.create({});
     const igAccount = await IGAccount.create({
       username: 'username',
-      password: 'password'
+      password: 'password',
+      AccountId: account.id
     });
 
     const iga = await IGAccount.findOne({ where: { id: igAccount.id }})

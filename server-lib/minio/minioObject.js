@@ -89,39 +89,8 @@ class v2 {
   }
 }
 
-class v1 {
-  static parse(objectname) {
-    try {
-      const [ name, extension ] = objectname.split('.');
-      const decoded = new Buffer(name.replace(/_/g,'='), 'base64').toString('ascii');
-      const [uuid,userId, m] = decoded.split(':');
-      const meta = new Buffer(m, 'base64').toString('ascii');
-      if ([ uuid, userId, extension].some(x=> typeof x === 'undefined')) throw new Error('error parsing');
-      return { uuid, userId, meta, extension }
-    } catch(e) {
-      throw new Error(`Error parsing v1 obj schema\n${e}`)
-    }
-  }
-  static create(params) {
-    const p = ({ 
-      uuid = demand('uuid'), 
-      userId = demand('userId'), 
-      meta = '',
-      extension = demand('extension') }) => { 
-        const m = new Buffer(meta).toString('base64');
-        const payload = new Buffer([uuid, userId, m].map(x=>x.toString()).join(':')).toString('base64');
-        return `${payload.replace(/=/g,'_')}.${extension}`;
-      }
-    try {
-      return p(params);
-    } catch(e){
-      throw new Error(`error parsing v1 obj name \n ${e}`)
-    }
-  }
-}
 
 const schemas = {
-  v1,
   v2,
   v3,
   v4

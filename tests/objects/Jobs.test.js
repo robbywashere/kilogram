@@ -79,14 +79,16 @@ describe('objects/Jobs', function(){
 
   it('should report outstanding jobs', async function(){
 
-    const igAccount = await IGAccount.create();
     const account = await Account.create();
+    const igAccount = await IGAccount.create({ AccountId: account.id, username: 'xxxxx', password:'xxxxx' });
+
     const j = await Job.create({
       AccountId: account.id,
       IGAccountId: igAccount.id,
       args: { arg1: 1 },
       cmd: 'cmd',
     })
+
     const jNot = await Job.create({
       AccountId: account.id,
       IGAccountId: igAccount.id,

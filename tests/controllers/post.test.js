@@ -8,7 +8,7 @@ const PostController = require('../../controllers/post');
 
 const DB = require('../../db');
 
-const { exprezz, ezUser, appLogger } = require('../helpers');
+const { exprezz, ezUser, appLogger, newIGAccount } = require('../helpers');
 
 const dbSync = require('../../db/sync');
 
@@ -36,7 +36,7 @@ describe('Post Controller', function(){
         include: [ Account ] 
       });
 
-    const igAccount = await IGAccount.create();
+    const igAccount = await newIGAccount(user);
 
     const photo = await Photo.create();
 
@@ -65,7 +65,7 @@ describe('Post Controller', function(){
         include: [ Account ] 
       });
 
-    const igAccount = await IGAccount.create();
+    const igAccount = await newIGAccount(user);
 
     const photo = await Photo.create();
 

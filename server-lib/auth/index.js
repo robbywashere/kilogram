@@ -93,7 +93,7 @@ module.exports = function Auth(app) {
   router.post('/auth',passport.authenticate('local'), function(req, res){
     //req.user.setPolicy('read', req.user);
     const user = req.user;
-    res.status(201);
+    //???res.status(201);
     res.send({ user });
   });
   router.delete('/auth', (req,res) => {
