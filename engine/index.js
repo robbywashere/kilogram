@@ -8,7 +8,8 @@ const columnify = require('columnify');
 
 const { startCase, fromPairs, clone, isEqual } = require('lodash');
 
-const status = (r) => logger.status('\n',columnify(r,{ showHeaders: false }),'\n\n');
+//const status = (r) => logger.status('\n',columnify(r,{ showHeaders: false }),'\n\n');
+const status = (r) => logger.status(r);
 
 async function syncDevices() {
   const devs = await cmds.adbDevices();
@@ -33,7 +34,10 @@ function runJobs() {
   return async function(){
     const outstanding = await Job.outstanding();
     const freeDevices = await Device.free();
-    const result = { 'Free Devices': freeDevices.length, 'Outstanding Jobs': outstanding.length }
+    const result = { 
+      'Free Devices': freeDevices.length, 
+      'Outstanding Jobs': outstanding.length 
+    };
 
     if (!isEqual(store,result)) {
       status(result);
