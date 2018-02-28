@@ -3,12 +3,17 @@ const path = require('path');
 const fs = require('fs');
 const { isInteger } = require('lodash');
 const cryptoRandomString = require('crypto-random-string');
-const minioConfig = require('./LoadMinioConfig')();
+
 
 if (!fs.existsSync(path.join(__dirname,'..','.env')) && process.env.NODE_ENV === 'development') {
   console.error(`**** \n ERROR: Cannot locate .env file! \n ***`);
 }
 require('dotenv').config(); // eslint-disable-line import/no-extraneous-dependencies
+
+
+const minioConfig = require('./LoadMinioConfig')(process.env.MINIO_CONFIG);
+if (!process.env.MINIO_CONFIG) console.warn('WARNING: env var MINIO_CONFIG is not defined!');
+
 
 function logLevel(level = 99) { 
   const L = parseInt(level);
@@ -26,6 +31,7 @@ function session_exp(minutes = 60) {
 module.exports = {
   DB_ENC_KEY: process.env.DB_ENC_KEY,
   NODE_ENV: process.env.NODE_ENV,
+  //MINIO_CONFIG: process.env.MINIO_CONFIG,
   PORT: process.env.PORT,
   LOG_LEVEL: logLevel(process.env.LOG_LEVEL),
   MINIO_ENDPOINT: process.env.MINIO_ENDPOINT, 
