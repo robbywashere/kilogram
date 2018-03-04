@@ -188,7 +188,6 @@ describe('Devices', function(){
 
   describe('syncDevices', function(){
     it ('should update devices (online: true where in <adb devices ids> and (online: false where not in <adb device ids>)', async function(){
-
       const off = await Device.create({ 
         online: false,
         idle: true,
@@ -207,10 +206,31 @@ describe('Devices', function(){
 
       assert.equal(!off.online, (await Device.findById(off.id)).online)
       assert.equal(!on.online, (await Device.findById(on.id)).online)
+    })
+  })
 
+
+  describe('syncAll', function(){
+    it ('should sync new devices with #register and #syncOnline, returning JSON when second argument is `true`', async function(){
+      const off = await Device.create({ 
+        online: false,
+        idle: true,
+        adbId: 'id1',
+        enabled: true,
+      })
+
+      const on = await Device.create({ 
+        online: true,
+        idle: false,
+        adbId: 'id2',
+        enabled: true,
+      })
+
+      const result = await Device.syncAll(['id1','did']);
+
+      assert.deepEqual(result,{ nowOffline: [ 'id2' ],nowOnline: [ 'id1' ],newDevices: [ 'did' ] })
 
     })
-
   })
 
 

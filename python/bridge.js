@@ -4,13 +4,17 @@ const { logger } = require('../lib/logger');
 const PythonShell = require('python-shell');
 
 
+
 class PythonBridge {
 
   constructor(deviceId, log = logger) {
     this.deviceId = deviceId;
     this.logger = log;
 
-    this.shell = new PythonShell('coupling.py', {
+  }
+
+  static shell(){
+    return new PythonShell('coupling.py', {
       pythonPath: config.get('PYTHON_PATH'),
       scriptPath: __dirname + '/../python',
       mode: 'json',
@@ -26,13 +30,18 @@ class PythonBridge {
 
   cmd(method, args = {}, outputFn = ()=>{}) {
     return new Promise((resolve, reject) => {
-      this.shell.send({
+      const shell = PythonBridge.shell();
+      shell.send({
         deviceId: this.deviceId,
         args,
         method,
       });
 
-      this.shell.on('message', (message) => {
+      shell.on('error',(err)=>{
+        reject(err);
+      })
+
+      shell.on('message', (message) => {
         if (typeof message === 'object') {
           outputFn(message);
           this.lastMsg = message;
@@ -42,7 +51,7 @@ class PythonBridge {
         }
       });
 
-      this.shell.end((err) => {
+      shell.end((err) => {
         if (err) reject(err)
         this.logger(`Method: ${method} - finished`);
         resolve(this.lastMsg);

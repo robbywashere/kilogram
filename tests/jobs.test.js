@@ -3,6 +3,7 @@ process.env.NODE_ENV = 'test'; // TODO ?
 const { JobRun, Agent, pullRemoteObject } = require('../python/runner');
 
 const PythonShell = require('python-shell');
+const { PythonBridge } = require('../python/bridge');
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../db/sync');
@@ -30,7 +31,8 @@ describe('jobs/', function(){
   beforeEach(()=>sync(true))
 
   describe('function JobRun', function(){
-    it(`should run a job via sending a 'full_dance' cmd sent to python bridge and properly respond to errors`, async function(){
+    //TODO: JobRun no longer handles its errors, the error is to be handled by the caller, therefore this should be tested - runJobs()
+    it.skip(`should run a job via sending a 'full_dance' cmd sent to python bridge and properly respond to errors`, async function(){
 
 
       const execSpy = sinon.spy(()=>{ throw new Error('ERROR!') });
@@ -178,8 +180,7 @@ describe('jobs/', function(){
 
       const bridge = agent.connect();
 
-      sinon.stub(bridge.shell,'send').callsFake((data)=>{
-
+      sinon.stub(PythonShell.prototype,'send').callsFake((data)=>{
         try {
           assert.deepEqual(data,{ deviceId: 'adbId', args: {}, method: '__testcmd__' })
         } catch(e) {

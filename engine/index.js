@@ -32,44 +32,78 @@ function runJobs() {
   let store = {};
   //TODO: try catch block
   return async function(){
-    const outstanding = await Job.outstanding();
-    const freeDevices = await Device.free();
-    const result = { 
-      'Free Devices': freeDevices.length, 
-      'Outstanding Jobs': outstanding.length 
-    };
 
-    if (!isEqual(store,result)) {
-      status(result);
-    }
 
-    store = clone(result);
+    try {
+      const stats = await Job.stats();
+      const freeDevices = await Device.free();
 
-    if (outstanding.length > 0 && freeDevices.length > 0) {
-      const device = await Device.popDevice();
+      //const outstanding = await Job.outstanding();
+      //const sleepingJobs = await Job.sleeping();
+      //const completedJobs = await Job.completed();
+      //const inProg = await Job.inProgress();
 
-      if (device) {
-        const job = await Job.popJob();
-        if (job) {
-          await job.reloadWithAll();
-          const deviceId = device.get('adbId');
-          const agent = new runner.Agent({ deviceId });
-          status({ 
-            'Running Job': job.id,
-            'Post': job.Post.id,
-            'IG Account': job.IGAccount.id, 
-            'Device': `${deviceId}:${device.id}`
-          });
-          await runner.JobRun({ post: job.Post, agent, job: job, igAccount: job.IGAccount, photo: job.Post.Photo })
-        }
-        await device.setFree();
+      const result = { 
+        'Free-Devices': freeDevices.length, 
+        'Completed': stats.completed,
+        'Outstanding': stats.outstanding,
+        'Sleeping' : stats.sleeping,
+        'In-Progress' : stats.in_progress
+      };
+
+      if (!isEqual(store,result)) {
+        status(result);
       }
+
+      store = clone(result);
+
+      if (stats.outstanding > 0 && freeDevices.length > 0) {
+        const device = await Device.popDevice();
+
+        if (device) {
+          const job = await Job.popJob();
+          if (job) {
+            await job.reloadWithAll();
+            const deviceId = device.get('adbId');
+            const agent = new runner.Agent({ deviceId });
+            status({ 
+              'Running Job': job.id,
+              'Post': job.Post.id,
+              'IG Account': job.IGAccount.id, 
+              'Device': `${deviceId}:${device.id}`
+            });
+
+            //TODO: figure out protocol to retry job in error cases, worst case scenario the job keeps posting photo to an account
+
+            let jobResult = {};
+            try {
+              jobResult = await runner.JobRun({ post: job.Post, agent, job: job, igAccount: job.IGAccount, photo: job.Post.Photo })
+              if (jobResult && jobResult.success === false){
+                throw new Error(jobResult.error)
+              } else {
+                await job.complete(jobResult);
+              }
+            } catch(err) {
+
+              await job.backout(err);
+
+              logger.error(`-- Error running Job: ${job.id}`, err); //TODO: logger.status??
+            }
+            logger.status(`-- Job Run cycle complete job_id: ${job.id}, success?: ${jobResult.success}`);
+            logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
+          }
+
+          await device.setFree();//.catch(e=>logger.error(`Error freeing device adbId: ${device.adbId} `));
+
+        }
+      }
+    } catch(e) {
+      logger.error(`Error running runJobs()`, e)
     }
   }
 }
 
 const main = function (){
-
   return [
     run(syncDevices,2000),
     run(Job.initJobs.bind(Job),2000),

@@ -113,7 +113,7 @@ module.exports = {
       const fIds = ids.filter( id => !exists.includes(id));
       if (fIds.length > 0) {
         newDevices = fIds.map(adbId=>({ online: true, idle: true, adbId }))
-        return this.bulkCreate(newDevices)
+        return this.bulkCreate(newDevices,{ returning: true, raw: true }).map(d=>d.get('adbId'));
       } else {
         return []
       }

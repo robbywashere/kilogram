@@ -7,3 +7,4 @@ node_modules
 .nyc_output/
 *.pyc
 .minio-test-data
+__pycache__

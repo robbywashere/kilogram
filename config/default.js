@@ -31,6 +31,8 @@ function session_exp(minutes = 60) {
 module.exports = {
   DB_ENC_KEY: process.env.DB_ENC_KEY,
   NODE_ENV: process.env.NODE_ENV,
+  //TEST_IGUSERNAME: process.env.TEST_IGUSERNAME,
+  // TEST_IGPASSWORD: process.env.TEST_IGPASSWORD,
   //MINIO_CONFIG: process.env.MINIO_CONFIG,
   PORT: process.env.PORT,
   LOG_LEVEL: logLevel(process.env.LOG_LEVEL),

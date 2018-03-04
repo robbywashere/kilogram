@@ -1,8 +1,9 @@
 //process.env.PORT = 8185;
+process.env.NODE_ENV='test';
 
-const baseServer = require('../../baseServer');
+const baseServer = require('../baseServer');
 const ffport = require('find-free-port');
-const dbSync = require('../../db/sync');
+const dbSync = require('../db/sync');
 const { exec, spawn } = require('child_process');
 const config = require('config');
 const kill  = require('tree-kill');
@@ -10,13 +11,17 @@ const assert = require('assert');
 const rimraf = require('rimraf');
 const Promise = require('bluebird');
 const request = require('request-promise');
-const { Job, Photo, IGAccount } = require('../../objects');
+const { Job, Device, Photo, IGAccount } = require('../objects');
 const { statSync, createReadStream, readdirSync } = require('fs');
 const md5File = require('md5-file');
 const path = require('path');
 const MINIODATADIR = './.minio-test-data';
 const BUCKETPATH = path.join(MINIODATADIR, config.get('MINIO_BUCKET'));
+const { main } = require('../engine');
 
+const IGUSERNAME = config.get('TEST_IGUSERNAME');
+const IGPASSWORD = config.get('TEST_IGPASSWORD');
+const RUN_ON_DEVICE = true;
 
 const spaceCat = { 
   data: createReadStream(path.join(__dirname,'spacecat.jpg')),
@@ -25,6 +30,7 @@ const spaceCat = {
 }
 
 let APP;
+let TIMERS = [];
 let SERVER;
 
 const Req =  function ({ path = '/', method, body = {}, ...args }) {
@@ -70,6 +76,25 @@ describe('End To End Test 👍 ',function(){
   let minio;
 
   beforeEach(async ()=>{
+
+
+    let retry = 0;
+    const fn = async ()=> {
+      try {
+        await dbSync(true);
+      } catch(e) {
+        retry++
+        console.log('DB SYNC ERROR, retrying after 1000 ms...');
+        await Promise.delay(1000);
+        return false;
+      }
+      return true;
+    }
+
+    while(!await fn()) {
+      console.log(`Retrying dbsync ${retry}...`)
+    }
+
   });
 
   afterEach((done)=>{
@@ -83,11 +108,16 @@ describe('End To End Test 👍 ',function(){
     } catch(e) { 
       console.log(e);
     }
+    try {
+      TIMERS.forEach(t=>clearTimeout(t));
+    } catch(e) {
+    }
     if (minio) { 
       kill(minio.pid,'SIGKILL'); 
       console.log('END, killing spawned proc') 
     }
     rimraf(MINIODATADIR, done);
+    done();
   })
 
   it(' Should signup User, Create new Post, have Post posted', async function(){
@@ -96,7 +126,6 @@ describe('End To End Test 👍 ',function(){
 
     minio =  runMinio();
     APP = await baseServer();
-    await dbSync(true);
     const [freePort] = await ffport(3000);
     FREE_PORT = freePort;
 
@@ -105,10 +134,12 @@ describe('End To End Test 👍 ',function(){
 
     await new Promise(R=>{
       SERVER = APP.listen(FREE_PORT,()=>{
+
         console.log(`Server listening on : ${FREE_PORT}`)
         R();
       });
     });
+    console.log('Server Up....')
 
 
     const res1 = await Req.post('/api/user/signup',{
@@ -167,8 +198,8 @@ describe('End To End Test 👍 ',function(){
 
     const res6 = await Req.post('/api/igaccount',{
       AccountId,
-      username: 'username',
-      password: 'password'
+      username: IGUSERNAME,
+      password: IGPASSWORD, 
     },{ jar });
 
     const igaccount = res6.body;
@@ -193,17 +224,33 @@ describe('End To End Test 👍 ',function(){
 
     assert(jobs.length,1);
 
-    const doJob = await (await Job.popJob()).reloadWithAll();
+    if (!RUN_ON_DEVICE) {
+      const doJob = await (await Job.popJob()).reloadWithAll();
+      const fullJob = doJob.toJSON();
+      assert.equal(fullJob.Post.id,post.id);
+      assert.equal(fullJob.IGAccount.username,igaccount.username);
+      assert.equal(fullJob.IGAccount.id,igaccount.id);
+      assert.equal(fullJob.Post.Photo.objectName, objectName);
 
-    const fullJob = doJob.toJSON();
+      //Req.post('/api/user/invite')
+    }
 
-    assert.equal(fullJob.Post.id,post.id);
-    assert.equal(fullJob.IGAccount.username,igaccount.username);
-    assert.equal(fullJob.IGAccount.id,igaccount.id);
-    assert.equal(fullJob.Post.Photo.objectName, objectName);
+    await new Promise(async (rv,rx)=>{
+      TIMERS = main(); 
+
+      while (!(await Device.findAll()).length) {
+        console.log('Waiting for device .....')
+        await Promise.delay(1000);
+      }
+
+      const devices = await Device.findAll();
+
+      await devices[0].update({ enabled: true });
+
+    });
 
 
-    //Req.post('/api/user/invite_')
+
 
 
 

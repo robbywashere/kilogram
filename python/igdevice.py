@@ -103,7 +103,7 @@ class IGDevice:
         self.device(text='Next').click()
         self.device(text='Next').click()
         self.describe(desc)
-        myDevice.device(text='Share').click()
+        self.device(text='Share').click()
         self.photo_posted = True
 
     def full_dance(self, username, password, localfile,  desc = ""):
@@ -112,13 +112,13 @@ class IGDevice:
                 raise Exception('Error no localname or objectname given')
             localfile = object_download(objectname) 
 
-        myDevice.clean_slate()
-        myDevice.open_ig()
-        myDevice.push_photo(localfile)
-        myDevice.refresh_media()
-        myDevice.login(username, password)
-        myDevice.photo_dance(desc)
-        myDevice.clean_slate()
+        self.clean_slate()
+        self.open_ig()
+        self.push_photo(localfile)
+        self.refresh_media()
+        self.login(username, password)
+        self.photo_dance(desc)
+        self.clean_slate()
 
     def get(self, method):
         return getattr(self,method) 
