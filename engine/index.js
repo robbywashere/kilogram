@@ -70,7 +70,7 @@ function runJobs() {
               'Running Job': job.id,
               'Post': job.Post.id,
               'IG Account': job.IGAccount.id, 
-              'Device': `${deviceId}:${device.id}`
+              'Device': deviceId
             });
 
             //TODO: figure out protocol to retry job in error cases, worst case scenario the job keeps posting photo to an account

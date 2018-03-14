@@ -18,10 +18,11 @@ const path = require('path');
 const MINIODATADIR = './.minio-test-data';
 const BUCKETPATH = path.join(MINIODATADIR, config.get('MINIO_BUCKET'));
 const { main } = require('../engine');
+const { logger } = require('../lib/logger');
 
 const IGUSERNAME = config.get('TEST_IGUSERNAME');
 const IGPASSWORD = config.get('TEST_IGPASSWORD');
-const RUN_ON_DEVICE = true;
+const RUN_ON_DEVICE = config.get('RUN_E2E_ON_DEVICE');//process.env.NODE_ENV === 'true';
 
 const spaceCat = { 
   data: createReadStream(path.join(__dirname,'spacecat.jpg')),
@@ -54,18 +55,22 @@ let PROCESS;
 
 function runMinio(){
   //minio server "$HOME/minio-data/"
-  //
+  let stderr = [];
   const minio = spawn('minio', ['server', './.minio-test-data']);
   minio.stdout.on('data', (data) => {
-    //>   console.log(`stdout: ${data}`);
+    //>   logger.debug(`stdout: ${data}`);
   });
 
+
   minio.stderr.on('data', (data) => {
+    stderr.push(data);
     //>   console.error(`stderr: ${data}`);
   });
 
   minio.on('close', (code) => {
-    console.log(`child process exited with code ${code}`);
+
+    logger.debug(`child process exited with code ${code}`);
+    if (stderr.length>0) logger.error(stderr.join("\n"));
   });
   return minio; 
 }
@@ -84,7 +89,7 @@ describe('End To End Test 👍 ',function(){
         await dbSync(true);
       } catch(e) {
         retry++
-        console.log('DB SYNC ERROR, retrying after 1000 ms...');
+        logger.debug('DB SYNC ERROR, retrying after 1000 ms...');
         await Promise.delay(1000);
         return false;
       }
@@ -92,7 +97,7 @@ describe('End To End Test 👍 ',function(){
     }
 
     while(!await fn()) {
-      console.log(`Retrying dbsync ${retry}...`)
+      logger.debug(`Retrying dbsync ${retry}...`)
     }
 
   });
@@ -101,23 +106,32 @@ describe('End To End Test 👍 ',function(){
     try{
       APP.minioEventListener.stop();
     } catch(e) { 
-      console.log(e);
+      logger.debug(e);
     }
     try{
       SERVER.close();
     } catch(e) { 
-      console.log(e);
+      logger.debug(e);
     }
     try {
       TIMERS.forEach(t=>clearTimeout(t));
     } catch(e) {
     }
-    if (minio) { 
-      kill(minio.pid,'SIGKILL'); 
-      console.log('END, killing spawned proc') 
+    try {
+      if (minio) { 
+        //kill(minio.pid,'SIGTERM'); 
+        process.kill(minio.pid);
+        logger.debug('END, killing spawned proc',minio.pid) 
+      }
+    } catch(e) {
+      logger.debug('Error killing spawned proc',e)
     }
-    rimraf(MINIODATADIR, done);
-    done();
+    try {
+      rimraf(MINIODATADIR, done);
+    } catch(e) {
+      logger.debug('Error cleaning MINIODATADIR')
+      done();
+    }
   })
 
   it(' Should signup User, Create new Post, have Post posted', async function(){
@@ -135,11 +149,11 @@ describe('End To End Test 👍 ',function(){
     await new Promise(R=>{
       SERVER = APP.listen(FREE_PORT,()=>{
 
-        console.log(`Server listening on : ${FREE_PORT}`)
+        logger.debug(`Server listening on : ${FREE_PORT}`)
         R();
       });
     });
-    console.log('Server Up....')
+    logger.debug('Server Up....')
 
 
     const res1 = await Req.post('/api/user/signup',{
@@ -183,7 +197,7 @@ describe('End To End Test 👍 ',function(){
 
     let retry =0;
     while (!(await Photo.findAll()).length && retry++ <= 3){
-      console.log(`try ${retry} Photo not in DB retrying in 1 sec....`);
+      logger.debug(`try ${retry} Photo not in DB retrying in 1 sec....`);
       await Promise.delay(1000);
     }
 
@@ -232,24 +246,40 @@ describe('End To End Test 👍 ',function(){
       assert.equal(fullJob.IGAccount.id,igaccount.id);
       assert.equal(fullJob.Post.Photo.objectName, objectName);
 
-      //Req.post('/api/user/invite')
     }
+    else {
+      await new Promise(async (rv,rx)=>{
+        try {
+          TIMERS = main(); 
 
-    await new Promise(async (rv,rx)=>{
-      TIMERS = main(); 
+          while (!(await Device.findAll()).length) {
+            logger.debug('Waiting for device .....')
+            await Promise.delay(1000);
+          }
 
-      while (!(await Device.findAll()).length) {
-        console.log('Waiting for device .....')
-        await Promise.delay(1000);
-      }
+          const devices = await Device.findAll();
 
-      const devices = await Device.findAll();
+          await devices[0].update({ enabled: true });
 
-      await devices[0].update({ enabled: true });
+          while(!(await Job.completed()).length) {
+            //console.log('Waiting for job to complete ....')
+            await Promise.delay(15000);
+          }
 
-    });
+          TIMERS.forEach(t=>clearInterval(t));
+
+          // console.log('DONE!');
+
+          rv();
+        }
+        catch(e) {
+          rx(e); 
+        }
 
 
+      });
+
+    }
 
 
 

@@ -79,7 +79,7 @@
     "tests:env": "mocha  --require ./tests/setup.js ./tests/nodeenv.test.js --watch",
     "tests:verbose": "mocha  --require ./tests/setup.js  --recursive \"./tests/**/*.test.js\" --watch",
     "tests:once": "nyc mocha --require ./tests/setup.js   --recursive \"./tests/**/*.test.js\"  ",
-    "tests:e2e":"mocha ./e2e/e2e.test.js --watch",
+    "tests:e2e":"mocha ./e2e/e2e.test.js",
     "pg:session:up": "psql postgres < ./node_modules/connect-pg-simple/table.sql",
     "moo": "cowsay",
     "device-node": "node ./engine/run"

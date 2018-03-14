@@ -12,8 +12,8 @@ const basePolicy = require('./basePolicy');
 //
 //TODO: Scope shouldn't be a function, perhaps scope should be an overridable class?
 
-class EmptyCollection { //TODO should probably make class wrappers for everything which is returned - save()'d serialize()'d
-  async save(){ return undefined }
+const EmptyCollection = { //TODO should probably make class wrappers for everything which is returned - save()'d serialize()'d
+  async save(){ return undefined },
   serialize(){
     return [];
   }
@@ -32,7 +32,7 @@ module.exports = class BaseResource {
   //TODO: whitelist columns based on models omit
   //TODO: whitelist allowed operators 
   static operators(query){
-    const returning = Object.entries(query).reduce((p,[k,v])=>{
+    return Object.entries(query).reduce((p,[k,v])=>{
       if (typeof v !== 'object') return p;
       Object.entries(v).forEach(([opKey,opValue])=>{
         let parsedValue = opValue;
@@ -47,8 +47,7 @@ module.exports = class BaseResource {
         }
       });
       return p;
-    },{})
-    return returning;
+    },{});
   }
 
   static page({ offset = 0, count = 100, page = 0 } = {}) {
@@ -119,7 +118,6 @@ module.exports = class BaseResource {
               return p
             },{})
 
-
           operators = this.constructor.operators(parsedOps);
           reqOpts.where = { ...operators, ...reqOpts.where }
           const order = this.constructor.sort(req.query.sort,this.sortableColumns);
@@ -159,7 +157,7 @@ module.exports = class BaseResource {
 
   static assertIntId(id) {
     const numId = parseInt(id);
-    if (!isFinite(numId)) throw new BadRequest(`Could not parse /:id' typeof ${typeof id}, ${id}' to type Integer`)
+    if (!numId>0) throw new BadRequest(`Bad value for /:id' - must be integer > 0`);
     return numId;
   }
 
@@ -231,7 +229,7 @@ module.exports = class BaseResource {
 
     const instances = await scope(user).findAll({ where });
 
-    if (!instances.length) return new EmptyCollection();
+    if (!instances.length) return EmptyCollection();
 
     const whereIds = { where: { id: { [Op.in]: instances.map(i=>i.id) } } };
 
@@ -248,7 +246,7 @@ module.exports = class BaseResource {
     const scope = opts.scope;
     const where = this.constructor.collectionWhere({ ids: query.ids, opts })
     const instances = await scope(user).findAll({ where });
-    if (!instances.length) return new EmptyCollection();
+    if (!instances.length) return EmptyCollection();
     const whereIds = { where: { id: { [Op.in]: instances.map(i=>i.id) } } };
     const sanitizedBody = this.model.sanitizeParams(body);
     let result;
@@ -260,7 +258,7 @@ module.exports = class BaseResource {
   async destroy({ user, params }, { opts }){
     const scope = opts.scope;
     const resource = await scope(user).findById(params.id, opts);
-    if (!instances.length) return new EmptyCollection();
+    if (!instances.length) return EmptyCollection();
     resource.save = resource.destroy;
     return resource;
   }
