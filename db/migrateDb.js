@@ -7,7 +7,6 @@ const config = require('config');
 const { logger } = require('../lib/logger');
 const { slurpDir2, slurpFile, forExt } = require('../lib/slurpDir2');
 
-const Promise = require('bluebird');
 const pgConfig = dbConfig[config.NODE_ENV];
 const migConfig = JSON.parse(JSON.stringify(pgConfig))
 const dbname = pgConfig.database.toString();

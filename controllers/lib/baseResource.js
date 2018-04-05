@@ -11,6 +11,9 @@ const basePolicy = require('./basePolicy');
 //TODO: consider Model.setPolicy(policy) for Model.authorize() when doing include model
 //
 //TODO: Scope shouldn't be a function, perhaps scope should be an overridable class?
+//
+//TODO: maybe #beforeAction is the wrong abstraction, a 'before action' could be executed using express's routing logic
+//app.get('/admin',function beforeAction(req,res,next){ ..... next() }, action);
 
 const EmptyCollection = { //TODO should probably make class wrappers for everything which is returned - save()'d serialize()'d
   async save(){ return undefined },
@@ -18,6 +21,9 @@ const EmptyCollection = { //TODO should probably make class wrappers for everyth
     return [];
   }
 }
+
+//make factory function or class to convience the #save and #serialize function
+//required by controller actions
 
 module.exports = class BaseResource {
 
@@ -85,6 +91,7 @@ module.exports = class BaseResource {
 
 
   beforeAction(req){ 
+    //if (req.user isn't superAdmin) then ...
     return this.policy.authorizeRequest(req); //TODO: is this too tight of coupling?
   }
 
@@ -92,7 +99,7 @@ module.exports = class BaseResource {
 
 
     let isIndexAction = !!opts.index;
-    delete opts.index;
+    delete opts.index; //TODO: delete is dumb
 
     const instanceFn = this[name];
     if (typeof instanceFn !== "function") throw new TypeError(`Controller action '${name}' is not a function`);

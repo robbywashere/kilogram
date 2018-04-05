@@ -6,7 +6,6 @@ const { Router } = require('express');
 
 class UserPolicy extends AuthPolicy {
 
-
   index(){
     return true;
   }
