@@ -22,7 +22,7 @@ const { logger } = require('../lib/logger');
 
 const IGUSERNAME = config.get('TEST_IGUSERNAME');
 const IGPASSWORD = config.get('TEST_IGPASSWORD');
-const RUN_ON_DEVICE = config.get('RUN_E2E_ON_DEVICE');//process.env.NODE_ENV === 'true';
+const RUN_ON_DEVICE = config.get('RUN_E2E_ON_DEVICE');
 
 const spaceCat = { 
   data: createReadStream(path.join(__dirname,'spacecat.jpg')),

@@ -86,6 +86,7 @@ function runJobs() {
               logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
             } catch(err) {
 
+              // TODO: is this effective? 
               await job.backout(err);
 
               logger.error(`-- Error running Job: ${job.id}`, err); //TODO: logger.status??
