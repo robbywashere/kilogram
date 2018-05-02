@@ -1,9 +1,5 @@
 const sequelize = require('sequelize');
-const crypto = require('crypto');
-const hashify = require('../server-lib/auth/hashify');
-const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op, ENUM } = sequelize;
-
-const Promise = require('bluebird');
+const { ENUM } = sequelize;
 
 module.exports = {
   Name: 'UserAccount',
@@ -16,27 +12,6 @@ module.exports = {
           isIn: [['member', 'admin']]
       }
     }
-  },
-  Hooks: {
-  },
-  AuthorizeInstance:{},
-  PolicyScopes:{},
-  Authorize: {
-    write: function(user){
-
-    }
-  },
-  PolicyAttributes:{},
-  PolicyAssert: true,
-  ScopeFunctions: true, 
-  Scopes: {
-  },
-  Methods:{
-  },
-  StaticMethods: {
-     
-  },
-  Init(){
   },
 }
 

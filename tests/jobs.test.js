@@ -79,12 +79,7 @@ describe('jobs/', function(){
 
       assert(
         jobUpdateSpy.calledWith({
-          inprog:false,
-          finish:false,
-          outcome:{
             success:false,
-            error: "Error: ERROR!"
-          }
         })
       );
 
@@ -138,11 +133,7 @@ describe('jobs/', function(){
 
       assert.deepEqual(
         jobUpdateSpy.getCall(0).args[0],
-        {
-          inprog: false,
-          finish: true,
-          outcome: { success: true }
-        }
+        { success: true }
       )
 
     })
@@ -151,7 +142,7 @@ describe('jobs/', function(){
 
   describe('class Agent', function(){
 
-    it ('should send an echo cmd to the python bridge', function(done){
+    it('should send an echo cmd to the python bridge', function(done){
 
       const agent = new Agent({ deviceId: 'adbId'});
 

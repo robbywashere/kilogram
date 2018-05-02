@@ -15,12 +15,12 @@ const basePolicy = require('./basePolicy');
 //TODO: maybe #beforeAction is the wrong abstraction, a 'before action' could be executed using express's routing logic
 //app.get('/admin',function beforeAction(req,res,next){ ..... next() }, action);
 
-const EmptyCollection = { //TODO should probably make class wrappers for everything which is returned - save()'d serialize()'d
+const EmptyCollection = ()=>({ //TODO should probably make class wrappers for everything which is returned - save()'d serialize()'d
   async save(){ return undefined },
   serialize(){
     return [];
   }
-}
+});
 
 //make factory function or class to convience the #save and #serialize function
 //required by controller actions

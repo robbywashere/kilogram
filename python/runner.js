@@ -44,9 +44,8 @@ class Agent {
 
 
 async function JobRun({ job = demand('job'), photo = demand('photo'), post = demand('post'), igAccount = demand('igAccount'), agent = demand('agent'), minioClient = (new minio.MClient()) }) {
-  let localfile;
   const mc = minioClient; 
-  localfile = await mc.pullPhoto({ name: photo.objectName })
+  let localfile = await mc.pullPhoto({ name: photo.objectName })
   const result = await agent.exec({ 
     cmd: 'full_dance', 
     args: {
