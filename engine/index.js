@@ -75,22 +75,21 @@ function runJobs() {
 
             //TODO: figure out protocol to retry job in error cases, worst case scenario the job keeps posting photo to an account
 
-            let jobResult = {};
             try {
-              jobResult = await runner.JobRun({ post: job.Post, agent, job: job, igAccount: job.IGAccount, photo: job.Post.Photo })
+              let jobResult = await runner.JobRun({ post: job.Post, agent, job: job, igAccount: job.IGAccount, photo: job.Post.Photo })
               if (jobResult && jobResult.success === false){
                 throw new Error(jobResult.error)
               } else {
                 await job.complete(jobResult);
               }
+              logger.status(`-- Job Run cycle complete job_id: ${job.id}, success?: ${jobResult.success}`);
+              logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
             } catch(err) {
 
               await job.backout(err);
 
               logger.error(`-- Error running Job: ${job.id}`, err); //TODO: logger.status??
             }
-            logger.status(`-- Job Run cycle complete job_id: ${job.id}, success?: ${jobResult.success}`);
-            logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
           }
 
           await device.setFree();//.catch(e=>logger.error(`Error freeing device adbId: ${device.adbId} `));

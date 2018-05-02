@@ -33,10 +33,10 @@ describe('engine' , function(){
 
     agentStub = sandbox.stub(runner,'Agent').returns(agentStubInstance())
 
-    jobRunStub = sandbox.stub(runner, 'JobRun').returns(async ()=>{
+    jobRunStub = sandbox.stub(runner, 'JobRun').resolves((async ()=>{
       await Promise.delay(200);
       return { success: true }
-    });
+    })());
 
 
   })
@@ -47,7 +47,7 @@ describe('engine' , function(){
 
 
 
-  it('should match queued jobs to free devices', async function(){
+  it.only('should match queued jobs to free devices', async function(){
 
     const d1 = await Device.create({
       adbId: 'adbId1',

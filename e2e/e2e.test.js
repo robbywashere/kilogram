@@ -157,12 +157,12 @@ describe('End To End Test 👍 ',function(){
 
 
     const res1 = await Req.post('/api/user/signup',{
-      email: 'robertapolana@gmail.com',
+      email: 'testemail@email.com',
       password: 'password',
     },{ jar });
 
     const res2 = await Req.post('/auth',{
-      username: 'robertapolana@gmail.com',
+      username: 'testemail@email.com',
       password: 'password',
     },{ jar });
 
