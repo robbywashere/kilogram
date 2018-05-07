@@ -30,7 +30,7 @@ const InitJobQuery = `
 
 
 
-const InitJobFromPostQuery = `
+const InitJobsFromPostsQuery = `
   INSERT INTO
     "Jobs"
     ("body", "cmd", "createdAt", "updatedAt") (
@@ -150,7 +150,7 @@ module.exports = {
     },
     backout: function (error, sleep = true) { 
       //     return this.update({ inprog: false, finish: false, outcome: { success: false, error: ((error && error.toString) ? error.toString() : error) }}) 
-      return this.update({ inprog: false, sleep: true, finish: false, outcome: { success: false, error }}) 
+      return this.update({ inprog: false, sleep, finish: false, outcome: { success: false, error }}) 
     }
   },
   StaticMethods: {
@@ -161,8 +161,8 @@ module.exports = {
         return result;
       });
     },
-    initJobs2: async function(){
-      return this.$.query(InitJobFromPostQuery, { type: sequelize.QueryTypes.INSERT, model: this })
+    initJobsFromPosts: async function(){
+      return this.$.query(InitJobsFromPostsQuery, { type: sequelize.QueryTypes.INSERT, model: this })
     },
     initJobs: async function(){
       return this.$.query(InitJobQuery, { type: sequelize.QueryTypes.INSERT, model: this })

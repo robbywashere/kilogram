@@ -6,19 +6,37 @@ const Runner = require('../python/runner');
 const DeviceAgent  = require('../python/deviceAgent');
 const Promise = require('bluebird');
 const columnify = require('columnify');
+const logDiff = require('../lib/logDiff');
 
-const { startCase, fromPairs, clone, isEqual } = require('lodash');
+const { zipObject, startCase, fromPairs, clone, isEqual } = require('lodash');
+
+//TODO: create CriticalError type which crashes everything?
+//TODO: safe logger?
+//TODO: error handling is bonkers
+//TODO: assure jobs run in priority order, by ids since incremental
 
 //const status = (r) => logger.status('\n',columnify(r,{ showHeaders: false }),'\n\n');
 const status = (r) => logger.status(r);
+
+function logDeviceSync(result) {
+  try {
+    if (Object.entries(result).map(([k,v])=>v).some(v=>v&&v.length)) {
+      logger.status(fromPairs(Object.entries(result).map(([k,v])=>[startCase(k),(v&&v.length)? v.join(','):'*' ] ))); 
+    }
+  } catch(e) {
+    try {
+      logger.status(JSON.stringify(result,null,4))
+    } catch(e2) {
+      logger.error('hoplessly unable to log device sync result');
+    }
+  }
+}
 
 async function syncDevices() {
   const devs = await cmds.adbDevices();
   await Device.freeDanglingByIds(devs); //TODO:???
   const result = await Device.syncAll(devs);
-  const output = fromPairs(Object.entries(result).map(([k,v])=>[startCase(k),(v&&v.length)? v.join(','):'*' ] ));
-  const shouldLog = Object.entries(result).map(([k,v])=>v).some(v=>v&&v.length);
-  if (shouldLog) status(output) 
+  logDeviceSync(result);
 };
 
 
@@ -28,86 +46,90 @@ const run = function(fn, milliseconds){
   }, milliseconds);
 }
 
-//TODO: assure jobs are ran in priority order, by ids???? vs DATE???
+
+async function runJobWithDevice({ job, device }) {
+
+  await job.reloadWithAll();
+  const deviceId = device.get('adbId');
+  const agent = new DeviceAgent.Agent({ deviceId });
+  logger.status({ 
+    'Running Job': job.id,
+    'Post': job.Post.id,
+    'IG Account': job.IGAccount.id, 
+    'Device': deviceId
+  });
+
+  //TODO: Move Job Queue'ing and executing to python
+  //TODO: figure out protocol to retry job in error cases, worst case scenario the job keeps posting photo to an account
+
+  let jobResult = await Runner.JobRun({ 
+    post: job.Post, 
+    agent, 
+    job: job, 
+    igAccount: job.IGAccount, 
+    photo: job.Post.Photo 
+  });
+
+  if (jobResult && jobResult.success === false) throw new Error(jobResult.error)
+
+  await job.complete(jobResult);
+
+  logger.status(`-- Job Run cycle complete job_id: ${job.id}, success: ${jobResult.success}`);
+
+  logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
+
+
+}
+
+
+
+
 function runJobs() {
-  let store = {};
-  //TODO: try catch block
+  const diffLogger = logDiff(status); //Logs only on deltas duh!
+
   return async function(){
 
-
+    let device;
+    let job;
     try {
       const stats = await Job.stats();
       const freeDevices = await Device.free();
 
-      //const outstanding = await Job.outstanding();
-      //const sleepingJobs = await Job.sleeping();
-      //const completedJobs = await Job.completed();
-      //const inProg = await Job.inProgress();
+      diffLogger({ 
+        ...zipObject(Object.keys(stats||{}).map(startCase),Object.values(stats||{})),
+        'Free Devices': (freeDevices||[]).length, 
+      });
 
-      const result = { 
-        'Free-Devices': freeDevices.length, 
-        'Completed': stats.completed,
-        'Outstanding': stats.outstanding,
-        'Sleeping' : stats.sleeping,
-        'In-Progress' : stats.in_progress
-      };
 
-      if (!isEqual(store,result)) {
-        status(result);
-      }
-
-      store = clone(result);
 
       if (stats.outstanding > 0 && freeDevices.length > 0) {
-        const device = await Device.popDevice();
+        //if (!!(stats.outstanding && freeDevices.length)) {
+        device = await Device.popDevice();
+        if (device) job = await Job.popJob();
+        if (job) {
+          try {
+            await runJobWithDevice({ job, device }); 
+          } catch(err) {
 
-        if (device) {
-          const job = await Job.popJob();
-          if (job) {
-            await job.reloadWithAll();
-            const deviceId = device.get('adbId');
-            const agent = new DeviceAgent.Agent({ deviceId });
-            status({ 
-              'Running Job': job.id,
-              'Post': job.Post.id,
-              'IG Account': job.IGAccount.id, 
-              'Device': deviceId
-            });
 
-            //TODO: Move Job Queue'ing and executing to python
-            //TODO: figure out protocol to retry job in error cases, worst case scenario the job keeps posting photo to an account
-            try {
+            //TRY if fails critical error?
+            await job.backout(err); // TODO !!!: backing out of job puts job in sleep mode, retry? retry with count?
 
-              let jobResult = await Runner.JobRun({ 
-                post: job.Post, 
-                agent, 
-                job: job, 
-                igAccount: job.IGAccount, 
-                photo: job.Post.Photo 
-              });
+            logger.error(`-- Error running Job: ${job.id}`); //TODO: logger.status??
 
-              if (jobResult && jobResult.success === false){
-                throw new Error(jobResult.error)
-              } else {
-                await job.complete(jobResult);
-              }
-              logger.status(`-- Job Run cycle complete job_id: ${job.id}, success?: ${jobResult.success}`);
-              logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
-            } catch(err) {
 
-              // TODO: is this effective? 
-              await job.backout(err);
-
-              logger.error(`-- Error running Job: ${job.id}`, err); //TODO: logger.status??
-            }
+            throw err;
           }
-
-          await device.setFree();//.catch(e=>logger.error(`Error freeing device adbId: ${device.adbId} `));
-
         }
+
       }
     } catch(e) {
-      logger.error(`Error running runJobs()`, e)
+      logger.error(`Error running 'runJobs' in engine/index.js,\n${e}`);
+    } finally {
+      if (device) {
+        logger.status(`Freeing device-adbId: ${device.adbId}`);
+        await device.setFree(); 
+      }
     }
   }
 }
