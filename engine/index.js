@@ -73,10 +73,18 @@ function runJobs() {
               'Device': deviceId
             });
 
+            //TODO: Move Job Queue'ing and executing to python
             //TODO: figure out protocol to retry job in error cases, worst case scenario the job keeps posting photo to an account
-
             try {
-              let jobResult = await runner.JobRun({ post: job.Post, agent, job: job, igAccount: job.IGAccount, photo: job.Post.Photo })
+
+              let jobResult = await runner.JobRun({ 
+                post: job.Post, 
+                agent, 
+                job: job, 
+                igAccount: job.IGAccount, 
+                photo: job.Post.Photo 
+              });
+
               if (jobResult && jobResult.success === false){
                 throw new Error(jobResult.error)
               } else {

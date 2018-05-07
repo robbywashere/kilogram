@@ -2,14 +2,19 @@
 
 const { Account, IGAccount, Job, Post, Photo, User } = require('../../objects');
 
+const ObjectRegistry = require('../../objects');
+
 const sinon = require('sinon');
 const assert = require('assert');
 const sequelize = require('sequelize');
 const sync = require('../../db/sync');
+const SEQ = require('../../db');
 const Promise = require('bluebird');
 const { ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('../helpers');
-const { constant, times } = require('lodash');
+const { zipObject, constant, times } = require('lodash');
 const minioObj = require('../../server-lib/minio/minioObject');
+
+const { denormalizeJobBody } = require('../../objects/_helpers');
 
 describe('objects/Post', function(){
 
@@ -36,6 +41,38 @@ describe('objects/Post', function(){
     })
 
   })
+
+
+  //TODO: Move me somewhere? Jobs test?
+  it.only('should create generic job for all statnding posts with .initJobs2', async function(){
+  
+    const user = await ezUserAccount();
+    const account = user.Accounts[0];
+    const igaccount = await newIGAccount(user);
+    const photo = await Photo.create({});
+
+    const props = {
+      postDate: sequelize.fn('NOW'),
+      UserId: user.id,
+      AccountId: account.id,
+      IGAccountId: igaccount.id,
+      photoUUID: photo.uuid
+    }    
+
+
+    await Post.bulkCreate(times(1,()=>props));
+
+    await Job.initJobs2();
+
+    const job = await Job.findOne();
+
+
+    return await denormalizeJobBody(ObjectRegistry, job.body);
+    //doesn't fail  ..... ?
+
+
+  
+  });
 
   it('should create jobs for all outstanding posts with .initJobs', async function(){
 

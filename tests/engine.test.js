@@ -47,7 +47,7 @@ describe('engine' , function(){
 
 
 
-  it.only('should match queued jobs to free devices', async function(){
+  it('should match queued jobs to free devices', async function(){
 
     const d1 = await Device.create({
       adbId: 'adbId1',

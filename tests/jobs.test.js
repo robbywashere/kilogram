@@ -144,6 +144,8 @@ describe('jobs/', function(){
 
     it('should send an echo cmd to the python bridge', function(done){
 
+      this.timeout(5000);
+
       const agent = new Agent({ deviceId: 'adbId'});
 
       const bridge = agent.connect();

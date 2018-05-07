@@ -3,6 +3,7 @@ const { STRING, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
 const { DB_ENC_KEY } = require('config');
 
+//Turns oustanding posts into Jobs
 const InitJobQuery = `
   INSERT INTO
     "Jobs"
@@ -11,6 +12,42 @@ const InitJobQuery = `
         "Posts"."id",
         "Posts"."IGAccountId",
         "Posts"."AccountId",
+        NOW() "createdAt",
+        NOW() "updatedAt"
+      FROM
+        "Posts"
+      LEFT JOIN
+        "Jobs"
+      ON 
+        "Jobs"."PostId" = "Posts"."id"
+      WHERE
+        "Posts"."postDate" <= NOW()
+      AND
+        "Jobs"."PostId" IS NULL 
+    )
+`
+
+
+//"Posts"."id", 'PostId',
+//          "Posts"."IGAccountId", 'IGAccountId',
+//          "Posts"."AccountId", 'AccountID'
+//
+//
+
+
+//InitJobFromPostQuery
+const InitJobFromPostQuery = `
+  INSERT INTO
+    "Jobs"
+    ("body", "cmd", "createdAt", "updatedAt") (
+      SELECT 
+        json_build_object(
+          'Photo', "Posts"."PhotoId",
+          'Account',"Posts"."AccountId",
+          'IGAccount', "Posts"."IGAccountId",
+          'Post', "Posts"."id"
+        ) as body,
+        'full_dance' as cmd,
         NOW() "createdAt",
         NOW() "updatedAt"
       FROM
@@ -67,7 +104,7 @@ const StatsQuery = `
       cmd: {
         type: STRING,
       },
-      args: {
+      body: {
         type: sequelize.JSON,
       },
       outcome: {
@@ -101,8 +138,8 @@ const StatsQuery = `
     },
     Init({ Post, Photo, IGAccount, Account }){
       this.belongsTo(Post, { foreignKey: { unique: true } });
-      this.belongsTo(Account, { foreignKey: { allowNull: false }});
-      this.belongsTo(IGAccount, { foreignKey: { allowNull: false }});
+      this.belongsTo(Account);//, { foreignKey: { allowNull: false }});
+      this.belongsTo(IGAccount);//, { foreignKey: { allowNull: false }});
       this.addScope('withPost', { include: [ { model: Post, include: [ Photo ] } ] })
       this.addScope('withAll', { include: [ { model: Post, include: [Photo, Account, IGAccount ] }, Account, IGAccount ] })
     }, 
@@ -127,6 +164,9 @@ const StatsQuery = `
           for (let key of Object.keys(result)) result[key] = parseInt(result[key],10)||0;
           return result;
         });
+      },
+      initJobs2: async function(){
+        return this.$.query(InitJobFromPostQuery, { type: sequelize.QueryTypes.INSERT, model: this })
       },
       initJobs: async function(){
         return this.$.query(InitJobQuery, { type: sequelize.QueryTypes.INSERT, model: this })

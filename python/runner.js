@@ -38,14 +38,24 @@ class Agent {
     await this._bridge.cmd('clean_slate');
     await Device.setFree(this.deviceId);
   }
+}
+
+
+async function AnyJobRun({ name, py_cmd, body, agent }) {
 
 
 }
 
-
-async function JobRun({ job = demand('job'), photo = demand('photo'), post = demand('post'), igAccount = demand('igAccount'), agent = demand('agent'), minioClient = (new minio.MClient()) }) {
-  const mc = minioClient; 
-  let localfile = await mc.pullPhoto({ name: photo.objectName })
+//TODO: Rename JobRun, to PostPhotoJob or something etc ...
+async function JobRun({ 
+  job = demand('job'), 
+  photo = demand('photo'), 
+  post = demand('post'), 
+  igAccount = demand('igAccount'), 
+  agent = demand('agent'), 
+  minioClient = (new minio.MClient()) 
+}) {
+  let localfile = await minioClient.pullPhoto({ name: photo.objectName })
   const result = await agent.exec({ 
     cmd: 'full_dance', 
     args: {
@@ -57,7 +67,6 @@ async function JobRun({ job = demand('job'), photo = demand('photo'), post = dem
   });
 
   await job.update(result);
-
   return result;
 }
 

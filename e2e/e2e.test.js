@@ -248,7 +248,7 @@ describe('End To End Test 👍 ',function(){
 
     }
     else {
-      await new Promise(async (rv,rx)=>{
+      await new Promise(async (resolve,reject)=>{
         try {
           TIMERS = main(); 
 
@@ -270,10 +270,10 @@ describe('End To End Test 👍 ',function(){
 
           // console.log('DONE!');
 
-          rv();
+          resolve();
         }
         catch(e) {
-          rx(e); 
+          reject(e); 
         }
 
 
