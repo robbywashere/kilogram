@@ -44,7 +44,7 @@ describe('objects/Post', function(){
 
 
   //TODO: Move me somewhere? Jobs test?
-  it.only('should create generic job for all statnding posts with .initJobs2', async function(){
+  it.skip('should create generic job for all outstanding posts with .initJobs2', async function(){
   
     const user = await ezUserAccount();
     const account = user.Accounts[0];
@@ -60,16 +60,15 @@ describe('objects/Post', function(){
     }    
 
 
-    await Post.bulkCreate(times(1,()=>props));
+    await Post.create(props);
 
     await Job.initJobs2();
 
-    const job = await Job.findOne();
+    const job = await Job.popJob();
 
+    const body = await job.getDenormalizedBody();
 
-    return await denormalizeJobBody(ObjectRegistry, job.body);
-    //doesn't fail  ..... ?
-
+    assert.deepEqual([ 'Photo', 'Account', 'IGAccount', 'Post' ],Object.keys(body));
 
   
   });

@@ -1,50 +1,58 @@
-
-const { PythonBridge } = require('./bridge');
-
-const { Job, BotchedJob, Device } = require('../objects');
-
 const demand = require('../lib/demand');
 
 const minio = require('../server-lib/minio');
 
-
-class Agent {
-
-  constructor({ deviceId = demand('deviceId') }){
-    this.deviceId = deviceId;
-  }
-
-  async exec({ cmd=demand('cmd'), args={} } = demand('{ cmd, args<optional>}')){
-    try {
-      if (!this._bridge) this.connect();
-      return this._bridge.cmd(cmd, args);
-
-    } catch(e) {
-      await this.killCleanFree();
-      throw e;
-    }
-  }
-  connect(){
-    this._bridge = new PythonBridge(this.deviceId);
-    return this._bridge;
-  }
-  //TODO: write tests for this
-  kill(){ 
-    if (this._bridge && this._bridge.childProcess) this._bridge.childProcess.kill();
-  }
-  async killCleanFree(){
-    this.kill();
-    this.connect();
-    await this._bridge.cmd('clean_slate');
-    await Device.setFree(this.deviceId);
-  }
-}
+//TODO: this is all sort of weird - the coupling of CODE and STORED DATA is extremely fragile and dumb (IQ: 76)
 
 
-async function AnyJobRun({ name, py_cmd, body, agent }) {
+const COMMAND_MAP = new Map([
+  ['PostJob', PostJob]
+])
 
+
+async function GenericJobRun({ job, agent }) {
+
+  const { cmd } = job;
+  if (typeof COMMAND_MAP === "undefined") throw new Error('WTF did you to COMMAND_MAP?its "undefined" ');
+  if (!COMMAND_MAP.has(cmd)) throw new Error(`Command: '${cmd}' does not exist in COMMAND_MAP, - Job Id: ${job.id} `);
+
+  const CMD_FN = COMMAND_MAP.get(cmd);
+
+  if (typeof CMD_FN === "undefined") throw new Error(`Command: ${cmd} exists - but the function does not...`)
+
+  const body = await job.getDenormalizedBody();
+
+  return CMD_FN({ ...body, agent });
 
 }
+
+async function PostJob({ 
+    IGAccount = demand('IGAccount'), 
+    Post = demand('Post'), 
+    Photo = demand('Photo'),
+    agent = demand('agent'), 
+    minioClient = (new minio.MClient()) 
+  }){
+
+
+  let localfile = await minioClient.pullPhoto({ name: Photo.objectName })
+
+  const result = await agent.exec({ 
+    cmd: 'full_dance', 
+    args: {
+      username: IGAccount.username, 
+      password: IGAccount.password,
+      desc: Post.text,
+      localfile
+    } 
+  });
+
+  await job.update(result); //fail fast ... TODO: possibly retry based on job??
+  
+  return result;
+
+}
+
 
 //TODO: Rename JobRun, to PostPhotoJob or something etc ...
 async function JobRun({ 
@@ -71,4 +79,8 @@ async function JobRun({
 }
 
 
-module.exports = { JobRun, Agent }
+
+
+
+
+module.exports = { JobRun, COMMAND_MAP };

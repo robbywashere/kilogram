@@ -2,6 +2,7 @@ const sequelize = require('sequelize');
 const { STRING, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
 const { DB_ENC_KEY } = require('config');
+const { denormalizeJobBody } = require('./_helpers');
 
 //Turns oustanding posts into Jobs
 const InitJobQuery = `
@@ -28,14 +29,7 @@ const InitJobQuery = `
 `
 
 
-//"Posts"."id", 'PostId',
-//          "Posts"."IGAccountId", 'IGAccountId',
-//          "Posts"."AccountId", 'AccountID'
-//
-//
 
-
-//InitJobFromPostQuery
 const InitJobFromPostQuery = `
   INSERT INTO
     "Jobs"
@@ -47,7 +41,7 @@ const InitJobFromPostQuery = `
           'IGAccount', "Posts"."IGAccountId",
           'Post', "Posts"."id"
         ) as body,
-        'full_dance' as cmd,
+        'PostJob' as cmd,
         NOW() "createdAt",
         NOW() "updatedAt"
       FROM
@@ -98,81 +92,83 @@ const StatsQuery = `
   from "Jobs"
 `;
 
-  module.exports = {
-    Name: 'Job',
-    Properties:{
-      cmd: {
-        type: STRING,
-      },
-      body: {
-        type: sequelize.JSON,
-      },
-      outcome: {
-        type: sequelize.JSON
-      },
-      objectPath: {
-        type: STRING
-      },
-      sleep: {
-        type: BOOLEAN,
-        defaultValue: false
-      },
-      inprog: {
-        type: BOOLEAN,
-        defaultValue: false
-      },
-      finish: { 
-        type: BOOLEAN,
-        defaultValue: false,
-      },
+module.exports = {
+  Name: 'Job',
+  Properties:{
+    cmd: {
+      type: STRING,
     },
-    PolicyAssert: false,
-    ScopeFunctions: true,
-    AuthorizeInstance:{},
-    Scopes: {
-      outstanding: { where: { finish: false, inprog: false, sleep: false } },
-      sleeping: { where: { finish: false, inprog: false, sleep: true } },
-      completed: { where: { finish: true } },
-      inProgress:  { where: { inprog: true } }
-      //outstanding: { where: { ran: false } }
+    body: {
+      type: sequelize.JSON,
     },
-    Init({ Post, Photo, IGAccount, Account }){
-      this.belongsTo(Post, { foreignKey: { unique: true } });
-      this.belongsTo(Account);//, { foreignKey: { allowNull: false }});
-      this.belongsTo(IGAccount);//, { foreignKey: { allowNull: false }});
-      this.addScope('withPost', { include: [ { model: Post, include: [ Photo ] } ] })
-      this.addScope('withAll', { include: [ { model: Post, include: [Photo, Account, IGAccount ] }, Account, IGAccount ] })
-    }, 
-    Methods: {
-      
-      complete: function(result){
-        return this.update({
-          inprog: false,
-          finish: true,
-          outcome: result 
-        })
-      },
-      backout: function (error, sleep = true) { 
-        //     return this.update({ inprog: false, finish: false, outcome: { success: false, error: ((error && error.toString) ? error.toString() : error) }}) 
-        return this.update({ inprog: false, sleep: true, finish: false, outcome: { success: false, error }}) 
-      }
+    outcome: {
+      type: sequelize.JSON
     },
-    StaticMethods: {
-      stats: async function(){
-        return this.$.query(StatsQuery).spread(r=>{
-          const result = JSON.parse(JSON.stringify(get(r,0)));
-          for (let key of Object.keys(result)) result[key] = parseInt(result[key],10)||0;
-          return result;
-        });
-      },
-      initJobs2: async function(){
-        return this.$.query(InitJobFromPostQuery, { type: sequelize.QueryTypes.INSERT, model: this })
-      },
-      initJobs: async function(){
-        return this.$.query(InitJobQuery, { type: sequelize.QueryTypes.INSERT, model: this })
-      },
-      popJob: async function(){ return get((await this.$.query(GetJobQuery, { type: sequelize.QueryTypes.SELECT, model: this })),0) } // TODO: model: require(./index).Job ???
+    objectPath: {
+      type: STRING
+    },
+    sleep: {
+      type: BOOLEAN,
+      defaultValue: false
+    },
+    inprog: {
+      type: BOOLEAN,
+      defaultValue: false
+    },
+    finish: { 
+      type: BOOLEAN,
+      defaultValue: false,
+    },
+  },
+  PolicyAssert: false,
+  ScopeFunctions: true,
+  AuthorizeInstance:{},
+  Scopes: {
+    outstanding: { where: { finish: false, inprog: false, sleep: false } },
+    sleeping: { where: { finish: false, inprog: false, sleep: true } },
+    completed: { where: { finish: true } },
+    inProgress:  { where: { inprog: true } }
+    //outstanding: { where: { ran: false } }
+  },
+  Init({ Post, Photo, IGAccount, Account }){
+    this.belongsTo(Post, { foreignKey: { unique: true } });
+    this.belongsTo(Account);//, { foreignKey: { allowNull: false }});
+    this.belongsTo(IGAccount);//, { foreignKey: { allowNull: false }});
+    this.addScope('withPost', { include: [ { model: Post, include: [ Photo ] } ] })
+    this.addScope('withAll', { include: [ { model: Post, include: [Photo, Account, IGAccount ] }, Account, IGAccount ] })
+  }, 
+  Methods: {
+    getDenormalizedBody: function(body) {
+      return denormalizeJobBody(this.sequelize.models, this.body);
+    },
+    complete: function(result){
+      return this.update({
+        inprog: false,
+        finish: true,
+        outcome: result 
+      })
+    },
+    backout: function (error, sleep = true) { 
+      //     return this.update({ inprog: false, finish: false, outcome: { success: false, error: ((error && error.toString) ? error.toString() : error) }}) 
+      return this.update({ inprog: false, sleep: true, finish: false, outcome: { success: false, error }}) 
     }
+  },
+  StaticMethods: {
+    stats: async function(){
+      return this.$.query(StatsQuery).spread(r=>{
+        const result = JSON.parse(JSON.stringify(get(r,0)));
+        for (let key of Object.keys(result)) result[key] = parseInt(result[key],10)||0;
+        return result;
+      });
+    },
+    initJobs2: async function(){
+      return this.$.query(InitJobFromPostQuery, { type: sequelize.QueryTypes.INSERT, model: this })
+    },
+    initJobs: async function(){
+      return this.$.query(InitJobQuery, { type: sequelize.QueryTypes.INSERT, model: this })
+    },
+    popJob: async function(){ return get((await this.$.query(GetJobQuery, { type: sequelize.QueryTypes.SELECT, model: this })),0) } // TODO: model: require(./index).Job ???
   }
+}
 
 

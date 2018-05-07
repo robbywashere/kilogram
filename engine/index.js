@@ -2,7 +2,8 @@
 const cmds = require('../android/cmds');
 const { Job, Device } = require('../objects');
 const { logger } = require('../lib/logger');
-const runner = require('../python/runner');
+const Runner = require('../python/runner');
+const DeviceAgent  = require('../python/deviceAgent');
 const Promise = require('bluebird');
 const columnify = require('columnify');
 
@@ -65,7 +66,7 @@ function runJobs() {
           if (job) {
             await job.reloadWithAll();
             const deviceId = device.get('adbId');
-            const agent = new runner.Agent({ deviceId });
+            const agent = new DeviceAgent.Agent({ deviceId });
             status({ 
               'Running Job': job.id,
               'Post': job.Post.id,
@@ -77,7 +78,7 @@ function runJobs() {
             //TODO: figure out protocol to retry job in error cases, worst case scenario the job keeps posting photo to an account
             try {
 
-              let jobResult = await runner.JobRun({ 
+              let jobResult = await Runner.JobRun({ 
                 post: job.Post, 
                 agent, 
                 job: job, 

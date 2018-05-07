@@ -1,6 +1,7 @@
 
 process.env.NODE_ENV = 'test'; // TODO ?
-const { JobRun, Agent, pullRemoteObject } = require('../python/runner');
+const { JobRun, pullRemoteObject } = require('../python/runner');
+const { Agent } = require('../python/deviceAgent');
 
 const PythonShell = require('python-shell');
 const { PythonBridge } = require('../python/bridge');

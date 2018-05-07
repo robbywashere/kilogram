@@ -6,6 +6,7 @@ const cmds = require('../android/cmds');
 const { Device, Job, Post } = require('../objects');
 const syncDb = require('../db/sync');
 const runner = require('../python/runner');
+const DeviceAgent = require('../python/deviceAgent')
 const Promise = require('bluebird');
 
 //TODO: Possible memory link, interferes with other tests, must be ran seperately
@@ -28,10 +29,10 @@ describe('engine' , function(){
     const deviceIdSpy = sinon.spy();
 
     const agentStubInstance = sinon.spy(function() {
-      return sinon.createStubInstance(runner.Agent);
+      return sinon.createStubInstance(DeviceAgent.Agent);
     });
 
-    agentStub = sandbox.stub(runner,'Agent').returns(agentStubInstance())
+    agentStub = sandbox.stub(DeviceAgent,'Agent').returns(agentStubInstance())
 
     jobRunStub = sandbox.stub(runner, 'JobRun').resolves((async ()=>{
       await Promise.delay(200);
