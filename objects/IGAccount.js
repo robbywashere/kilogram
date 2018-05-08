@@ -20,6 +20,14 @@ module.exports = {
       //permit: false,
     },
   },
+  Hooks: {
+    afterCreate: async function(IGAccount) {
+      const { VerifyIGJob } = this.sequelize.models;
+      return VerifyIGJob.create({
+        IGAccount
+      });
+    }
+  }
   Scopes: {
   },
   Methods:{

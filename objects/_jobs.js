@@ -114,6 +114,7 @@ const JobScopes = {
   inProgress:  { where: { inprog: true } }
 }
 
+
 module.exports = {
   JobScopes,
   JobMethods,
@@ -122,4 +123,10 @@ module.exports = {
   InitPostJobQuery,
   GetJobQuery,
   StatsQuery,
+  JobObj: {
+    Properties: JobProperties,
+    Scopes: JobScopes,
+    StaticMethods: JobStaticMethods,
+    Methods: JobMethods,
+  }
 }

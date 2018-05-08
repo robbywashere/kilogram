@@ -3,7 +3,7 @@ const {
   JobProperties, 
   JobScopes, 
   JobMethods, 
-  JobStaticMethods ,
+  JobStaticMethods,
   InitPostJobQuery,
 } = require('./_jobs');
 

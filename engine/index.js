@@ -4,14 +4,10 @@ const { PostJob, Device } = require('../objects');
 const { logger } = require('../lib/logger');
 const Runner = require('../python/runner');
 const DeviceAgent  = require('../python/deviceAgent');
-const Promise = require('bluebird');
-const columnify = require('columnify');
 
 const { startCase, fromPairs, clone, isEqual } = require('lodash');
 
-//const status = (r) => logger.status('\n',columnify(r,{ showHeaders: false }),'\n\n');
-const status = (r) => logger.status(r);
-
+const status = logger.status
 async function syncDevices() {
   const devs = await cmds.adbDevices();
   await Device.freeDanglingByIds(devs); //TODO:???
@@ -38,11 +34,6 @@ function runJobs() {
     try {
       const stats = await PostJob.stats();
       const freeDevices = await Device.free();
-
-      //const outstanding = await Job.outstanding();
-      //const sleepingJobs = await Job.sleeping();
-      //const completedJobs = await Job.completed();
-      //const inProg = await Job.inProgress();
 
       const result = { 
         'Free-Devices': freeDevices.length, 

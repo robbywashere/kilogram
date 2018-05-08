@@ -2,6 +2,7 @@ const sequelize = require('sequelize');
 const DB = require('../db');
 const { isUndefined, isNull, get } = require('lodash');
 const { STRING, UUID, VIRTUAL, TEXT, DATE, Op, ValidationError } = sequelize;
+const { logger } = require('../lib/logger');
 const minioObj = require('../server-lib/minio/minioObject');
 const { isLoggedIn, isSuperAdmin } = require('./_helpers');
 const { ForbiddenError, BadRequestError, NotFoundError, FinaleError } = require('finale-rest').Errors;
@@ -90,8 +91,7 @@ module.exports = {
     }
   },
   Methods:{
-    initJob: async function(){
-      console.warn('Post.initJob() IS DEPRECATED');
+    initJob: async function({ throwOnDuplicates = false } = {}){
       const { PostJob } = DB.models; 
       try {
         await PostJob.create({
@@ -99,9 +99,9 @@ module.exports = {
           AccountId: this.AccountId,
           IGAccountId: this.IGAccountId
         })
-      } catch(e){
-        let error = e
-        if (get(e,'errors[0].type') === "unique violation") { 
+      } catch(error){
+        if (get(error,'errors[0].type') === "unique violation" && !throwOnDuplicates) { 
+          logger.error(`'PostJob' already exists for PostId: ${this.id}`)
         } else {
           throw error;
         }
