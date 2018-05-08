@@ -65,8 +65,7 @@ module.exports = {
 
   },
   Hooks: {
-    //beforeCreate: function(){}
-    afterCreate: async function(user, options){
+    afterCreate: async function(user){
       const { Account } = this.sequelize.models;
       if (!isArray(user.Accounts)) {
         try {

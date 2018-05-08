@@ -4,93 +4,14 @@ const { get } = require('lodash');
 const { DB_ENC_KEY } = require('config');
 const { denormalizeJobBody } = require('./_helpers');
 
-//Turns oustanding posts into Jobs
-const InitJobQuery = `
-  INSERT INTO
-    "Jobs"
-    ("PostId", "IGAccountId", "AccountId", "createdAt", "updatedAt") (
-      SELECT 
-        "Posts"."id",
-        "Posts"."IGAccountId",
-        "Posts"."AccountId",
-        NOW() "createdAt",
-        NOW() "updatedAt"
-      FROM
-        "Posts"
-      LEFT JOIN
-        "Jobs"
-      ON 
-        "Jobs"."PostId" = "Posts"."id"
-      WHERE
-        "Posts"."postDate" <= NOW()
-      AND
-        "Jobs"."PostId" IS NULL 
-    )
-`
+const { 
+  InitJobQuery,
+  InitJobsFromPostsQuery,
+  GetJobQuery,
+  JobStatsQuery 
+} = require('./_customQueries');
 
 
-
-const InitJobsFromPostsQuery = `
-  INSERT INTO
-    "Jobs"
-    ("body", "cmd", "createdAt", "updatedAt") (
-      SELECT 
-        json_build_object(
-          'Photo', "Posts"."PhotoId",
-          'Account',"Posts"."AccountId",
-          'IGAccount', "Posts"."IGAccountId",
-          'Post', "Posts"."id"
-        ) as body,
-        'PostJob' as cmd,
-        NOW() "createdAt",
-        NOW() "updatedAt"
-      FROM
-        "Posts"
-      LEFT JOIN
-        "Jobs"
-      ON 
-        "Jobs"."PostId" = "Posts"."id"
-      WHERE
-        "Posts"."postDate" <= NOW()
-      AND
-        "Jobs"."PostId" IS NULL 
-    )
-`
-
-//TODO: https://blog.2ndquadrant.com/what-is-select-skip-locked-for-in-postgresql-9-5/
-const GetJobQuery =`
-  UPDATE 
-      "Jobs"
-  SET 
-      inprog=true
-  WHERE
-      id = (
-          SELECT
-              id
-          FROM
-              "Jobs"
-          WHERE
-              inprog=false
-          AND
-              finish=false
-          AND
-              sleep=false
-          ORDER BY id 
-          FOR UPDATE SKIP LOCKED
-          LIMIT 1
-      )
-  RETURNING *;
-`
-
-
-const StatsQuery = `
-  SELECT 
-    sum(case when (finish = true) then 1 else 0 end) as completed,
-    sum(case when (finish = false) AND (inprog = false) AND (sleep = false) then 1 else 0 end) as outstanding,
-    sum(case when (sleep = true) AND (inprog = false) AND (finish = false) then 1 else 0 end) as sleeping,
-    sum(case when (inprog = true) then 1 else 0 end) as in_progress
-  from "Jobs"
-`;
 
 module.exports = {
   Name: 'Job',
@@ -103,9 +24,6 @@ module.exports = {
     },
     outcome: {
       type: sequelize.JSON
-    },
-    objectPath: {
-      type: STRING
     },
     sleep: {
       type: BOOLEAN,
@@ -120,9 +38,7 @@ module.exports = {
       defaultValue: false,
     },
   },
-  PolicyAssert: false,
   ScopeFunctions: true,
-  AuthorizeInstance:{},
   Scopes: {
     outstanding: { where: { finish: false, inprog: false, sleep: false } },
     sleeping: { where: { finish: false, inprog: false, sleep: true } },
@@ -131,6 +47,8 @@ module.exports = {
     //outstanding: { where: { ran: false } }
   },
   Init({ Post, Photo, IGAccount, Account }){
+    //TODO: !!! REMOVE THESE RELATIONS except for Account? - they are store in :body
+    //This reduced coupling will also help migrate to an ACTUAL job queue where these relations do not exist
     this.belongsTo(Post, { foreignKey: { unique: true } });
     this.belongsTo(Account);//, { foreignKey: { allowNull: false }});
     this.belongsTo(IGAccount);//, { foreignKey: { allowNull: false }});
@@ -154,8 +72,13 @@ module.exports = {
     }
   },
   StaticMethods: {
+
+    initJobFromVerifyIGAccount: async function(IGAccount){
+      this.create({})
+    },
+
     stats: async function(){
-      return this.$.query(StatsQuery).spread(r=>{
+      return this.$.query(JobStatsQuery).spread(r=>{
         const result = JSON.parse(JSON.stringify(get(r,0)));
         for (let key of Object.keys(result)) result[key] = parseInt(result[key],10)||0;
         return result;
@@ -164,6 +87,7 @@ module.exports = {
     initJobsFromPosts: async function(){
       return this.$.query(InitJobsFromPostsQuery, { type: sequelize.QueryTypes.INSERT, model: this })
     },
+
     initJobs: async function(){
       return this.$.query(InitJobQuery, { type: sequelize.QueryTypes.INSERT, model: this })
     },

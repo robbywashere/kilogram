@@ -28,7 +28,7 @@ function denormalizeJobBody(objectRegistry, body) {
     queries.push(()=>objectRegistry[modelName].findById(id));
   }
   return Promise.all(queries.map(query=>query()))
-    .then(resultingArray => zipObject(Object.keys(body),resultingArray.map(r=>r.toJSON())));
+    .then(resultingArray => zipObject(Object.keys(body),resultingArray));
 }
 
 

@@ -14,6 +14,7 @@ const { zipObject, startCase, fromPairs, clone, isEqual } = require('lodash');
 //TODO: safe logger?
 //TODO: error handling is bonkers
 //TODO: assure jobs run in priority order, by ids since incremental
+//TODO: !!!Jobs are essentially state machines, and maybe should be implimented more clearly as such to assist in better logging and error handling
 
 //const status = (r) => logger.status('\n',columnify(r,{ showHeaders: false }),'\n\n');
 const status = (r) => logger.status(r);
@@ -35,12 +36,11 @@ function logDeviceSync(result) {
 async function syncDevices() {
   const devs = await cmds.adbDevices();
   await Device.freeDanglingByIds(devs); //TODO:???
-  const result = await Device.syncAll(devs);
-  logDeviceSync(result);
+  await Device.syncAll(devs).then(logDeviceSync);
 };
 
 
-const run = function(fn, milliseconds){
+const run = function(fn, milliseconds){ // Job 'Harness' - Errors should never reach this point?
   return setInterval(function(){
     fn().catch(e=>logger.critical(`Unhandled exception in function: ${fn.name}`,e))
   }, milliseconds);
@@ -85,12 +85,14 @@ async function runJobWithDevice({ job, device }) {
 
 
 function runJobs() {
+
   const diffLogger = logDiff(status); //Logs only on deltas duh!
 
   return async function(){
 
     let device;
     let job;
+
     try {
       const stats = await Job.stats();
       const freeDevices = await Device.free();
@@ -136,9 +138,10 @@ function runJobs() {
 
 const main = function (){
   return [
-    run(syncDevices,2000),
-    run(Job.initJobs.bind(Job),2000),
-    run(runJobs(), 5000)
+    run(syncDevices,1000),
+    run(Job.initJobs.bind(Job),1000), // Turns posts into queued jobs
+    //run(Job.initJobsFromPosts.bind(Job),1000), // Turns posts into queued jobs
+    run(runJobs(), 2000) //executes queued jobs every
   ];
 }
 
