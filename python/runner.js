@@ -4,19 +4,17 @@ const minio = require('../server-lib/minio');
 
 async function PostJobRun({ 
   job = demand('job'), 
-  photo = demand('photo'), 
-  post = demand('post'), 
-  igAccount = demand('igAccount'), 
   agent = demand('agent'), 
   minioClient = (new minio.MClient()) 
 }) {
-  let localfile = await minioClient.pullPhoto({ name: photo.objectName })
+  const { IGAccount, Post, Photo } = job;
+  let localfile = await minioClient.pullPhoto({ name: Photo.objectName })
   const result = await agent.exec({ 
     cmd: 'full_dance', 
     args: {
-      username: igAccount.username, 
-      password: igAccount.password,
-      desc: post.text,
+      username: IGAccount.username, 
+      password: IGAccount.password,
+      desc: Post.text,
       localfile
     } 
   });
@@ -26,8 +24,25 @@ async function PostJobRun({
 }
 
 
+async function VerifyIGJobRun({ 
+  job = demand('job'), 
+  agent = demand('agent'), 
+}) {
+  const { IGAccount } = job;
+  const result = await agent.exec({ 
+    cmd: 'verify_ig_dance', 
+    args: {
+      username: IGAccount.username, 
+      password: IGAccount.password,
+    } 
+  });
+  await job.update(result);
+  return result;
+}
 
 
 
 
-module.exports = { PostJobRun };
+
+
+module.exports = { PostJobRun, VerifyIGJobRun };

@@ -22,7 +22,6 @@ module.exports = {
     this.belongsTo(Account, { foreignKey: { allowNull: false }});
     this.belongsTo(IGAccount, { foreignKey: { allowNull: false }});
     this.addScope('withPost', { include: [ { model: Post, include: [ Photo ] } ] })
-    this.addScope('withAll', { include: [ { model: Post, include: [Photo, Account, IGAccount ] }, Account, IGAccount ] })
   }, 
   Methods: {
     ...JobMethods

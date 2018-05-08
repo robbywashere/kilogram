@@ -108,6 +108,7 @@ const JobProperties = {
 
 
 const JobScopes = {
+  withAll: { include: [ { all: true } ] },
   outstanding: { where: { finish: false, inprog: false, sleep: false } },
   sleeping: { where: { finish: false, inprog: false, sleep: true } },
   completed: { where: { finish: true } },

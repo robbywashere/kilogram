@@ -24,24 +24,12 @@ module.exports = {
       allowNull: false
     },
   },
-  AuthorizeInstance:{
-    all: isSuperAdmin,
-    create: function(user){
-      if (!get(user,'Accounts.length')) {
-        throw new Error('Attempt to scope to Account without Account on user object')
-      }
-      if (typeof this.IGAccountId === "undefined") {
-        throw new Error('Posts IGAccountId is undefined');
-      }
-      return user.igAccountIds().includes(this.IGAccountId) && user.accountIds().includes(this.AccountId);
-    },
-  },
   Init({ PostJob, Photo, Account, IGAccount }){
     this.belongsTo(Account, { foreignKey: { allowNull: false }});
     this.belongsTo(IGAccount, { foreignKey: { allowNull: false }});
     this.hasOne(PostJob);
     this.belongsTo(Photo);
-    this.addScope('withJob', { include: [ PostJob ] } )
+    this.addScope('withJob', { include: [ PostJob ] } );
     this.addScope('due', { include: [ PostJob ], where: { 
       postDate: { [Op.lte]: sequelize.fn(`NOW`) },
       '$PostJob$': { [Op.eq]: null }
@@ -75,6 +63,7 @@ module.exports = {
     }
   },
   Scopes: {
+    withAll: { include: [ { all: true } ] },
     userScoped: function(user) {
       if (!get(user,'Accounts.length')) {
         throw new Error('Attempt to scope to Account without Account on user object')

@@ -21,13 +21,13 @@ module.exports = {
     },
   },
   Hooks: {
-    afterCreate: async function(IGAccount) {
+    afterCreate: async function({ id }) {
       const { VerifyIGJob } = this.sequelize.models;
       return VerifyIGJob.create({
-        IGAccount
+        IGAccountId: id
       });
     }
-  }
+  },
   Scopes: {
   },
   Methods:{
@@ -37,4 +37,5 @@ module.exports = {
   Init(){
   },
 }
+
 

@@ -11,7 +11,8 @@ const sync = require('../../db/sync');
 const SEQ = require('../../db');
 const Promise = require('bluebird');
 const { ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('../helpers');
-const { zipObject, constant, times } = require('lodash');
+const { logger } = require('../../lib/logger');
+const { zipObject, startCase, constant, times } = require('lodash');
 const minioObj = require('../../server-lib/minio/minioObject');
 
 const { denormalizeJobBody } = require('../../objects/_helpers');
@@ -25,7 +26,7 @@ describe('objects/Post', function(){
   it.skip('should adhere to Policy', async function(){
 
     const user = await ezUser({
-     superAdmin: true 
+      superAdmin: true 
     });
     const user2 = await ezUser({
     });
@@ -45,7 +46,7 @@ describe('objects/Post', function(){
 
   //TODO: Move me somewhere? PostJobs test?
   it.skip('should create generic job for all outstanding posts with .initJobs2', async function(){
-  
+
     const user = await ezUserAccount();
     const account = user.Accounts[0];
     const igaccount = await newIGAccount(user);
@@ -70,7 +71,7 @@ describe('objects/Post', function(){
 
     assert.deepEqual([ 'Photo', 'Account', 'IGAccount', 'Post' ],Object.keys(body));
 
-  
+
   });
 
   it('should create jobs for all outstanding posts with .initJobs', async function(){
@@ -106,12 +107,20 @@ describe('objects/Post', function(){
   });
 
 
-  it('should find due posts with .due', async function(){
+  it.only('should find due posts with .due', async function(){
 
 
     const { post } = await createAccountUserPost();
 
     await post.initJob();
+
+  const { associations, name } = post.constructor; 
+  const assocKeys = Object.keys(associations);
+
+  if (!assocKeys.every((k)=>post[k])) {
+    console.log('reload!')
+    await post.reloadWithAll();
+  }
 
     const pd = await Post.due();
 
