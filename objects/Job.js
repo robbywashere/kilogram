@@ -56,8 +56,13 @@ module.exports = {
     this.addScope('withAll', { include: [ { model: Post, include: [Photo, Account, IGAccount ] }, Account, IGAccount ] })
   }, 
   Methods: {
-    getDenormalizedBody: function(body) {
+    getDenormalizedBody: function() {
       return denormalizeJobBody(this.sequelize.models, this.body);
+    },
+    //?????
+    reloadDenormalized: async function (){
+      const objs = await denormalizeJobBody(this.sequelize.models, this.body);
+      return Object.assign(this,objs);
     },
     complete: function(result){
       return this.update({

@@ -11,21 +11,37 @@ const { zipObject } = require('lodash');
 function isSuperAdmin(user) {
   return !!(user && user.superAdmin);
 }
-function isLoggedIn(user){
-  return !!user
-}
-
 function genPasswordKey(){
   return cryptoRandomString(32);
 }
 
+const deserializeObjs = denormalizeJobBody(registry, body);
+const serializeObjs = function(objs){
+  return Object.entries(objs).reduce( (p,[ modelName, { id } ]) => { p[modelName] = id; return p } ,{});
+}
 
 function denormalizeJobBody(objectRegistry, body) {
   let queries = [];
-  for (const [modelName, id] of Object.entries(body)) {
-    if (!objectRegistry[modelName]) throw new Error(`Model ${modelName} relation does not exist, cannot denormalize body ->\n ${JSON.stringify(body,null,4)}`);
-    //delaying execution until loop is finished
-    queries.push(()=>objectRegistry[modelName].findById(id));
+  // Sequelize.Utils.singuarlize if modelName does not exists!?
+  for (let [modelName, id] of Object.entries(body)) {
+    if (!objectRegistry[modelName]) {
+      let singularModel = sequelize.Utils.singuarlize(modelName);
+      if (!objectRegistry[singularModel]) throw new Error(
+        `Model ${modelName} relation does not exist, cannot denormalize body ->\n ${JSON.stringify(body,null,4)}`);
+      else {
+        modelName = singularModel;
+      }
+    }
+    //TODO: this is getting out of hand!
+    // Sequelize.Utils.pluralize
+    if (Array.isArray(id)) {
+      queries.push(()=>objectRegistry[modelName].findAll({ where: { id: { [Op.in]: id } } }));
+    }
+    else {
+      queries.push(()=>objectRegistry[modelName].findById(id));
+    }
+
+
   }
   return Promise.all(queries.map(query=>query()))
     .then(resultingArray => zipObject(Object.keys(body),resultingArray));
@@ -35,4 +51,11 @@ function denormalizeJobBody(objectRegistry, body) {
 const randomKey = genPasswordKey;
 
 
-module.exports = { denormalizeJobBody, isSuperAdmin, within24hrs, isLoggedIn, genPasswordKey, randomKey } 
+module.exports = { 
+  deserializeObjs,
+  denormalizeJobBody,
+  isSuperAdmin,
+  within24hrs,
+  genPasswordKey,
+  randomKey
+} 

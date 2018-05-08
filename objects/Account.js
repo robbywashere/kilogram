@@ -4,7 +4,6 @@ const crypto = require('crypto');
 const hashify = require('../server-lib/auth/hashify');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const Promise = require('bluebird');
-const { isLoggedIn } = require('./_helpers');
 
 module.exports = {
   Name: 'Account',
@@ -21,7 +20,6 @@ module.exports = {
   },
   ScopeFunctions: true, 
   Scopes: {
-    // withIGAccounts: { include: [ this.sequelize.models.IGAccount ] },
     userScoped: function(user){
       if (!get(user,'Accounts.length')) {
         throw new Error('User record must include Account');

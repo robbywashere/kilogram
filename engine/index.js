@@ -16,8 +16,10 @@ const { zipObject, startCase, fromPairs, clone, isEqual } = require('lodash');
 //TODO: assure jobs run in priority order, by ids since incremental
 //TODO: !!!Jobs are essentially state machines, and maybe should be implimented more clearly as such to assist in better logging and error handling
 
+
+
 //const status = (r) => logger.status('\n',columnify(r,{ showHeaders: false }),'\n\n');
-const status = (r) => logger.status(r);
+const status = logger.status;
 
 function logDeviceSync(result) {
   try {
@@ -83,6 +85,13 @@ async function runJobWithDevice({ job, device }) {
 
 
 
+function logStats(logger, stats = {}, freeDevices = []){
+  logger({ 
+    ...zipObject(Object.keys(stats).map(startCase),Object.values(stats)),
+    'Free Devices': (freeDevices).length, 
+  });
+}
+
 
 function runJobs() {
 
@@ -97,33 +106,20 @@ function runJobs() {
       const stats = await Job.stats();
       const freeDevices = await Device.free();
 
-      diffLogger({ 
-        ...zipObject(Object.keys(stats||{}).map(startCase),Object.values(stats||{})),
-        'Free Devices': (freeDevices||[]).length, 
-      });
-
-
+      logStats(diffLogger, stats, freeDevices);
 
       if (stats.outstanding > 0 && freeDevices.length > 0) {
-        //if (!!(stats.outstanding && freeDevices.length)) {
-        device = await Device.popDevice();
-        if (device) job = await Job.popJob();
-        if (job) {
+        if (device = await Device.popDevice() && job = await Job.popJob()) {
           try {
             await runJobWithDevice({ job, device }); 
           } catch(err) {
-
-
             //TRY if fails critical error?
             await job.backout(err); // TODO !!!: backing out of job puts job in sleep mode, retry? retry with count?
 
             logger.error(`-- Error running Job: ${job.id}`); //TODO: logger.status??
-
-
             throw err;
           }
         }
-
       }
     } catch(e) {
       logger.error(`Error running 'runJobs' in engine/index.js,\n${e}`);

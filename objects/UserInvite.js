@@ -3,7 +3,6 @@ const hashify = require('../server-lib/auth/hashify');
 const sequelize = require('sequelize');
 const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const cryptoRandomString = require('crypto-random-string');
-const { isSuperAdmin, isLoggedIn } = require('./_helpers');
 
 module.exports = {
   Name: 'UserInvite',
@@ -21,32 +20,10 @@ module.exports = {
       }
     },
   },
-  PolicyScopes:{},
-  Authorize: {
-    all: isLoggedIn,
-  },
-  PolicyAttributes:{},
-  PolicyAssert: false, //TODO: haha
   ScopeFunctions: true, 
   Scopes: {
   },
-  AuthorizeInstance:{
-    all: function (user) {
-      try {
-        return user.Accounts.map(a=>a.id).includes(this.accountId)
-      } catch(e){
-        return false
-      }
-    }
-  },
   Hooks: {
-    /*afterUpdate: async function(instance){
-      const { password, email } = instance;
-      const { User } = this.sequelize.models;
-      const user = await User.find({ where: { email }});
-      await user.update({ verified: true, password })
-      return instance.destroy();
-    },*/
     beforeCreate: async function(instance){
       if (!instance.User) { 
         const { email, Account } = instance;
@@ -77,7 +54,6 @@ module.exports = {
   },
   StaticMethods: {
   },
-
   Init({ Account, User }){
     this.belongsTo(User);
     this.belongsTo(Account, { foreignKey: {
