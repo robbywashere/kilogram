@@ -60,8 +60,7 @@ async function createAccountUserPostJob(){
   await post.initJob();
   await post.reloadWithJob();
 
-  job = post.Job;
-  return { account, igAccount, user, post, job }
+  return { account, igAccount, user, post, job: post.PostJob }
 }
 
 function ezUser(opts,moreOpts){

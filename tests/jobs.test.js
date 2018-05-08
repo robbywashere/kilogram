@@ -1,6 +1,6 @@
 
 process.env.NODE_ENV = 'test'; // TODO ?
-const { JobRun, pullRemoteObject } = require('../python/runner');
+const { PostJobRun, pullRemoteObject } = require('../python/runner');
 const { Agent } = require('../python/deviceAgent');
 
 const PythonShell = require('python-shell');
@@ -8,7 +8,7 @@ const { PythonBridge } = require('../python/bridge');
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../db/sync');
-const { Post, Job, Device, User, Photo } = require('../objects');
+const { Post, Device, User, Photo } = require('../objects');
 const minio = require('../server-lib/minio');
 const { MClient } = minio; 
 
@@ -16,23 +16,10 @@ const { MClient } = minio;
 describe('jobs/', function(){
   let minioStub;
 
-  //TODO: remove this as passing minioClient to JobRun is now an option
-  /*beforeEach(async ()=> {
-    await sync(true);
-    const mClientStubInstance = function() {
-      const mcstub = sinon.createStubInstance(MClient);
-      mcstub.pullPhoto.resolves('/tmpfile');
-      return mcstub;
-    };
-    minioStub = sinon.stub(minio,'MClient').returns(mClientStubInstance())
-  });
-  afterEach(()=>minioStub.restore())
-  */
-
   beforeEach(()=>sync(true))
 
-  describe('function JobRun', function(){
-    //TODO: JobRun no longer handles its errors, the error is to be handled by the caller, therefore this should be tested - runJobs()
+  describe('function PostJobRun', function(){
+    //TODO: PostJobRun no longer handles its errors, the error is to be handled by the caller, therefore this should be tested - runJobs()
     it.skip(`should run a job via sending a 'full_dance' cmd sent to python bridge and properly respond to errors`, async function(){
 
 
@@ -62,7 +49,7 @@ describe('jobs/', function(){
 
 
 
-      await JobRun({ job, agent, post, photo, igAccount, minioClient }, false)
+      await PostJobRun({ job, agent, post, photo, igAccount, minioClient }, false)
 
       assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0],{ name: 'objectName' })
 
@@ -116,7 +103,7 @@ describe('jobs/', function(){
 
 
 
-      await JobRun({ job, agent, post, photo, igAccount, minioClient })
+      await PostJobRun({ job, agent, post, photo, igAccount, minioClient })
 
       assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0],{ name: 'objectName' })
 

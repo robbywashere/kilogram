@@ -11,7 +11,7 @@ const assert = require('assert');
 const rimraf = require('rimraf');
 const Promise = require('bluebird');
 const request = require('request-promise');
-const { Job, Device, Photo, IGAccount } = require('../objects');
+const { PostJob, Device, Photo, IGAccount } = require('../objects');
 const { statSync, createReadStream, readdirSync } = require('fs');
 const md5File = require('md5-file');
 const path = require('path');
@@ -232,14 +232,14 @@ describe('End To End Test 👍 ',function(){
 
     assert(post.id);
 
-    await Job.initJobs();
+    await PostJob.initJobs();
 
-    const jobs  = await Job.outstanding();
+    const jobs  = await PostJob.outstanding();
 
     assert(jobs.length,1);
 
     if (!RUN_ON_DEVICE) {
-      const doJob = await (await Job.popJob()).reloadWithAll();
+      const doJob = await (await PostJob.popJob()).reloadWithAll();
       const fullJob = doJob.toJSON();
       assert.equal(fullJob.Post.id,post.id);
       assert.equal(fullJob.IGAccount.username,igaccount.username);
@@ -251,39 +251,22 @@ describe('End To End Test 👍 ',function(){
       await new Promise(async (resolve,reject)=>{
         try {
           TIMERS = main(); 
-
           while (!(await Device.findAll()).length) {
             logger.debug('Waiting for device .....')
             await Promise.delay(1000);
           }
-
           const devices = await Device.findAll();
-
           await devices[0].update({ enabled: true });
-
-          while(!(await Job.completed()).length) {
-            //console.log('Waiting for job to complete ....')
+          while(!(await PostJob.completed()).length) {
             await Promise.delay(15000);
           }
-
           TIMERS.forEach(t=>clearInterval(t));
-
-          // console.log('DONE!');
-
           resolve();
         }
         catch(e) {
           reject(e); 
         }
-
-
       });
-
     }
-
-
-
-
   })
-
 })

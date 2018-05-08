@@ -34,7 +34,7 @@ describe('engine' , function(){
 
     agentStub = sandbox.stub(DeviceAgent,'Agent').returns(agentStubInstance())
 
-    jobRunStub = sandbox.stub(runner, 'JobRun').resolves((async ()=>{
+    jobRunStub = sandbox.stub(runner, 'PostJobRun').resolves((async ()=>{
       await Promise.delay(200);
       return { success: true }
     })());
@@ -73,7 +73,7 @@ describe('engine' , function(){
 
     assert.equal(post.id,p.id);
     assert.equal(photo.id,p.PhotoId);
-    assert.equal(job.id, p.Job.id)
+    assert.equal(job.id, p.PostJob.id)
     assert(igAccount.id)
     assert(agentStub.calledWith({ deviceId: 'adbId1' }))
 

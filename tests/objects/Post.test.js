@@ -1,6 +1,6 @@
 
 
-const { Account, IGAccount, Job, Post, Photo, User } = require('../../objects');
+const { Account, IGAccount, PostJob, Post, Photo, User } = require('../../objects');
 
 const ObjectRegistry = require('../../objects');
 
@@ -43,7 +43,7 @@ describe('objects/Post', function(){
   })
 
 
-  //TODO: Move me somewhere? Jobs test?
+  //TODO: Move me somewhere? PostJobs test?
   it.skip('should create generic job for all outstanding posts with .initJobs2', async function(){
   
     const user = await ezUserAccount();
@@ -62,9 +62,9 @@ describe('objects/Post', function(){
 
     await Post.create(props);
 
-    await Job.initJobs2();
+    await PostJob.initJobs2();
 
-    const job = await Job.popJob();
+    const job = await PostJob.popJob();
 
     const body = await job.getDenormalizedBody();
 
@@ -92,13 +92,13 @@ describe('objects/Post', function(){
 
     await Post.bulkCreate(times(9,constant(props)));
 
-    await Job.initJobs();
+    await PostJob.initPostJobs();
 
     //Run again to assure no dupes ;)
 
-    await Job.initJobs();
+    await PostJob.initPostJobs();
 
-    const jobs = await Job.findAll();
+    const jobs = await PostJob.findAll();
 
     assert.equal(9,jobs.length)
 
@@ -122,7 +122,7 @@ describe('objects/Post', function(){
   it ('should respond to reloadWithJob withJob with .Job object', async function(){
     const { post } = await createAccountUserPostJob();
     post.reloadWithJob();
-    assert(post.Job);
+    assert(post.PostJob);
   })
 
 

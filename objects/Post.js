@@ -35,15 +35,15 @@ module.exports = {
       return user.igAccountIds().includes(this.IGAccountId) && user.accountIds().includes(this.AccountId);
     },
   },
-  Init({ Job, Photo, Account, IGAccount }){
+  Init({ PostJob, Photo, Account, IGAccount }){
     this.belongsTo(Account, { foreignKey: { allowNull: false }});
     this.belongsTo(IGAccount, { foreignKey: { allowNull: false }});
-    this.hasOne(Job);
+    this.hasOne(PostJob);
     this.belongsTo(Photo);
-    this.addScope('withJob', { include: [ Job ] } )
-    this.addScope('due', { include: [ Job ], where: { 
+    this.addScope('withJob', { include: [ PostJob ] } )
+    this.addScope('due', { include: [ PostJob ], where: { 
       postDate: { [Op.lte]: sequelize.fn(`NOW`) },
-      '$Job$': { [Op.eq]: null }
+      '$PostJob$': { [Op.eq]: null }
     }})
     this.addScope('withIGAccount', { include: [ IGAccount ] } )
   },
@@ -91,9 +91,10 @@ module.exports = {
   },
   Methods:{
     initJob: async function(){
-      const { Job } = DB.models; 
+      console.warn('Post.initJob() IS DEPRECATED');
+      const { PostJob } = DB.models; 
       try {
-        await Job.create({
+        await PostJob.create({
           PostId: this.id,     
           AccountId: this.AccountId,
           IGAccountId: this.IGAccountId
@@ -101,8 +102,6 @@ module.exports = {
       } catch(e){
         let error = e
         if (get(e,'errors[0].type') === "unique violation") { 
-          // do nothing!
-          //JUST SAY NOPE: error = new Error(`Job already exists for PostId: ${this.id}`); 
         } else {
           throw error;
         }

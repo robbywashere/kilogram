@@ -1,4 +1,4 @@
-const { IGAccount, Account, Job, Post, Photo, User } = require('../../objects');
+const { IGAccount, Account, PostJob, Post, Photo, User } = require('../../objects');
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../../db/sync');
@@ -6,7 +6,7 @@ const Promise = require('bluebird');
 const { createAccountUserPostJob, createAccountUserPost, createUserPostJob } = require('../helpers');
 
 
-describe('objects/Jobs', function(){
+describe('objects/PostJob', function(){
 
   beforeEach(async ()=> {
     return await sync(true);
@@ -18,8 +18,8 @@ describe('objects/Jobs', function(){
 
     const { post }  = await createAccountUserPostJob();
 
-    const job1 = await Job.withPost({ where: {id: post.Job.id }})
-    const job2 = await Job.withPostForId(post.Job.id)
+    const job1 = await PostJob.withPost({ where: {id: post.PostJob.id }})
+    const job2 = await PostJob.withPostForId(post.PostJob.id)
     assert(job1[0].Post.Photo)
     assert(job2.Post.Photo)
 
@@ -29,7 +29,7 @@ describe('objects/Jobs', function(){
 
     const { post }  = await createAccountUserPostJob();
 
-    const job = await Job.findById(post.Job.id)
+    const job = await PostJob.findById(post.PostJob.id)
     const j = await job.reloadWithPost();
     assert(j.Post.Photo)
 
@@ -39,7 +39,7 @@ describe('objects/Jobs', function(){
 
     const { post }  = await createAccountUserPostJob();
 
-    const job = await Job.withAllForId(post.Job.id);
+    const job = await PostJob.withAllForId(post.PostJob.id);
 
     assert(job.Post);
     assert(job.Post.Photo);
@@ -52,11 +52,11 @@ describe('objects/Jobs', function(){
 
     const { post }  = await createAccountUserPostJob();
 
-    const job = await Job.findById(post.Job.id, { 
+    const job = await PostJob.findById(post.PostJob.id, { 
       include: [ { model: IGAccount }, { model: Post, include: [ { model: Photo } ] } ] 
     });
 
-    const j = await Job.popJob();
+    const j = await PostJob.popJob();
 
     assert(j.inprog);
 
@@ -66,7 +66,7 @@ describe('objects/Jobs', function(){
 
     const { post }  = await createAccountUserPostJob();
 
-    const job = await Job.findById(post.Job.id, { 
+    const job = await PostJob.findById(post.PostJob.id, { 
       include: [ { model: IGAccount }, { model: Post, include: [ { model: Photo } ] } ] 
     });
 
@@ -82,14 +82,14 @@ describe('objects/Jobs', function(){
     const account = await Account.create();
     const igAccount = await IGAccount.create({ AccountId: account.id, username: 'xxxxx', password:'xxxxx' });
 
-    const j = await Job.create({
+    const j = await PostJob.create({
       AccountId: account.id,
       IGAccountId: igAccount.id,
       args: { arg1: 1 },
       cmd: 'cmd',
     })
 
-    const jNot = await Job.create({
+    const jNot = await PostJob.create({
       AccountId: account.id,
       IGAccountId: igAccount.id,
       args: { arg1: 1 },
@@ -98,7 +98,7 @@ describe('objects/Jobs', function(){
       finish: false
     })
 
-    const jNot2 = await Job.create({
+    const jNot2 = await PostJob.create({
       AccountId: account.id,
       IGAccountId: igAccount.id,
       args: { arg1: 1 },
@@ -107,7 +107,7 @@ describe('objects/Jobs', function(){
       finish: true
     })
 
-    let jOut = await Job.outstanding();
+    let jOut = await PostJob.outstanding();
 
     assert.equal(1, jOut.length)
 

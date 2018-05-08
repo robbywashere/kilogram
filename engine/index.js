@@ -1,6 +1,6 @@
 
 const cmds = require('../android/cmds');
-const { Job, Device } = require('../objects');
+const { PostJob, Device } = require('../objects');
 const { logger } = require('../lib/logger');
 const Runner = require('../python/runner');
 const DeviceAgent  = require('../python/deviceAgent');
@@ -36,7 +36,7 @@ function runJobs() {
 
 
     try {
-      const stats = await Job.stats();
+      const stats = await PostJob.stats();
       const freeDevices = await Device.free();
 
       //const outstanding = await Job.outstanding();
@@ -62,7 +62,7 @@ function runJobs() {
         const device = await Device.popDevice();
 
         if (device) {
-          const job = await Job.popJob();
+          const job = await PostJob.popJob();
           if (job) {
             await job.reloadWithAll();
             const deviceId = device.get('adbId');
@@ -78,7 +78,7 @@ function runJobs() {
             //TODO: figure out protocol to retry job in error cases, worst case scenario the job keeps posting photo to an account
             try {
 
-              let jobResult = await Runner.JobRun({ 
+              let jobResult = await Runner.PostJobRun({ 
                 post: job.Post, 
                 agent, 
                 job: job, 
@@ -115,7 +115,7 @@ function runJobs() {
 const main = function (){
   return [
     run(syncDevices,2000),
-    run(Job.initJobs.bind(Job),2000),
+    run(PostJob.initJobs.bind(Job),2000),
     run(runJobs(), 5000)
   ];
 }
