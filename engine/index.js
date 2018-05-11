@@ -141,7 +141,7 @@ async function runAnyJobWithDevice({ job, device, runner }) {
   const name = job.constructor.name || 'UnknownJobWTF'; 
   const associations = Object.keys(job.constructor.associations);
 
-  if (!associations.every(k=>!isUndefined(job[k])) { //make this into a object wide func?
+  if (!associations.every(k=>!isUndefined(job[k]))) { //make this into a object wide func?
     await job.reloadWithAll();
   }
 

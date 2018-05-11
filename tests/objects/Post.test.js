@@ -107,20 +107,12 @@ describe('objects/Post', function(){
   });
 
 
-  it.only('should find due posts with .due', async function(){
+  it('should find due posts with .due', async function(){
 
 
     const { post } = await createAccountUserPost();
 
     await post.initJob();
-
-  const { associations, name } = post.constructor; 
-  const assocKeys = Object.keys(associations);
-
-  if (!assocKeys.every((k)=>post[k])) {
-    console.log('reload!')
-    await post.reloadWithAll();
-  }
 
     const pd = await Post.due();
 

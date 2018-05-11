@@ -36,6 +36,7 @@ async function VerifyIGJobRun({
       password: IGAccount.password,
     } 
   });
+  //If result is sucess .....
   await job.update(result);
   return result;
 }
