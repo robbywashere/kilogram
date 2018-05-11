@@ -1,4 +1,5 @@
 require('../lib/handleUnhandledRejections');
+require('../lib/arrayPrototypeToJSON');
 const path = require('path');
 const fs = require('fs');
 const { isInteger } = require('lodash');

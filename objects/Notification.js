@@ -48,7 +48,7 @@ module.exports = {
 
     },
     unread: function({ UserId, AccountId },opts){
-      const { NotificationRead, UserAccount, Account, User } = this.sequelize.models;
+      const { NotificationRead, Account, User } = this.sequelize.models;
 
       //TODO: Scoping needs to be narrowed down
       return (!isUndefined(AccountId) ? 
@@ -59,7 +59,7 @@ module.exports = {
             [Op.or]: [
               { '$NotificationReads.UserId$': { [Op.ne]: UserId } },
               { '$NotificationReads.UserId$': null  },
-              { '$NotificationReads$': null  },
+              //{ '$NotificationReads$': null  },
             ],
           },
           include: [ { model: Account, include: User  } ,{ 
@@ -68,7 +68,8 @@ module.exports = {
             where: { 
                '$NotificationReads.UserId$': { [Op.eq]: UserId } 
             }
-          }]
+          }],
+          ...opts
         })
 
 

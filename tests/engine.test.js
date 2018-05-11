@@ -43,12 +43,12 @@ describe('engine' , function(){
   })
 
   afterEach(()=>{
-   sandbox.restore()
+    sandbox.restore()
   });
 
 
 
-  it('should match queued jobs to free devices', async function(){
+  it.only('should match queued jobs to free devices', async function(){
 
     const d1 = await Device.create({
       adbId: 'adbId1',
@@ -69,10 +69,18 @@ describe('engine' , function(){
 
     await runJobs()();
 
-    const { post, agent, job, igAccount, photo } = jobRunStub.getCall(0).args[0];
+    const Job = jobRunStub.getCall(0).args[0].job;
 
-    assert.equal(post.id,p.id);
-    assert.equal(photo.id,p.PhotoId);
+    //   console.log(Object.keys(jobRunStub.getCall(0).args[0].job));
+
+    //await Post.reload({ include: [ { all: true }] });
+
+    //console.log(Post.Photo.toJSON());
+
+
+
+    assert.equal(Post.id,p.id);
+    assert.equal(Photo.id,p.PhotoId);
     assert.equal(job.id, p.PostJob.id)
     assert(igAccount.id)
     assert(agentStub.calledWith({ deviceId: 'adbId1' }))

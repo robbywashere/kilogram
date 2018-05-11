@@ -8,8 +8,6 @@ const { ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUse
 const dbSync = require('../db/sync');
 
 
-Array.prototype.toJSON = function(){ return (this.length && typeof this[0] !== "undefined" && this[0].toJSON) ? this.map(i=>i.toJSON()) : this }
-
 describe('Notifications', function(){
 
   beforeEach(()=>dbSync(true))
@@ -40,7 +38,7 @@ describe('Notifications', function(){
   });
 
 
-  it.only('should list notifications for users own account(s) only', async function(){
+  it('should list notifications for users own account(s) only', async function(){
 
 
     const user1 = await ezUserAccount();
@@ -75,11 +73,13 @@ describe('Notifications', function(){
 
     const user2Notifs = await Notification.unread({ 
        UserId: user2.id 
-    });
+    },{ attributes: ['id'] });
 
 
-    console.log(user2Notifs.toJSON())
 
+    assert.equal(user2Notifs.length,1);
+
+    assert.deepEqual(user2Notifs[0].id,3);
 
   });
 
@@ -135,8 +135,6 @@ describe('Notifications', function(){
     assert.deepEqual(user2Notifs.map(un=>un.id),[1,2]);
 
 
-
-
     const user2AllUnreadNotifs = await Notification.unread({ 
       UserId: user2.id 
     })
@@ -152,7 +150,6 @@ describe('Notifications', function(){
 
     assert.deepEqual(user2AllNotifsAfterRead,[]);
 
-    //TODO FIX cross account scoping
     assert.deepEqual((await Notification.unread({ UserId: user1.id })).map(n=>n.id),[2])
 
   });
