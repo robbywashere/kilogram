@@ -126,7 +126,7 @@ describe('jobs/', function(){
 
     })
 
-    it(`should run a job downloading photo then sending a 'full_dance' cmd to python bridge updating the job with the outcome`, async function(){
+    it(`should run a job downloading photo then sending a 'full_dance' cmd to python bridge updating the job with the body`, async function(){
 
 
 
@@ -221,7 +221,8 @@ describe('jobs/', function(){
 
       agent.exec({ cmd: '__testcmd__', args: {} }).then( result => {
         try {
-          assert.deepEqual(result, { error: "noinput", success: false })
+          //TODO: change this use status codes 400 for bad request for example
+          assert.deepEqual(result, { error: "no input", code: 400, success: false })
           done();
         } catch(e) {
           return done(e);

@@ -120,9 +120,10 @@ function runJobs({ JobModel = PostJob, JobRunner = Runner.PostJobRun } = {}) {
               job, 
             });
 
-            if (jobResult && jobResult.success === false) throw new Error(jobResult.error)
+            //TODO: this needs more robust handling!
+            if (!get(jobResult,'success')) throw new Error(jobResult.error)
 
-            await job.complete(jobResult);
+            await job.complete({ body: jobResult });
 
             logger.status(`-- ${JobModel} Run cycle complete job_id: ${job.id}, success: ${jobResult.success}`);
 
@@ -140,6 +141,7 @@ function runJobs({ JobModel = PostJob, JobRunner = Runner.PostJobRun } = {}) {
       }
     } catch(e) {
       logger.error(`Error running 'runJobs' in engine/index.js,\n${e}`);
+      try { logger.error(JSON.stringify(e,null,4)) } catch(e) {}
     } finally {
       if (device) {
         logger.status(`Freeing device-adbId: ${device.adbId}`);

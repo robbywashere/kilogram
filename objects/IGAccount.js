@@ -20,11 +20,8 @@ module.exports = {
       //permit: false,
     },
     status: {
-      type: ENUM('unverified','verified','failed'),
-      defaultValue: 'unverified',
-      validate: {
-          isIn: [['unverified','verified','failed']]
-      }
+      type: ENUM('UNVERIFIED','GOOD','FAILED'),
+      defaultValue: 'UNVERIFIED',
     }
   },
   Hooks: {

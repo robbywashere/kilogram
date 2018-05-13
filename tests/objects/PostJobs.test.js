@@ -83,7 +83,7 @@ describe('objects/PostJob', function(){
 
   })
 
-  it('should .popJob - giving a single job returning a job from the db while updating that job as inprog: true', async function(){
+  it('should .popJob - giving a single job returning a job from the db while updating that job as SPINNING', async function(){
 
 
     const { post }  = await createAccountUserPostJob();
@@ -94,7 +94,7 @@ describe('objects/PostJob', function(){
 
     const j = await PostJob.popJob();
 
-    assert(j.inprog);
+    assert.equal(j.status,'SPINNING');
 
   })
 
@@ -130,8 +130,7 @@ describe('objects/PostJob', function(){
       IGAccountId: igAccount.id,
       args: { arg1: 1 },
       cmd: 'cmd',
-      inprog: true,
-      finish: false
+      status: 'SPINNING',
     })
 
     const jNot2 = await PostJob.create({
@@ -139,8 +138,7 @@ describe('objects/PostJob', function(){
       IGAccountId: igAccount.id,
       args: { arg1: 1 },
       cmd: 'cmd',
-      inprog: false,
-      finish: true
+      status: 'FAILED'
     })
 
     let jOut = await PostJob.outstanding();

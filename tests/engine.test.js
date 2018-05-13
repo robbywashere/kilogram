@@ -48,7 +48,7 @@ describe('engine' , function(){
 
 
 
-  it('should match queued jobs to free devices', async function(){
+  it.only('should match queued jobs to free devices', async function(){
 
     const d1 = await Device.create({
       adbId: 'adbId1',
@@ -67,7 +67,7 @@ describe('engine' , function(){
     const p = (await createAccountUserPostJob()).post;
 
 
-    await runJobs({ })();
+    await runJobs()();
 
     const { agent, job } = jobRunStub.getCall(0).args[0];
 

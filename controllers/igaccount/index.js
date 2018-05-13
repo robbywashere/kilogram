@@ -19,10 +19,6 @@ class IGAccountPolicy extends AuthPolicy {
     return this._accounts() && (await this._adminOnly());
   }
 
-  verify(){
-    return !!this.user;
-  }
-
   index(){
     return true;
   }

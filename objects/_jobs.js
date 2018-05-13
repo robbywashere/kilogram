@@ -1,6 +1,6 @@
 const sequelize = require('sequelize');
 const { get } = require('lodash');
-const { STRING, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
+const { STRING, ENUM, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 
 //Turns oustanding posts into Jobs
 //this exists since we are essentially #bulkCreate'ing from a subselect
@@ -35,7 +35,7 @@ const GetJobQuery = (tableName) => `
   UPDATE 
       "${tableName}"
   SET 
-      inprog=true
+      status='SPINNING'
   WHERE
       id = (
           SELECT
@@ -43,11 +43,7 @@ const GetJobQuery = (tableName) => `
           FROM
               "${tableName}"
           WHERE
-              inprog=false
-          AND
-              finish=false
-          AND
-              sleep=false
+              status='OPEN'
           ORDER BY id 
           FOR UPDATE SKIP LOCKED
           LIMIT 1
@@ -58,10 +54,12 @@ const GetJobQuery = (tableName) => `
 
 const StatsQuery = (tableName)=>`
   SELECT 
-    sum(case when (finish = true) then 1 else 0 end) as completed,
-    sum(case when (finish = false) AND (inprog = false) AND (sleep = false) then 1 else 0 end) as outstanding,
-    sum(case when (sleep = true) AND (inprog = false) AND (finish = false) then 1 else 0 end) as sleeping,
-    sum(case when (inprog = true) then 1 else 0 end) as in_progress
+    sum(case when (status = 'OPEN') then 1 else 0 end) as open,
+    sum(case when (status = 'SUCCESS') then 1 else 0 end) as success,
+    sum(case when (status = 'SUCCESS' AND (result != 'NEGATIVE')) then 1 else 0 end) as missions_accomplished,
+    sum(case when (status = 'FAILED') then 1 else 0 end) as failed,
+    sum(case when (status = 'SLEEPING') then 1 else 0 end) as sleeping,
+    sum(case when (status = 'SPINNING') then 1 else 0 end) as spinning
   from "${tableName}"
 `;
 
@@ -70,15 +68,24 @@ const JobMethods = {
   denormalize: function(){
     return this.reload({ include: [{ all: true }] }); //
   },
-  complete: function(result){
+  complete: function({ body, resultOf }){
+
+    let result = (typeof resultOf === "undefined") ? 'UNKNOWN' : (!!resultOf) ? 'POSITIVE' : 'NEGATIVE';
+
     return this.update({
-      inprog: false,
-      finish: true,
-      outcome: result 
+      result,
+      status: !!get(body,'success') ? 'SUCCESS' : 'FAILED',
+      body
     })
+
   },
-  backout: function (error, sleep = true) { 
-    return this.update({ inprog: false, sleep: true, finish: false, outcome: { success: false, error }}) 
+  backout: function (err, sleep = false) { 
+    let error = (typeof err !== "object") ? String(error) : err;
+    return this.update({
+      status: (sleep) ? 'SLEEPING' : 'FAILED',
+      body: error
+    })
+
   }
 }
 
@@ -94,31 +101,36 @@ const JobStaticMethods = {
   popJob: async function(){ return get((await this.$.query(GetJobQuery(this.tableName), { type: sequelize.QueryTypes.SELECT, model: this })),0) }
 }
 
+/*
+ *
+ * Job itself, did what it was told --- status = SUCCESS
+ * 
+ * result of job was not good --- result = NEGATIVE vs result = POSTIVE
+ *
+ *
+ */
+
 const JobProperties = {
-  outcome: {
+  body: {
     type: sequelize.JSON
   },
-  sleep: {
-    type: BOOLEAN,
-    defaultValue: false
+  result: {
+    type: ENUM('UNKNOWN','POSITIVE','NEGATIVE'),
   },
-  inprog: {
-    type: BOOLEAN,
-    defaultValue: false
+  status: {
+    type: ENUM('OPEN','SPINNING','SUCCESS','SLEEPING','FAILED'),
+    defaultValue: 'OPEN'
   },
-  finish: { 
-    type: BOOLEAN,
-    defaultValue: false,
-  }
 }
 
 
 const JobScopes = {
   withAll: { include: [ { all: true } ] },
-  outstanding: { where: { finish: false, inprog: false, sleep: false } },
-  sleeping: { where: { finish: false, inprog: false, sleep: true } },
-  completed: { where: { finish: true } },
-  inProgress:  { where: { inprog: true } }
+  outstanding: { where: { status: 'OPEN' } },
+  sleeping: { where: { status: 'SLEEPING' } },
+  completed: { where: { status: 'SUCCESS' } },
+  failed: { where: { status: 'FAILED' } },
+  inProgress:  { where: { status: 'SPINNING' } }
 }
 
 

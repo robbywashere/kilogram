@@ -34,7 +34,7 @@ module.exports = {
       postDate: { [Op.lte]: sequelize.fn(`NOW`) },
       '$PostJob$': { [Op.eq]: null }
     }})
-    this.addScope('withIGAccount', { include: [ IGAccount ] } )
+    //Not used delete me? this.addScope('withIGAccount', { include: [ IGAccount ] } )
   },
   ScopeFunctions: true,
   Hooks: {
