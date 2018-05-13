@@ -25,7 +25,7 @@ class IGDevice:
         if self.device.screen == "on":
             self.device.sleep()
 
-    def tear_down(self):
+    def teardown(self):
         self.sleep()
 
     def setup(self):
@@ -87,7 +87,7 @@ class IGDevice:
         self.device(resourceId='com.instagram.android:id/caption_text_view').set_text(txt)
 
     def push_photo(self, local, storage_name = None):
-        storage_name = storage_name if storage_name != None else random_string() 
+        storage_name = storage_name if storage_name != None else random_string() #huh? perhaps you should use this for selection?
         remote = '/storage/emulated/legacy/DCIM/Camera/{}.jpg'.format(storage_name)
         cmd = "adb push '{}' '{}'".format(local,remote)
         result = system(cmd)
@@ -106,6 +106,11 @@ class IGDevice:
         self.device(text='Share').click()
         self.photo_posted = True
 
+    def verify_ig_dance(self, username, password): 
+        self.clean_slate()
+        self.open_ig()
+        self.login(username, password)
+        
     def full_dance(self, username, password, localfile,  desc = ""):
         if localfile is None:
             if objectname is None:

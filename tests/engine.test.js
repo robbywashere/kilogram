@@ -67,7 +67,7 @@ describe('engine' , function(){
     const p = (await createAccountUserPostJob()).post;
 
 
-    await runJobs()();
+    await runJobs({ })();
 
     const { agent, job } = jobRunStub.getCall(0).args[0];
 

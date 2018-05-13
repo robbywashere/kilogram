@@ -15,11 +15,12 @@ async function PostJobRun({
   job = demand('job'), 
   IGAccount = demand('IGAccount'),
   Post = demand('Post'),
-  //Photo = demand('Photo')
+  //Photo = demand('Photo')- I wish for a flatter dep injection :(
   agent = demand('agent'), 
   minioClient = (new minio.MClient()) 
 }) {
   
+  //TODO: I wish for a flatter dep injection :(
   if (typeof get(Post,'Photo.objectName') === "undefined") throw new Error(`Post ${Post.id} does not have a .Photo.objectName`);
 
   let localfile = await minioClient.pullPhoto({ name: Post.Photo.objectName })
@@ -42,10 +43,9 @@ async function PostJobRun({
 
 async function VerifyIGJobRun({ 
   job = demand('job'), 
+  IGAccount = demand('IGAccount'),
   agent = demand('agent'), 
 }) {
-  // const { IGAccount } = job;
-  const { IGAccount } = await job.denormalize();
   const result = await agent.exec({ 
     cmd: 'verify_ig_dance', 
     args: {
@@ -53,7 +53,6 @@ async function VerifyIGJobRun({
       password: IGAccount.password,
     } 
   });
-  //If result is sucess .....
   await job.update(result);
   return result;
 }

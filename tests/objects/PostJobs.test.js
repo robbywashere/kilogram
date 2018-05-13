@@ -3,7 +3,9 @@ const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../../db/sync');
 const Promise = require('bluebird');
-const { createAccountUserPostJob, createAccountUserPost, createUserPostJob } = require('../helpers');
+const sequelize = require('sequelize');
+const { ezUserAccount, newIGAccount, createAccountUserPostJob, createAccountUserPost, createUserPostJob } = require('../helpers');
+const { times, constant } = require('lodash');
 
 
 describe('objects/PostJob', function(){
@@ -11,6 +13,40 @@ describe('objects/PostJob', function(){
   beforeEach(async ()=> {
     return await sync(true);
   });
+
+
+  it('should create jobs for all outstanding posts with .initJobs', async function(){
+
+
+    const user = await ezUserAccount();
+    const account = user.Accounts[0];
+    const igaccount = await newIGAccount(user);
+    const photo = await Photo.create({});
+
+    const props = {
+      postDate: sequelize.fn('NOW'),
+      UserId: user.id,
+      AccountId: account.id,
+      IGAccountId: igaccount.id,
+      photoUUID: photo.uuid
+    }    
+
+
+    await Post.bulkCreate(times(9,constant(props)));
+
+    await PostJob.initPostJobs();
+
+    //Run again to assure no dupes ;)
+
+    await PostJob.initPostJobs();
+
+    const jobs = await PostJob.findAll();
+
+    assert.equal(9,jobs.length)
+
+
+  });
+
 
 
   it('should respond to withPost and withPostForId with a .Post object with a .Photo object', async function(){

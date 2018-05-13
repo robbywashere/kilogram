@@ -1,6 +1,6 @@
 
 const cmds = require('../android/cmds');
-const { PostJob, Device } = require('../objects');
+const { PostJob, VerifyIGJob, Device } = require('../objects');
 const { logger } = require('../lib/logger');
 const Runner = require('../python/runner');
 const DeviceAgent  = require('../python/deviceAgent');
@@ -54,16 +54,13 @@ const run = function(fn, milliseconds){ // Job 'Harness' - Errors should never r
 
 //const { associations, name } = job.constructor; 
 
-async function runJobWithDevice({ job, device }) {
-
+  /*async function runJobWithDevice({ job, device }) {
   const deviceId = device.get('adbId');
   const agent = new DeviceAgent.Agent({ deviceId });
-
   let jobResult = await Runner.PostJobRun({ 
     agent, 
     job, 
   });
-
   if (jobResult && jobResult.success === false) throw new Error(jobResult.error)
 
   await job.complete(jobResult);
@@ -71,9 +68,7 @@ async function runJobWithDevice({ job, device }) {
   logger.status(`-- PostJob Run cycle complete job_id: ${job.id}, success: ${jobResult.success}`);
 
   logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
-
-
-}
+}*/
 
 
 
@@ -94,33 +89,32 @@ function jobStats(job){
 
 
 
-function runJobs() {
+
+//TODO: Jobs may not always be device dependent! different function?
+function runJobs({ JobModel = PostJob, JobRunner = Runner.PostJobRun } = {}) {
+
   const diffLogger = logDiff(logger.status); //Logs only on deltas duh!
   return async function(){
     let device;
     let job;
     try {
-      const stats = await PostJob.stats();
+      const stats = await JobModel.stats();
       const freeDevices = await Device.free();
 
       logger.status(jobsStats(stats, freeDevices))
 
 
       if (stats.outstanding > 0 && freeDevices.length > 0) {
-        if ((device = await Device.popDevice()) && (job = await PostJob.popJob())) {
+        if ((device = await Device.popDevice()) && (job = await JobModel.popJob())) {
           try {
-
-
             const deviceId = device.get('adbId');
             const agent = new DeviceAgent.Agent({ deviceId });
-
 
             await job.denormalize(); // Loads Job data from Id's into 'job' object
 
             logger.status(jobStats(job));
 
-
-            let jobResult = await Runner.PostJobRun({ 
+            let jobResult = await JobRunner({ 
               ...job,
               agent, 
               job, 
@@ -130,7 +124,7 @@ function runJobs() {
 
             await job.complete(jobResult);
 
-            logger.status(`-- PostJob Run cycle complete job_id: ${job.id}, success: ${jobResult.success}`);
+            logger.status(`-- ${JobModel} Run cycle complete job_id: ${job.id}, success: ${jobResult.success}`);
 
             logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
 
@@ -159,12 +153,15 @@ function runJobs() {
 
 const main = function (){
   return [
-    run(syncDevices,1000),
-    run(PostJob.initJobs.bind(Job),1000), // Turns posts into queued jobs
-    run(runJobs(), 2000) //executes queued post jobs--- deprecating: see below
 
-    //TODO: run(runAnyJob(VerifyIGJob,Runner.VerifyIGJobRun),2000)
-    //TODO: run(runAnyJob(PostJob,Runner.PostJobRun),2000)
+    run(syncDevices,1000),
+
+    run(PostJob.initJobs,1000), // Turns posts into queued jobs
+
+    run(runJobs({ JobModel: PostJob, JobRunner: Runner.PostJobRun }), 2000),
+
+    run(runJobs({ JobModel: VerifyIGJob, JobRunner: Runner.VerifyIGJobRunner }), 2000)
+
   ];
 }
 

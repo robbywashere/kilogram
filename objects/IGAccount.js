@@ -1,6 +1,6 @@
 const sequelize = require('sequelize');
 const crypto = require('crypto');
-const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
+const { ENUM, STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { isLoggedIn } = require('./_helpers');
 
 //TODO unique true composite key constraint { AccountId, username }
@@ -19,6 +19,13 @@ module.exports = {
       unique: 'igaccount_account'
       //permit: false,
     },
+    status: {
+      type: ENUM('unverified','verified','failed'),
+      defaultValue: 'unverified',
+      validate: {
+          isIn: [['unverified','verified','failed']]
+      }
+    }
   },
   Hooks: {
     afterCreate: async function({ id }) {
