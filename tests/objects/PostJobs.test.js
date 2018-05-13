@@ -35,7 +35,7 @@ describe('objects/PostJob', function(){
 
   })
 
-  it('should respond to withAllForId with job.Post, job.Post.Photo, job.IGAccount',async function(){
+  it.skip('should respond to withAllForId with job.Post, job.Post.Photo, job.IGAccount',async function(){
 
     const { post }  = await createAccountUserPostJob();
 

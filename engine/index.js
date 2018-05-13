@@ -56,25 +56,12 @@ const run = function(fn, milliseconds){ // Job 'Harness' - Errors should never r
 
 async function runJobWithDevice({ job, device }) {
 
-  await job.reloadWithAll();
   const deviceId = device.get('adbId');
   const agent = new DeviceAgent.Agent({ deviceId });
-  logger.status({ 
-    'Running Job': job.id,
-    'Post': job.Post.id,
-    'IG Account': job.IGAccount.id, 
-    'Device': deviceId
-  });
-
-  //TODO: Move Job Queue'ing and executing to python
-  //TODO: figure out protocol to retry job in error cases, worst case scenario the job keeps posting photo to an account
 
   let jobResult = await Runner.PostJobRun({ 
-    post: job.Post, 
     agent, 
-    job: job, 
-    igAccount: job.IGAccount, 
-    photo: job.Post.Photo 
+    job, 
   });
 
   if (jobResult && jobResult.success === false) throw new Error(jobResult.error)
@@ -90,84 +77,19 @@ async function runJobWithDevice({ job, device }) {
 
 
 
-function logStats(logger, stats = {}, freeDevices = []){
-  logger({ 
+function jobsStats(stats = {}, freeDevices = []){
+  return { 
     ...zipObject(Object.keys(stats).map(startCase),Object.values(stats)),
     'Free Devices': (freeDevices).length, 
-  });
+  };
 }
 
-
-function runAnyJob(JobModel, JobRunner) {
-  const diffLogger = logDiff(logger.status); //Logs only on deltas duh!
-  return async function(){
-    let device;
-    let job;
-    try {
-      const stats = await JobModel.stats();
-      const freeDevices = await Device.free();
-
-      logStats(diffLogger, stats, freeDevices);
-
-      if (stats.outstanding > 0 && freeDevices.length > 0) {
-        if ((device = await Device.popDevice()) && (job = await JobModel.popJob())) {
-          try {
-
-            //Combine these funtions no need to seperate??
-            await runAnyJobWithDevice({ job, device, runner: JobRunner }); 
-
-          } catch(err) {
-            //TRY if fails critical error?
-            await job.backout(err); // TODO !!!: backing out of job puts job in sleep mode, retry? retry with count?
-
-            logger.error(`-- Error running job type: ${JobModel.name} - ${job.id}`); //TODO: logger.status??
-            throw err;
-          }
-        }
-      }
-    } catch(e) {
-      logger.error(`Error running job in engine/index.js,\n${e}`);
-    } finally {
-      if (device) {
-        logger.status(`Freeing device-adbId: ${device.adbId}`);
-        await device.setFree(); 
-      }
-    }
-  }
-}
-
-async function runAnyJobWithDevice({ job, device, runner }) {
-
-  const name = job.constructor.name || 'UnknownJobWTF'; 
+function jobStats(job){
   const associations = Object.keys(job.constructor.associations);
-
-  if (!associations.every(k=>!isUndefined(job[k]))) { //make this into a object wide func?
-    await job.reloadWithAll();
-  }
-
-  const deviceId = device.get('adbId');
-  const agent = new DeviceAgent.Agent({ deviceId });
-
-  logger.status({ 
+  return { 
     ...associations.reduce((p,key) => { 
-      p[`${startCase(key)} Id`] = get(job,`${key}.id`); return p } ,{})
-  });
-
-
-  //TODO: Move Job Queue'ing and executing to python
-  //TODO: figure out protocol to retry job in error cases, worst case scenario the job keeps posting photo to an account
-
-  const jobResult = await runner({ job, agent });
-
-  if (jobResult && jobResult.success === false) throw new Error(jobResult.error)
-
-  await job.complete(jobResult);
-
-  logger.status(`-- ${name} Run cycle complete ${name}Id: ${job.id}, success: ${jobResult.success}`);
-
-  logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
-
-
+      p[`${startCase(key)} Id`] = get(job,`${key}Id`); return p } ,{})
+  };
 }
 
 
@@ -181,13 +103,37 @@ function runJobs() {
       const stats = await PostJob.stats();
       const freeDevices = await Device.free();
 
-      logStats(diffLogger, stats, freeDevices);
+      logger.status(jobsStats(stats, freeDevices))
+
 
       if (stats.outstanding > 0 && freeDevices.length > 0) {
         if ((device = await Device.popDevice()) && (job = await PostJob.popJob())) {
           try {
 
-            await runJobWithDevice({ job, device }); 
+
+            const deviceId = device.get('adbId');
+            const agent = new DeviceAgent.Agent({ deviceId });
+
+
+            await job.denormalize(); // Loads Job data from Id's into 'job' object
+
+            logger.status(jobStats(job));
+
+
+            let jobResult = await Runner.PostJobRun({ 
+              ...job,
+              agent, 
+              job, 
+            });
+
+            if (jobResult && jobResult.success === false) throw new Error(jobResult.error)
+
+            await job.complete(jobResult);
+
+            logger.status(`-- PostJob Run cycle complete job_id: ${job.id}, success: ${jobResult.success}`);
+
+            logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
+
 
           } catch(err) {
             //TRY if fails critical error?

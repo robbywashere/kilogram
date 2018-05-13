@@ -1,6 +1,7 @@
 const {readdirSync, readFileSync } = require('fs');
-const { User, Photo, Account, IGAccount, Post } = require('../../objects');
+const { User, PostJob, Photo, Account, IGAccount, Post } = require('../../objects');
 const minioObj = require('../../server-lib/minio/minioObject');
+const { get } = require('lodash');
 
 function loadFixture(name) {
   return readFileSync(`${__dirname}/../fixtures/${name}`).toString();
@@ -31,8 +32,24 @@ function exprezz(user = {}){
   return app;
 }
 
+async function initJob({ id, AccountId, IGAccountId }){
+  try {
+    return await PostJob.create({
+      PostId: id,     
+      AccountId,
+      IGAccountId,
+    })
+  } catch(error){
+    if (get(error,'errors[0].type') === "unique violation") { 
+      logger.error(`'PostJob' already exists for PostId: ${this.id}`)
+    } else {
+      throw error;
+    }
+  }
+}
+
 function newIGAccount(user){
-  return IGAccount.create({ username: 'xxx', password: 'password', AccountId: user.Accounts[0].id });
+  return IGAccount.create({ username: 'username', password: 'password', AccountId: user.Accounts[0].id });
 }
 async function createAccountUserPostJob(){
 
@@ -44,8 +61,8 @@ async function createAccountUserPostJob(){
   },{ include: [ Account ]});
   const account = user.Accounts[0];
   const photo = await Photo.create({ 
-      bucket: 'uploads',
-      objectName: minioObj.create('v2',{ payload: true })
+    bucket: 'uploads',
+    objectName: minioObj.create('v2',{ payload: true })
   });
   const igAccount = await newIGAccount(user);
   let post = await Post.create({
@@ -53,11 +70,12 @@ async function createAccountUserPostJob(){
     UserId: user.id,
     AccountId: account.id,
     IGAccountId: igAccount.id,
+    text: '#description',
     photoUUID: photo.uuid,
     Photo: photo
   })
 
-  await post.initJob();
+  await initJob(post);
   await post.reloadWithJob();
 
   return { account, igAccount, user, post, job: post.PostJob }
@@ -77,8 +95,8 @@ function ezUserAccount(){
 async function createAccountUserPost(){
   const user = await ezUserAccount();
   const photo = await Photo.create({ 
-      bucket: 'uploads',
-      objectName: minioObj.create('v2',{ payload: true })
+    bucket: 'uploads',
+    objectName: minioObj.create('v2',{ payload: true })
   });
   const account = user.Accounts[0];
   const igAccount = await newIGAccount(user);
@@ -110,7 +128,7 @@ async function createAccountUserPostJob2(){
   },{
     include: [ Photo ]
   })
-  await post.initJob();
+  await initJob(post);
   await post.reloadWithJob();
 
   return post;
@@ -128,10 +146,10 @@ async function createUserPostJob(){
   },{
     include: [ Photo ]
   })
-  await post.initJob();
+  await initJob(post);
   await post.reloadWithJob();
 
   return post;
 }
 
-module.exports =  { ezUser, ezUserAccount, fixtures, createAccountUserPostJob, newIGAccount, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz, appLogger  }
+module.exports =  { initJob, ezUser, ezUserAccount, fixtures, createAccountUserPostJob, newIGAccount, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz, appLogger  }

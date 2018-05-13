@@ -11,6 +11,7 @@ const sync = require('../db/sync');
 const { Post, Device, User, Photo } = require('../objects');
 const minio = require('../server-lib/minio');
 const { MClient } = minio; 
+const { createAccountUserPostJob } = require('./helpers');
 
 
 describe('jobs/', function(){
@@ -18,9 +19,59 @@ describe('jobs/', function(){
 
   beforeEach(()=>sync(true))
 
+
   describe('function PostJobRun', function(){
-    //TODO: PostJobRun no longer handles its errors, the error is to be handled by the caller, therefore this should be tested - runJobs()
+
+
+
+    // TODO: PostJobRun job argument is kept normalized intentionally, keeping the interface
+    // generic and leaving it up to the function 'PostJobRun' to be responsible for fetching its own data dependents
+    // Abondanodnninedning
+    it.skip(`should take argument, 'job' then agent.exec with proper data arguments`, async function(){
+
+
+      const agent = { exec: sinon.spy(()=>{ throw new Error('ERROR!') }) };
+
+      const { account, igAccount, user, post, job } = await createAccountUserPostJob();
+
+      await post.reload({ include: [ Photo ] });
+
+      const minioClient = {
+        pullPhoto: sinon.mock().returns(Promise.resolve('/tmpfile'))
+      }
+
+      job.update = sinon.spy();
+
+      await PostJobRun({ job, agent, minioClient }, false)
+
+      assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0],{ name: post.Photo.objectName })
+
+      assert(
+        agent.exec.calledWith({ 
+          cmd: 'full_dance', 
+          args: {
+            username: igAccount.username,
+            password: igAccount.password,
+            desc: post.text,
+            localfile: '/tmpfile' 
+          } 
+        }))
+
+
+      assert(
+        jobUpdateSpy.calledWith({
+          success:false,
+        })
+      );
+
+
+    })
+
+
+    //const { account, igAccount, user, post, job } = await createAccountUserPostJob()
+    //????TODO: PostJobRun no longer handles its errors, the error is to be handled by the caller, therefore this should be tested - runJobs()
     it.skip(`should run a job via sending a 'full_dance' cmd sent to python bridge and properly respond to errors`, async function(){
+
 
 
       const execSpy = sinon.spy(()=>{ throw new Error('ERROR!') });
@@ -40,6 +91,7 @@ describe('jobs/', function(){
       const agent = {
         exec: execSpy
       }
+
       const job = {
         update: jobUpdateSpy
       }
@@ -49,7 +101,7 @@ describe('jobs/', function(){
 
 
 
-      await PostJobRun({ job, agent, post, photo, igAccount, minioClient }, false)
+      await PostJobRun({ job, agent, minioClient }, false)
 
       assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0],{ name: 'objectName' })
 
@@ -67,7 +119,7 @@ describe('jobs/', function(){
 
       assert(
         jobUpdateSpy.calledWith({
-            success:false,
+          success:false,
         })
       );
 
@@ -77,38 +129,36 @@ describe('jobs/', function(){
     it(`should run a job downloading photo then sending a 'full_dance' cmd to python bridge updating the job with the outcome`, async function(){
 
 
-      const execSpy = sinon.spy(()=>({ success: true }));
-      const jobUpdateSpy = sinon.spy();
 
       const minioClient = {
         pullPhoto: sinon.mock().returns(Promise.resolve('/tmpfile'))
       }
 
-      const igAccount = {
+      const IGAccount = {
         username: 'username',
         password: 'password' 
       }
-      const post = {
-        text: "#description"
+      const Post = {
+        text: "#description",
+        Photo: { objectName: 'objectName' }
       }
       const agent = {
-        exec: execSpy
+        exec: sinon.spy(()=>({ success: true }))
       }
       const job = {
-        update: jobUpdateSpy
+        update: sinon.spy()
       }
       const photo = {
         objectName: 'objectName'
       }
 
 
-
-      await PostJobRun({ job, agent, post, photo, igAccount, minioClient })
+      await PostJobRun({ job, agent, Post, IGAccount, minioClient })
 
       assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0],{ name: 'objectName' })
 
       assert.deepEqual(
-        execSpy.getCall(0).args[0],
+        agent.exec.getCall(0).args[0],
         { 
           cmd: 'full_dance', 
           args: {
@@ -118,9 +168,8 @@ describe('jobs/', function(){
             localfile: '/tmpfile' 
           } 
         })
-
       assert.deepEqual(
-        jobUpdateSpy.getCall(0).args[0],
+        job.update.getCall(0).args[0],
         { success: true }
       )
 

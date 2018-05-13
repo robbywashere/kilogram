@@ -16,7 +16,7 @@ module.exports = {
     text: {
       type: TEXT
     },
-    photoUUID: {
+    photoUUID: { // TODO: wtf does this exist?
       type: UUID
     },
     postDate: {
@@ -44,22 +44,8 @@ module.exports = {
         await this.mapToPhoto(instance);
       }
     },
-    beforeCreate: async function(instance){
-      const { Photo } = this.sequelize.models;
-      const { photoUUID } = instance;
-      if (isUndefined(photoUUID) || isNull(photoUUID)) {
-        throw new ValidationError(`photoUUID cannot be ${(!isNull(photoUUID)) ? 'undefined' : 'null'}`); 
-      }
-      if (isUndefined(instance.PhotoId)) {
-        const photo = await Photo.findOne({ where: { uuid: photoUUID }});
-        if (photo){
-          instance.dataValues.PhotoId = photo.id;
-        } else {
-          //throw new BadRequest(`Photo with UUID: ${photoUUID} not found`)
-          //
-          throw new ValidationError(`Photo with UUID: ${photoUUID} not found`); 
-        }
-      }
+    beforeCreate: function(instance){
+      return this.mapToPhoto(instance)
     }
   },
   Scopes: {
@@ -80,22 +66,6 @@ module.exports = {
     }
   },
   Methods:{
-    initJob: async function({ throwOnDuplicates = false } = {}){
-      const { PostJob } = DB.models; 
-      try {
-        await PostJob.create({
-          PostId: this.id,     
-          AccountId: this.AccountId,
-          IGAccountId: this.IGAccountId
-        })
-      } catch(error){
-        if (get(error,'errors[0].type') === "unique violation" && !throwOnDuplicates) { 
-          logger.error(`'PostJob' already exists for PostId: ${this.id}`)
-        } else {
-          throw error;
-        }
-      }
-    }
   },
   StaticMethods: {
     mapToPhoto: async function(instance){
@@ -109,8 +79,6 @@ module.exports = {
         if (photo){
           instance.dataValues.PhotoId = photo.id;
         } else {
-          //throw new BadRequest(`Photo with UUID: ${photoUUID} not found`)
-          //
           throw new ValidationError(`Photo with UUID: ${photoUUID} not found`); 
         }
       }

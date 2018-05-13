@@ -20,7 +20,10 @@ module.exports = {
     this.belongsTo(IGAccount, { foreignKey: { allowNull: false }});
   }, 
   Methods: {
-    ...JobMethods
+    ...JobMethods,
+    denormalize: function() {
+      return this.reloadWithDeps();
+    }
   },
   StaticMethods: {
     ...JobStaticMethods,

@@ -3,6 +3,8 @@ const { get } = require('lodash');
 const { STRING, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 
 //Turns oustanding posts into Jobs
+//this exists since we are essentially #bulkCreate'ing from a subselect
+//not currently possibly or feasible or optimizied to do in sequelize ;)
 const InitPostJobQuery = `
   INSERT INTO
     "PostJobs"
@@ -65,6 +67,9 @@ const StatsQuery = (tableName)=>`
 
 
 const JobMethods = {
+  denormalize: function(){
+    return this.reload({ include: [{ all: true }] }); //
+  },
   complete: function(result){
     return this.update({
       inprog: false,
@@ -78,6 +83,7 @@ const JobMethods = {
 }
 
 const JobStaticMethods = {
+
   stats: async function(){
     return this.$.query(StatsQuery(this.tableName)).spread(r=>{
       const result = JSON.parse(JSON.stringify(get(r,0)));

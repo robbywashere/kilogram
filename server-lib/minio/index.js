@@ -91,7 +91,8 @@ class MClient {
       await this.client.fGetObject(bucket,name,localpath)
       return localpath;
     } catch(e) {
-      throw e
+      e.message = `Error fetching Minio Object: ${e.message}`;
+      throw e;
     }
   }
 

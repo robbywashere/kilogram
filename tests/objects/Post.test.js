@@ -10,7 +10,7 @@ const sequelize = require('sequelize');
 const sync = require('../../db/sync');
 const SEQ = require('../../db');
 const Promise = require('bluebird');
-const { ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('../helpers');
+const { initJob, ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('../helpers');
 const { logger } = require('../../lib/logger');
 const { zipObject, startCase, constant, times } = require('lodash');
 const minioObj = require('../../server-lib/minio/minioObject');
@@ -112,7 +112,7 @@ describe('objects/Post', function(){
 
     const { post } = await createAccountUserPost();
 
-    await post.initJob();
+    await initJob(post);
 
     const pd = await Post.due();
 
