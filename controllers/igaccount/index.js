@@ -45,6 +45,7 @@ class IGAccountPolicy extends AuthPolicy {
 module.exports = function IGAccountController(){
   const router = new Router();
   const resource = new Resource({ model: IGAccount, policy: IGAccountPolicy });
+  router.get('/verified', resource.action('index',{ scope: 'verified', index: true }));
   router.use(resource.resource());
   return router;
 }

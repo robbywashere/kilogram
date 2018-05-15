@@ -33,6 +33,7 @@ module.exports = {
     }
   },
   Scopes: {
+    verified: { where: { status: 'GOOD' } }
   },
   Methods:{
   },

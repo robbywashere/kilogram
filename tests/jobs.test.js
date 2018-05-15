@@ -14,7 +14,7 @@ const { MClient } = minio;
 const { createAccountUserPostJob } = require('./helpers');
 
 
-describe('jobs/', function(){
+describe.only('jobs/', function(){
   let minioStub;
 
   beforeEach(()=>sync(true))
@@ -179,6 +179,14 @@ describe('jobs/', function(){
 
   describe('class Agent', function(){
 
+
+    let sandbox = sinon.sandbox.create();
+
+
+    afterEach(()=>{
+      sandbox.restore()
+    });
+
     it('should send an echo cmd to the python bridge', function(done){
 
       this.timeout(5000);
@@ -210,7 +218,7 @@ describe('jobs/', function(){
 
       const bridge = agent.connect();
 
-      sinon.stub(PythonShell.prototype,'send').callsFake((data)=>{
+      sandbox.stub(PythonShell.prototype,'send').callsFake((data)=>{
         try {
           assert.deepEqual(data,{ deviceId: 'adbId', args: {}, method: '__testcmd__' })
         } catch(e) {

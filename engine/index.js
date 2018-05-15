@@ -91,7 +91,7 @@ function jobStats(job){
 
 
 //TODO: Jobs may not always be device dependent! different function?
-function runJobs({ JobModel = PostJob, JobRunner = Runner.PostJobRun } = {}) {
+function runJobs({ JobModel = demand('JobModel'), JobRunner = demand('JobRunner') } = {}) {
 
   const diffLogger = logDiff(logger.status); //Logs only on deltas duh!
   return async function(){
@@ -104,11 +104,12 @@ function runJobs({ JobModel = PostJob, JobRunner = Runner.PostJobRun } = {}) {
       logger.status(jobsStats(stats, freeDevices))
 
 
-      if (stats.outstanding > 0 && freeDevices.length > 0) {
+      if (stats.open > 0 && freeDevices.length > 0) {
         if ((device = await Device.popDevice()) && (job = await JobModel.popJob())) {
           try {
             const deviceId = device.get('adbId');
             const agent = new DeviceAgent.Agent({ deviceId });
+
 
             await job.denormalize(); // Loads Job data from Id's into 'job' object
 
@@ -125,15 +126,13 @@ function runJobs({ JobModel = PostJob, JobRunner = Runner.PostJobRun } = {}) {
 
             await job.complete({ body: jobResult });
 
-            logger.status(`-- ${JobModel} Run cycle complete job_id: ${job.id}, success: ${jobResult.success}`);
-
+            logger.status(`-- ${JobModel} Run cycle complete Job Id: ${job.id}, success: ${jobResult.success}`);
             logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
 
 
           } catch(err) {
             //TRY if fails critical error?
             await job.backout(err); // TODO !!!: backing out of job puts job in sleep mode, retry? retry with count?
-
             logger.error(`-- Error running Job: ${job.id}`); //TODO: logger.status??
             throw err;
           }
@@ -147,6 +146,9 @@ function runJobs({ JobModel = PostJob, JobRunner = Runner.PostJobRun } = {}) {
         logger.status(`Freeing device-adbId: ${device.adbId}`);
         await device.setFree(); 
       }
+      /* if (job && job.status === 'SPINNING') {
+        await job.update({ status: 'OPEN' });
+      }*/
     }
   }
 }

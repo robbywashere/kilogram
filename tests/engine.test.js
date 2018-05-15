@@ -3,7 +3,7 @@ const { createAccountUserPostJob }  = require('./helpers')
 const sinon = require('sinon');
 const assert = require('assert');
 const cmds = require('../android/cmds');
-const { Device, Job, Post } = require('../objects');
+const { Device, Post, PostJob } = require('../objects');
 const syncDb = require('../db/sync');
 const runner = require('../python/runner');
 const DeviceAgent = require('../python/deviceAgent')
@@ -15,10 +15,9 @@ describe('engine' , function(){
 
   let agentStub;
 
-
   let jobRunStub;
 
-  var sandbox = sinon.sandbox.create();
+  let sandbox = sinon.sandbox.create();
 
   beforeEach(async ()=>{
 
@@ -48,7 +47,7 @@ describe('engine' , function(){
 
 
 
-  it.only('should match queued jobs to free devices', async function(){
+  it('should match queued PostJobs to free devices', async function(){
 
     const d1 = await Device.create({
       adbId: 'adbId1',
@@ -67,10 +66,14 @@ describe('engine' , function(){
     const p = (await createAccountUserPostJob()).post;
 
 
-    await runJobs()();
+    const JobRunner = sinon.stub().resolves((async ()=>{
+      await Promise.delay(200);
+      return { success: true }
+    })());
 
-    const { agent, job } = jobRunStub.getCall(0).args[0];
+    await runJobs({ JobRunner, JobModel: PostJob })();
 
+    const { agent, job } = JobRunner.getCall(0).args[0];
 
     assert(agent.constructor instanceof sinon.constructor);
 
