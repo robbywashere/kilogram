@@ -1,1 +1,1 @@
-drop extension pgcrypto;
+drop extension IF EXISTS pgcrypto;

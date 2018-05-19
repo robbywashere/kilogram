@@ -6,12 +6,25 @@ const { get } = require('lodash');
 module.exports = {
   Name: 'BucketEvents',
   TableName: 'bucketevents',
+  /*Triggers: [
+    {
+      after: ['INSERT'],
+      columns: '*',
+      channel: 'igaccount_status'
+      fn: function(OLD,NEW){
+        if (NEW.value.Records[0].eventName === "s3:ObjectCreated:Put") {
+          UUID = NEW.key.split('/')[1].split('.')[0];
+          if (UUID) plv8.execute( 'UPDATE "Photos" SET uploaded=true WHERE UUID=$1', [ UUID ] );
+        }
+      }
+    }
+  ],*/
   PolicyAssert: false,
   Properties:{
-   key: { 
+    key: { 
       type: STRING,
       unique: true
-   },
+    },
     value: {
       type: sequelize.JSON
     },

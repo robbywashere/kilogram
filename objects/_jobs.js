@@ -92,10 +92,12 @@ const JobMethods = {
 const JobStaticMethods = {
 
   stats: async function(){
-    return this.$.query(StatsQuery(this.tableName)).spread(r=>{
+    return this.$.query(StatsQuery(this.tableName)).spread( r =>{
+      //Object.keys(JSON.parse(JSON.stringify(get(r,0)))).reduce( (p,n) => ({ ...p, [n] :(parseInt(result[key],10)||0) }),{});
       const result = JSON.parse(JSON.stringify(get(r,0)));
       for (let key of Object.keys(result)) result[key] = parseInt(result[key],10)||0;
       return result;
+
     });
   },
   popJob: async function(){ return get((await this.$.query(GetJobQuery(this.tableName), { type: sequelize.QueryTypes.SELECT, model: this })),0) }

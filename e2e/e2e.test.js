@@ -104,7 +104,7 @@ describe('End To End Test 👍 ',function(){
 
   afterEach((done)=>{
     try{
-      APP.minioEventListener.stop();
+      //TODO: REMOVE ME MAYBE - APP.minioEventListener.stop();
     } catch(e) { 
       logger.debug(e);
     }

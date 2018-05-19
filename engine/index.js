@@ -126,7 +126,7 @@ function runJobs({ JobModel = demand('JobModel'), JobRunner = demand('JobRunner'
 
             await job.complete({ body: jobResult });
 
-            logger.status(`-- ${JobModel} Run cycle complete Job Id: ${job.id}, success: ${jobResult.success}`);
+            logger.status(`-- ${JobModel.name} Run cycle complete Job Id: ${job.id}, success: ${jobResult.success}`);
             logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
 
 

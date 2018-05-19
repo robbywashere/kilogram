@@ -21,6 +21,7 @@ const ClientConfig =  ()=> ({ //TODO leverage / move to config/default.js
   bucket: config.get('MINIO_BUCKET'),
   port: parseInt(config.get('MINIO_PORT')),
   secure: (config.get('MINIO_SECURE') !== "true") ? false : true,
+  sqsArn: config.get('MINIO_SQS_ARN'),
   accessKey: config.get('S3_ACCESS_KEY'),
   secretKey: config.get('S3_SECRET_KEY'),
   tmpDir: config.get('MINIO_TMP_DIR'),
@@ -62,23 +63,42 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
 
 }
 
-//TODO: return this to above list 
-//
+//TODO: remove default us-east-1 region
+//Rename MClient to MStore - since the implimentation details are not abstracted and nearly hard-coded to fit the needs of this application
 
 class MClient {
-  constructor({ bucket = ClientConfig().bucket, region='us-east-1', config = ClientConfig(), client }={}){ //TODO bucket should just go off of 'config' not be passed diff
+  constructor({ 
+    bucket = ClientConfig().bucket, 
+    region='us-east-1', 
+    sqsArn= ClientConfig().sqsArn,
+    config = ClientConfig(), 
+    client }){ //TODO bucket should just go off of 'config' not be passed diff
     this.config = config;
     this.bucket = bucket;
+    this.sqsArn = sqsArn;
     this.region = region;
     this.client = (client) ? client : WrapMinioClient(new Minio.Client(config));
   }
 
 
   listen({ bucket = this.bucket, client = this.client, events }){
-    const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*']);
-    logger.debug('Listening for s3/minio events ....');
-    listener.on('notification', events);
-    return listener;
+
+    function makeListener(){
+
+      const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*']);
+      logger.status('Listening for s3/minio events ....');
+      listener.on('notification', events);
+      listener.on('error', async (err) => {
+        if (err.code === 'ECONNREFUSED') {
+          logger.error('Listener Disconnected : Reconnecting')
+          await Promise.delay(2000)
+          makeListener();
+        }
+      });
+      return listener;
+    }
+
+    return makeListener();
   }
 
   getSignedPutObject({ name, exp = 60}) { 
@@ -123,8 +143,25 @@ class MClient {
     return { url, uuid, objectName: name };
   }
 
-  init(){
-    return this.createBucket().then( ()=> this.listen({ events: MClient.PhotoEvents() }))
+  async init(){
+    await this.createBucket();
+    await this.createBucketNotifications();
+    //this.listen({ events: MClient.PhotoEvents() }));
+  }
+
+  async createBucketNotifications({ bucket = this.bucket, events = [Minio.ObjectCreatedAll, Minio.ObjectRemovedAll], sqsArn = this.sqsArn }={}){
+    try {
+      let queue = new Minio.QueueConfig(sqsArn);
+      [].concat(events).forEach(e=>queue.addEvent(e));
+      let bucketNotify = new Minio.NotificationConfig();
+      bucketNotify.add(queue)
+      await this.client.setBucketNotification(bucket, bucketNotify)
+    } catch(err) {
+      err.message = `Could not create bucket: ${bucket + ""} for notifications for events: ${JSON.stringify(events) + ""}\n` + err;
+      throw err;
+    }
+    logger.status(`Created notifications for events: ${JSON.stringify(events) + ""} for bucket: ${bucket + ""}`);
+
   }
 
   async createBucket({ bucket = this.bucket, region = this.region } = {}){
@@ -134,13 +171,13 @@ class MClient {
       if (err.code === 'NoSuchBucket') {
         try {
           await this.client.makeBucket(bucket, this.region)
-          return logger(`Bucket ${bucket} created successfully in ${this.region}.`)
+          return logger.status(`Bucket ${bucket} created successfully in ${this.region}.`)
         } catch(err) {
-          if (err) logger.error(err)
+          err.message = `Could not create bucket:${bucket} in region:${this.region}\n` + err;
         }
       } 
     }
-    logger.debug(`Bucket ${bucket} exists ... skipping`)
+    logger.status(`Bucket ${bucket} exists ... skipping`)
   }
 
   static PhotoEvents(){

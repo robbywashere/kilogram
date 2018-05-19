@@ -1,6 +1,6 @@
 const dbConfig = require('./config');
 
-const { Pool, Client } = require('pg')
+const { Client } = require('pg')
 
 const config = require('config');
 
@@ -17,12 +17,12 @@ const MDIR = `${__dirname}/migrations`;
 const slurpUpSql = slurpDir2(MDIR, forExt(".up.sql"))
 const slurpDownSql = slurpDir2(MDIR, forExt(".down.sql"))
 
-async function runMigFiles(pool, migfileArray){
+async function runMigFiles(client, migfileArray){
   for (let [file, msql] of migfileArray) {
     logger(`DB: ${dbname} - Executing sql file ${file}....`);
     let res;
     try {
-      res = await pool.query(msql);
+      res = await client.query(msql);
     } catch(e) {
       logger.error(file, e, res);
     }
@@ -31,10 +31,11 @@ async function runMigFiles(pool, migfileArray){
 }
 
 async function up(){
-  const pool = new Pool(pgConfig)
+  const client = new Client(pgConfig);
+  client.connect();
   let res;
   try {
-    res = await pool.query(`CREATE DATABASE ${dbname}`)
+    res = await client.query(`CREATE DATABASE ${dbname}`)
     logger(`DB up ${dbname} success!`)
   } catch(err) {
     if (err && err.code === '42P04') {
@@ -43,27 +44,29 @@ async function up(){
       logger.error(err, res)
     }
   }
-  pool.end();
+  client.end();
   process.exit(0)
 }
 
 async function migDown(){
-  const migPool = new Pool(migConfig)
-  await runMigFiles(migPool, slurpDownSql(f=> [f,slurpFile(f)]))
+  const migClient = new Client(migConfig)
+  migClient.connect();
+  await runMigFiles(migClient, slurpDownSql(f=> [f,slurpFile(f)]))
 
-  await migPool.end();
+  await migClient.end();
 }
 async function migUp(){
-  const migPool = new Pool(migConfig)
-  await runMigFiles(migPool, slurpUpSql(f=> [f,slurpFile(f)]))
-  await migPool.end();
+  const migClient = new Client(migConfig)
+  migClient.connect();
+  await runMigFiles(migClient, slurpUpSql(f=> [f,slurpFile(f)]))
+  await migClient.end();
 }
 
 async function down(){
-  const pool = new Pool(pgConfig)
+  const client = new Client(pgConfig)
   let res;
   try {
-    res = await pool.query(`DROP DATABASE ${dbname}`);
+    res = await client.query(`DROP DATABASE ${dbname}`);
     logger(`DB down ${dbname} success!`)
   } catch(err){
     if (err.code === '3D000') {
@@ -72,7 +75,7 @@ async function down(){
       logger.error(err, res)
     }  
   }
-  pool.end()
+  client.end()
   process.exit(0)
 }
 

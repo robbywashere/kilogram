@@ -13,7 +13,6 @@ const Promise = require('bluebird');
 const { initJob, ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('../helpers');
 const { logger } = require('../../lib/logger');
 const { zipObject, startCase, constant, times } = require('lodash');
-const minioObj = require('../../server-lib/minio/minioObject');
 
 describe('objects/Post', function(){
 
