@@ -2,7 +2,7 @@ const pg = require('pg');
 
 const config = require('config');
 
-const defaultConfig = require('../../db/config')[config.get('NODE_ENV')];
+const dbConfig = require('../../db/config')[config.get('NODE_ENV')];
 
 const { logger } = require('../../lib/logger');
 
@@ -26,13 +26,14 @@ class PGListen {
 
   constructor({ 
     debug = false,
-    pgConfig = defaultConfig, 
+    dbConfig, 
     persist = true,
-    pgClient = pg.Client,
+    client,
     json = true, 
     channels = [] }={}){
 
     this.json = json;
+    this.dbConfig = dbConfig;
     this.persist = persist;
     this.debug = (typeof debug === "function") 
       ? debug 
@@ -40,11 +41,13 @@ class PGListen {
       ? logger.debug 
       : ()=>{};
 
+
     this.events = new EventEmitter();
     this.channels = new Set(channels);
-    this.pgConfig = pgConfig;
-    this.Client = pgClient;
+    //    this.pgConfig = pgConfig;
     this.connected = false;
+
+    this.Client = (client) ? client.bind(client) : pg.Client.bind(pg);
 
   }
 
@@ -98,25 +101,37 @@ class PGListen {
 
   async disconnect(unlisten = true){
     this.persist = false;
-    this.events.removeAllListeners();
+    this.events.removeAllListeners(); //????
     return this.client.end();
   }
 
   connect(retry = 0) {
-    
-    this.client = new this.Client(this.pgConfig);
+
+    this.client = new this.Client(this.dbConfig);
 
     this.client.connect();
 
-    this.client.on('connect', async () => {
-      retry = 0; //reset rety
+    this.client.once('end', async (err) => {
+      if (!this.persist) return;
+      this.connected = false;
+      const msExp = ((retry > 5) ? 5 : retry);
+      const delayMs = (2**msExp) * 1000;
+      logger.status(`
+        PGListen Disconnect:
+        -  Retry #: ${retry+1}
+        -  Retying in ${delayMs}ms
+      `)
+      await new Promise(_ => setTimeout(_, delayMs));
+      this.connect(msExp+1);
+    });
+
+
+
+    this.client.on('connect', async (x) => {
+      retry = 0;
       this.connected = true;
       this.events.emit('connect');
-
-      const { host = '*', port = '*' } = (get(this.client,'connectionParameters') || {})
-
-      this.debug(`PGListen connected to ${host}:${port}`);
-
+      this.debug(`PGListen connected to ${get(this.client,'connectionParameters.host') + ""}`);
       this.channels.forEach(ch => {
         this.listen(ch);
       });
@@ -126,9 +141,7 @@ class PGListen {
     this.client.on('notification', (msg) => {
       this.debug(msg);
       const { payload, channel } = msg;
-
       this.events.emit(channel,JSON.parse(payload))
-
     });
 
 
@@ -137,25 +150,6 @@ class PGListen {
       if (!this.persist) this.events.emit('error',err); 
       else logger.error(err);
     })
-
-    this.client.on('end', async (err) => {
-
-      if (!this.persist) return;
-
-      this.connected = false;
-      const msExp = ((retry > 5) ? 5 : retry);
-      const delayMs = (2**msExp) * 1000;
-      logger.status(`
-        PGListen Disconnect:
-        -  Retry #: ${retry+1}
-        -  Retying in ${delayMs}ms
-      `)
-
-      await new Promise(_ => setTimeout(_, delayMs));
-      this.client.removeAllListeners();
-      delete this.client;
-      this.connect(msExp+1);
-    });
 
     return new Promise((rs,rx)=>{
       this.events.once('connect',rs);

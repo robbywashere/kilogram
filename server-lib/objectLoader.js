@@ -12,7 +12,7 @@ const TriggerSqlFn  = require('../db/trigger-notify/sql-fn');
 const sequelize = require('sequelize');
 const slurpDir = require('../lib/slurpDir');
 
-const TRIGGER_FN = 'trigger_notify_procedure'; //TODO ??? PUT THIS SOMEWHERE?
+const TRIGGER_FN = 'trigger_notify_event'; //TODO ??? PUT THIS SOMEWHERE?
 
 function newRegistry(){
   return {
@@ -43,7 +43,6 @@ function loadObject(object, registry) {
 
   model._scopeFns = !!object.ScopeFunctions;
   // Scopes into instance Static functions
-
 
   //experimental authorize and set policy
   //
