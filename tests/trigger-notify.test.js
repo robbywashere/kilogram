@@ -10,6 +10,16 @@ describe('trigger notify functionality',function(){
 
   beforeEach(()=>dbSync(true));
 
+
+
+  it.only(`object columns should 'triggerable'`, async function(){
+
+
+     console.log(IGAccount.Triggerables.status);
+
+  
+  })
+
   it.skip('Should notify when updating IGAccount.status', async function(){
 
     this.timeout(Infinity);
@@ -38,10 +48,6 @@ describe('trigger notify functionality',function(){
 
 
     const i = await IGAccount.findOne();
-
-
-
-
 
 
   })

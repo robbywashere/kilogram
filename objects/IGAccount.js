@@ -58,14 +58,12 @@ const { isLoggedIn } = require('./_helpers');
 
 module.exports = {
   Name: 'IGAccount',
-  Triggerable: {
-    events: ["INSERT"]
-  },
   Properties:{
     password: {
       type: STRING,
       allowNull: false,
       omit: true,
+      triggerable: true,
     },
     username: {
       type: STRING,

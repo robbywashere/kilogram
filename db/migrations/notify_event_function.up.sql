@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION notify_event() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION pg_trigger_notify_event() RETURNS TRIGGER AS $$
 
     DECLARE 
         data json;

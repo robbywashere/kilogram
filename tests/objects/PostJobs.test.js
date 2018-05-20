@@ -19,7 +19,7 @@ describe('objects/PostJob', function(){
 
 
 
-  it.only('should create jobs for all outstanding posts with .initJobs', async function(){
+  it('should create jobs for all outstanding posts with .initJobs', async function(){
 
 
     const user = await ezUserAccount();

@@ -1,13 +1,18 @@
-const { get, clone, camelCase } = require('lodash');
+const { set, get, clone, camelCase } = require('lodash');
 const DB = require('../db');
 const OBJECTS = {};
 const INITS = {};
 const { pickBy, isArray } = require('lodash');
+const Promise = require('bluebird');
 const { Model } = require('sequelize'); 
 const { logger } = require('../lib/logger')
+const { Trigger } = require('../db/trigger-notify/triggers');
+const TriggerSqlFn  = require('../db/trigger-notify/sql-fn');
 
 const sequelize = require('sequelize');
 const slurpDir = require('../lib/slurpDir');
+
+const TRIGGER_FN = 'trigger_notify_procedure'; //TODO ??? PUT THIS SOMEWHERE?
 
 function newRegistry(){
   return {
@@ -72,6 +77,22 @@ function loadObject(object, registry) {
 
   model.permitted = mapItted('permit');
 
+
+  //Triggerables 
+  //
+  function mapTriggerables() {
+    return Object.entries(object.Properties).reduce((p,[k,v])=>{
+      if (v['triggerable']) p.push(k);
+      return p;
+    },[])
+  }
+
+
+
+  model._triggerables = mapTriggerables();
+
+
+
   model.sanitizeParams = function sanitizeParams(obj){
     return pickBy(obj,(v,k)=>model.permitted[k]);
   }
@@ -114,11 +135,50 @@ function loadObject(object, registry) {
 
 function initObjects(objectRegistry) {
 
+  function triggerFn(table, columns){
+    return Trigger()
+      .drop(true)
+      .after({ 'update': [].concat(columns) })
+      .table(table)
+      .exec(TRIGGER_FN);
+  }
+
+
+
   Object.keys(objectRegistry.objects).forEach( name => {
+
 
     let object = objectRegistry.objects[name];
 
+  
+
+    for (let triggerable of (object._triggerables||[])) {
+      const { query, name } = triggerFn(object.tableName, triggerable);
+
+      set(object,`Triggerables.${triggerable}`,{ event: name });
+
+      object.afterSync(async function retryable(retry = true){
+        try {
+          await this.sequelize.query(query);
+        } catch(err) {
+          if (retry && err instanceof this.sequelize.DatabaseError 
+            && String(get(err,'original.code')) === "42883") {
+             logger.error(get(err,'original.message'))
+             logger.debug(`Loading trigger function: ${TRIGGER_FN}  --- then retrying trigger query`)
+             await this.sequelize.query(TriggerSqlFn(TRIGGER_FN))
+             await retryable.bind(this)(false);
+          }
+          else throw err;
+        }
+      })
+
+
+    }
+
+
+
     if (objectRegistry.inits && objectRegistry.inits[name]) objectRegistry.inits[name].bind(object)(objectRegistry.objects);
+
 
     let scopes = get(object,'options.scopes');
 
@@ -151,7 +211,7 @@ function initObjects(objectRegistry) {
 };
 
 function wholeShebang(objectsDir) {
-  const registry = { objects: {}, inits: {} };
+  const registry = newRegistry();
   slurpDir(objectsDir)((object)=>loadObject(object, registry))
   initObjects(registry);
   return registry.objects;
