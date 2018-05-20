@@ -1,7 +1,7 @@
 const sequelize = require('sequelize');
 const DB = require('../db');
 const { isUndefined, isNull, get } = require('lodash');
-const { STRING, UUID, VIRTUAL, TEXT, DATE, Op, ValidationError } = sequelize;
+const { STRING, ENUM, UUID, VIRTUAL, TEXT, DATE, Op, ValidationError } = sequelize;
 const { logger } = require('../lib/logger');
 const minioObj = require('../server-lib/minio/minioObject');
 const { isLoggedIn, isSuperAdmin } = require('./_helpers');
@@ -23,6 +23,10 @@ module.exports = {
       type: DATE,
       allowNull: false
     },
+    status: {
+      type: ENUM('DRAFT','PUBLISH','PUBLISHED'),
+      defaultValue: 'PUBLISH'
+    }
   },
   Init({ PostJob, Photo, Account, IGAccount }){
     this.belongsTo(Account, { foreignKey: { allowNull: false }});

@@ -17,6 +17,11 @@ module.exports = {
   Scopes: {
     ...JobScopes,
   },
+  Hooks: {
+    afterUpdate: function(instance) {
+      //TODO: update post if completed 
+    }
+  },
   Init({ Post, Photo, IGAccount, Account }){
     this.belongsTo(Post, { foreignKey: { unique: true } });
     this.belongsTo(Account, { foreignKey: { allowNull: false }});

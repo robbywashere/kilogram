@@ -15,12 +15,12 @@ const { isLoggedIn } = require('./_helpers');
  *
  db.dialect.QueryGenerator.
   createTrigger(
-  "IGAccounts", //this.tableName,
-  "IGAccounts:status:update", //triggername
-  "AFTER",// eventType - default is AFTER
-   ["UPDATE","status"] //fireOnSpec - default is UPDATE, columname
+  "igaccounts", //this.tableName,
+  "igaccounts:status:update", //triggername
+  "after",// eventType - default is AFTER
+   ["update","status"] //fireOnSpec - default is UPDATE, columname
   "notify_event", //functionname - default is this its in the migration folder
-  [{ type: "TEXT", name: "IGAccounts:status:update" }]
+  [{ type: "TEXT", name: "igaccounts:status:update" }]
   )
 
   createTrigger(tableName, triggerName, eventType, fireOnSpec, functionName, functionParams, optionsArray) {
@@ -41,18 +41,26 @@ const { isLoggedIn } = require('./_helpers');
  db.dialect.QueryGenerator.
   createTrigger(
     "IGAccounts",
-    "IGAccounts:status:update",
+    "igaccounts:update:status",
     "after",
      [["update","status"]],
     "notify_event",
-    [{ type: "TEXT", name: "IGAccounts:status:update" }]
+    [{ type: "TEXT", name: "igaccounts:update:status" }]
   )
 
 
 */
 
+//IGAccount.Events.on('igaccounts:insert')
+
+//IGAccount.Events.on('igaccounts:update:status')
+
+
 module.exports = {
   Name: 'IGAccount',
+  Triggerable: {
+    events: ["INSERT"]
+  },
   Properties:{
     password: {
       type: STRING,

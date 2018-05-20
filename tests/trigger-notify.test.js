@@ -8,15 +8,13 @@ const PGListen = require('../server-lib/pg-listen');
 describe('trigger notify functionality',function(){
 
 
-  let pgListener = new PGListen({ debug: true });
-
   beforeEach(()=>dbSync(true));
 
-  afterEach(()=>pgListener.disconnect());
-
-  it.only('Should notify when updating IGAccount.status', async function(){
+  it.skip('Should notify when updating IGAccount.status', async function(){
 
     this.timeout(Infinity);
+
+    const pgListener = new PGListen({ debug: true });
 
     await pgListener.connect();
 
@@ -25,8 +23,8 @@ describe('trigger notify functionality',function(){
     const account = await Account.create();
 
     const chans = await pgListener.getChannels();
-
-    //   await pgListener.client.query(`NOTIFY "igaccount_status", 'xxx'`);
+    
+    console.log(chans);
 
     const ig = await IGAccount.create({ 
       username: 'ribbit', 
@@ -40,7 +38,6 @@ describe('trigger notify functionality',function(){
 
 
     const i = await IGAccount.findOne();
-
 
 
 

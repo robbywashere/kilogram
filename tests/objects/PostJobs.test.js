@@ -14,8 +14,12 @@ describe('objects/PostJob', function(){
     return await sync(true);
   });
 
+  it.skip('should only create jobs for Post.status = PUBLISH', async function(){
+  });
 
-  it('should create jobs for all outstanding posts with .initJobs', async function(){
+
+
+  it.only('should create jobs for all outstanding posts with .initJobs', async function(){
 
 
     const user = await ezUserAccount();
