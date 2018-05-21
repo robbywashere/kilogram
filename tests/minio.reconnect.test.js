@@ -5,51 +5,35 @@ process.env.NODE_ENV='test';
 const baseServer = require('../baseServer');
 
 const { MClient } = require('../server-lib/minio');
-const ffport = require('find-free-port');
 const dbSync = require('../db/sync');
 const { exec, spawn } = require('child_process');
 const config = require('config');
-const kill  = require('tree-kill');
 const assert = require('assert');
 const rimraf = require('rimraf');
 const Promise = require('bluebird');
-const request = require('request-promise');
-const { PostJob, Device, Photo, IGAccount } = require('../objects');
-const { statSync, createReadStream, readdirSync } = require('fs');
-const md5File = require('md5-file');
-const path = require('path');
-const MINIODATADIR = './.minio-test-data';
-const BUCKETPATH = path.join(MINIODATADIR, config.get('MINIO_BUCKET'));
-const { main } = require('../engine');
+const {  Account, Photo } = require('../objects');
 const { logger } = require('../lib/logger');
 const minioObj = require('../server-lib/minio/minioObject');
 
-
-let APP;
-let TIMERS = [];
-let SERVER;
-
-
-
-let FREE_PORT;
-let PROCESS;
-
+const MINIODATADIR = './.minio-test-data';
 function runMinio(){
-  //minio server "$HOME/minio-data/"
   let stderr = [];
   const minio = spawn('minio', ['server', './.minio-test-data']);
   minio.stdout.on('data', (data) => {
-    logger.debug(`stdout: ${data}`);
+    minio.emit('data', data);
+    //logger.debug(`stdout: ${data}`);
   });
 
   minio.stderr.on('data', (data) => {
     stderr.push(data);
-    console.error(`stderr: ${data}`);
+    //console.error(`stderr: ${data}`);
   });
+
+  minio.once('data', ()=> minio.emit('open',{}));
 
   minio.on('close', (code) => {
     logger.debug(`child process exited with code ${code}`);
-    if (stderr.length>0) logger.error(stderr.join("\n"));
+    //if (stderr.length>0) logger.error(stderr.join("\n"));
   });
   return minio; 
 }
@@ -58,13 +42,14 @@ describe.skip('Minio Connect and Reconnect',function(){
 
 
   let minio;
+  let Persistener;
 
+
+  beforeEach(()=>dbSync(true))
 
   afterEach((done)=>{
-    try{
-
-      //     APP.minioEventListener.stop();
-
+    try {
+      Persistener.listener.stop();
     } catch(e) { 
       logger.debug(e);
     }
@@ -85,35 +70,59 @@ describe.skip('Minio Connect and Reconnect',function(){
     }
   })
 
-  it('XXXXXX',async function(){
-    this.timeout(Infinity);
+  it('Should persist Minio Event Listeners and Connection',async function(){
+
+    this.timeout(35*1000);
+
+    const account = await Account.create({});
 
     minio = runMinio();
+
+    await new Promise((rs) => minio.on('open', rs) )
+      .then(()=>logger.status('Minio Startup ...'))
 
     const minioClient = new MClient();
 
+    await minioClient.createBucket().then(()=>logger.status('Init Minio'))
 
-    await minioClient.init()
+    Persistener = minioClient.listenPersist({ events: MClient.PhotoEvents() });
 
+    logger.status('Killing Minio ....');
 
-    await Promise.delay(5000);
+    process.nextTick(()=>process.kill(minio.pid));
 
-    process.kill(minio.pid);
-
-    await Promise.delay(5000);
+    await new Promise((rs)=>minio.on('close', rs))
+      .then(()=>logger.status('Minio exited'))
 
     minio = runMinio();
 
-    await Promise.delay(5000);
+    await new Promise((rs) => minio.on('open', rs) )
+      .then(()=>logger.status('Minio Startup ...'))
 
-    const name = minioObj.create('v4',{ payload: true })
+    await Promise.delay(5000)
 
-    await minioClient.client.putObject('uploads', name,'XXXXXXX')
+    await minioClient.createBucket().then(()=>logger.status('Init Minio'))
+
+    const objectName = minioObj.create('v4',{ AccountId: account.id });
+
+    await minioClient.client.putObject('uploads', objectName,'X');
+
+    await Promise.delay(5000)
+
+    const photo = await Photo.findOne({ where: { objectName } });
+
+    assert.equal(photo.objectName, objectName);
+
+    delete minioClient;
+
+    Persistener.listener.stop();
+
+    await Promise.delay(5000)
+
+    process.nextTick(()=>process.kill(minio.pid));
     
-
-    await Promise.delay(9999999);
-
-
+    await new Promise((rs)=>minio.on('close', rs))
+      .then(()=>logger.status('Minio exited'))
 
   })
 });

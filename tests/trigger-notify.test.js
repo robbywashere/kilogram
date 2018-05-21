@@ -7,6 +7,7 @@ const assert = require('assert');
 const { logger } = require('../lib/logger');
 const Watcher = require('../db/trigger-notify/watch');
 const PGListen = require('../server-lib/pg-listen');
+const { EventEmitter } = require('events');
 
 describe('trigger notify functionality',function(){
 
@@ -16,19 +17,46 @@ describe('trigger notify functionality',function(){
   beforeEach(()=>dbSync(true));
   afterEach(()=>((typeof watcher.disconnect === "function") ? watcher.disconnect() : null))
 
-  it.skip('should persist PGListen connections', async function(){
-  
-    const pgListener = new PGListen({ debug: true });
+  //TODO: move 
+  it('should persist PGListen connections', async function(){
 
-    pgListener.events.on('connect',()=>connects++);
+    this.timeout(8500);
 
-  
+     return new Promise((resolve, reject)=>{
+      try {
+        let allowConnect = true;
+        let count = 0;
+
+        const pgClient = class Client extends EventEmitter {
+          connect(){
+            count++;
+            if (count === 4) {
+              allowConnect = true; 
+              this.on('connect',resolve);
+            }
+            if (allowConnect) process.nextTick(()=>this.emit('connect'));
+            else {
+              process.nextTick(()=>this.emit('end'));
+            }
+          }
+        }
+        const pgListener = new PGListen({ debug: true, pgClient });
+        pgListener.connect();
+        allowConnect = false;
+        pgListener.client.emit('end');
+      }
+      catch(e) {
+        reject(e);
+      }
+    });
+
+
   })
-  
 
-  it.only(`object columns should 'triggerable'`, async function(){
 
-    this.timeout(10000);
+  it(`object columns should 'triggerable'`, async function(){
+
+    this.timeout(5000);
 
     watcher = new Watcher({ debug: logger.debug });
 
@@ -57,7 +85,7 @@ describe('trigger notify functionality',function(){
       })
     });
 
-   ig.update({
+    ig.update({
       status: 'GOOD'
     })
 
