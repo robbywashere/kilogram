@@ -72,7 +72,7 @@ class MClient {
     region='us-east-1', 
     sqsArn= ClientConfig().sqsArn,
     config = ClientConfig(), 
-    client }){ //TODO bucket should just go off of 'config' not be passed diff
+    client } = {}){ //TODO bucket should just go off of 'config' not be passed diff
     this.config = config;
     this.bucket = bucket;
     this.sqsArn = sqsArn;
@@ -81,24 +81,41 @@ class MClient {
   }
 
 
+
+
   listen({ bucket = this.bucket, client = this.client, events }){
+    const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*']);
+    logger.debug('Listening for s3/minio events ....');
+    listener.on('notification', events);
+    return listener;
+  }
 
-    function makeListener(){
-
-      const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*']);
-      logger.status('Listening for s3/minio events ....');
+  listenPersist({ bucket = this.bucket, client = this.client, events }){
+    let Listener = {};
+    function makeListener(retry = 0){
+      Listener.listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*']);
+      let listener = Listener.listener;
+      logger.status(`Listening for s3/minio events on ${bucket}....`);
       listener.on('notification', events);
       listener.on('error', async (err) => {
-        if (err.code === 'ECONNREFUSED') {
-          logger.error('Listener Disconnected : Reconnecting')
-          await Promise.delay(2000)
-          makeListener();
-        }
+        listener.stop();
+        logger.error(err);
+        //if (err.code === 'ECONNREFUSED') {
+        // const msExp = ((retry > 5) ? 5 : retry);
+        // const delayMs = (2**msExp) * 1000;
+        // logger.status(`
+        // Minio Listener Disconnected:
+        // -  Retry #: ${retry+1}
+        // -  Retying in ${delayMs}ms
+        //`)
+        // await Promise.delay(delayMs)
+        //makeListener.bind(this)(msExp + 1);
+        await Promise.delay(3000);
+        makeListener.bind(this)();
       });
-      return listener;
     }
-
-    return makeListener();
+    makeListener.bind(this)();
+    return Listener;
   }
 
   getSignedPutObject({ name, exp = 60}) { 
@@ -136,17 +153,18 @@ class MClient {
     return objects;
   }
 
-  async newPhoto({ bucket = this.bucket, accountId = demand('accountId') }){
+  async newPhoto({ bucket = this.bucket, AccountId = demand('AccountId') }){
     const uuid = Uuid.v4();
-    const name = minioObj.create('v4',{ uuid, accountId })
+    const name = minioObj.create('v4',{ uuid, AccountId })
     const url = await this.getSignedPutObject({ name }); //TODO: 
     return { url, uuid, objectName: name };
   }
 
   async init(){
     await this.createBucket();
-    await this.createBucketNotifications();
-    //this.listen({ events: MClient.PhotoEvents() }));
+    //await this.createBucketNotifications();
+    //await this.listen({ events: MClient.PhotoEvents() });
+    this.listenPersist({ events: MClient.PhotoEvents() });
   }
 
   async createBucketNotifications({ bucket = this.bucket, events = [Minio.ObjectCreatedAll, Minio.ObjectRemovedAll], sqsArn = this.sqsArn }={}){
@@ -168,14 +186,12 @@ class MClient {
     try {
       await this.client.bucketExists(bucket)
     } catch(err) {
-      if (err.code === 'NoSuchBucket') {
-        try {
-          await this.client.makeBucket(bucket, this.region)
-          return logger.status(`Bucket ${bucket} created successfully in ${this.region}.`)
-        } catch(err) {
-          err.message = `Could not create bucket:${bucket} in region:${this.region}\n` + err;
-        }
-      } 
+      try {
+        await this.client.makeBucket(bucket, this.region)
+        return logger.status(`Bucket ${bucket} created successfully in ${this.region}.`)
+      } catch(err) {
+        err.message = `Could not create bucket:${bucket} in region:${this.region}\n` + err;
+      }
     }
     logger.status(`Bucket ${bucket} exists ... skipping`)
   }
@@ -188,12 +204,12 @@ class MClient {
   }
 
   static PutPhotoFn({ bucket, key }){
-    const { uuid, accountId } = minioObj.parse(key);
+    const { uuid, AccountId = demand('AccountId') } = minioObj.parse(key);
     return Photo.create({
       bucket,
       objectName: key, 
       uuid, 
-      AccountId: accountId 
+      AccountId
     });
   }
   static DelPhotoFn({ key }){
@@ -209,7 +225,7 @@ class MClient {
       try {
         logger.debug('  event meta data',JSON.stringify(minioObj.parse(key)))
       } catch(e) {
-        //swallow
+        //swallow?? //TODO: ????
       }
       if (key) {
         try {

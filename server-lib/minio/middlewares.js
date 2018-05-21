@@ -42,7 +42,7 @@ function signedURL({ minioClient = demand('minioClient') }){
 
       if (typeof get(req,'user.accountIds') !== "function" || !req.user.accountIds().includes(AccountId)) throw new Unauthorized('User not authorized for given AccountId');
 
-      const { uuid, url, objectName } = await minioClient.newPhoto({ accountId: AccountId });
+      const { uuid, url, objectName } = await minioClient.newPhoto({ AccountId });
 
       res.send({ uuid, url, objectName });
     } catch(e) {

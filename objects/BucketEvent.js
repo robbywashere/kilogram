@@ -3,10 +3,7 @@ const SEQ = require('../db');
 const { STRING, DATE, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 const { get } = require('lodash');
 
-module.exports = {
-  Name: 'BucketEvents',
-  TableName: 'bucketevents',
-  /*Triggers: [
+/*Triggers: [
     {
       after: ['INSERT'],
       columns: '*',
@@ -19,6 +16,10 @@ module.exports = {
       }
     }
   ],*/
+
+module.exports = {
+  Name: 'BucketEvents',
+  TableName: 'bucketevents',
   PolicyAssert: false,
   Properties:{
     key: { 

@@ -12,6 +12,8 @@ const { get } = require('lodash');
 
 const { EventEmitter } = require('events');
 
+const uuid = require('uuid');
+
 const Promise = require('bluebird');
 
 function tryJSONParse(text){
@@ -28,10 +30,12 @@ class PGListen {
     debug = false,
     pgConfig = defaultConfig, 
     persist = true,
+    uuid = uuid.v4(),
     pgClient = pg.Client,
     json = true, 
     channels = [] }={}){
 
+    this.uuid = uuid;
     this.json = json;
     this.persist = persist;
     this.debug = (typeof debug === "function") 
@@ -104,7 +108,7 @@ class PGListen {
 
   connect(retry = 0) {
     
-    this.client = new this.Client(this.pgConfig);
+    this.client = new this.Client(this.pgConfig); //MUST make a new client, how 'pg' works
 
     this.client.connect();
 
@@ -147,6 +151,7 @@ class PGListen {
       const delayMs = (2**msExp) * 1000;
       logger.status(`
         PGListen Disconnect:
+        -  UUID: ${this.uuid}
         -  Retry #: ${retry+1}
         -  Retying in ${delayMs}ms
       `)
