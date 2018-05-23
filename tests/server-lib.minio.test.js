@@ -240,7 +240,7 @@ describe('MClient class', function(){
 
         let putRecord = {}
         const uuid = uuidv4();
-        const key = minioObj.create('v2',{ uuid, accountId: 1 });
+        const key = minioObj.create('v4',{ uuid, accountId: 1 });
         set(putRecord,'s3.object.key',key);
         set(putRecord,'s3.bucket.name','puttestBucket');
         set(putRecord,'eventName', 's3:ObjectCreated:Put');
@@ -287,7 +287,7 @@ describe('MClient class', function(){
 
       let putRecord = {}
       const uuid = uuidv4();
-      const key = minioObj.create('v2',{ uuid });
+      const key = minioObj.create('v4',{ uuid });
       set(putRecord,'s3.object.key',key);
       set(putRecord,'s3.bucket.name','puttestBucket');
       set(putRecord,'eventName', 's3:ObjectCreated:Put');
@@ -323,7 +323,7 @@ describe('MClient class', function(){
 
       const uuid = uuidv4();
       const meta = { uuid }
-      const key = minioObj.create('v2',meta)
+      const key = minioObj.create('v4',meta)
       let putRecord = {}
       set(putRecord,'s3.object.key',key);
       set(putRecord,'s3.bucket.name',bucket);

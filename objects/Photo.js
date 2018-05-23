@@ -9,7 +9,9 @@ const { superAdmin } = require('./_helpers');
 
 module.exports = {
   Name: 'Photo',
-  PolicyAssert: false,
+  TableTriggers: [{
+    after: 'INSERT' 
+  }],
   Properties:{
     objectName: {
       type: TEXT,
@@ -51,10 +53,10 @@ module.exports = {
     }
   },
   Hooks: {
-    beforeValidate: async function(instance){
+    beforeValidate: async function(instance){ //TODO: --- beforeCreate??::dszddsadd
       const { uuid } = instance;
       if (isUndefined(instance.objectName)) {
-        instance.set('objectName', minioObj.create('v2',{ uuid }));
+        instance.set('objectName', minioObj.create('v4',{ uuid }));
       }
     }
   },

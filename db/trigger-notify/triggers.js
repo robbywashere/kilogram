@@ -3,45 +3,40 @@ const { get, snakeCase, isString, isUndefined, isPlainObject } = require('lodash
 
 function Trigger(Name,Params = {}) {
 
-  let self = {};
-
-  self.Params = { 
-    Name, 
-    ...Params 
-  };
 
   let eventsStr = "INSERT,UPDATE,DELETE,TRUNCATE"
   const eventMap = new Set(eventsStr.split(','));
 
-  self = new Object({
-    ...self,
-    _parseAction(eventParam, preposition){
+  let self = {
 
-      let paramAction; 
+    Name,
 
-      if (isString(eventParam)) {
-        paramAction = eventParam.toUpperCase(); 
-        self.Params.PrepositionAction = paramAction;
-      }
+    Params,
 
-      else if (isPlainObject(eventParam)) {
-        let [ event, columns ] = Object.entries(eventParam)[0];
-        this.Params.Columns = columns;
-        let actionEvent = event.toUpperCase();
-        if (!eventMap.has(actionEvent)) {
-          throw new TypeError(`Event ${actionEvent} must be ${eventsStr}`)
-        }
-        self.Params.PrepositionAction = `${preposition} ${actionEvent}`;
+    actionPrep(actionType, preposition) {
 
-        paramAction = (actionEvent !== "UPDATE") ? actionEvent : "UPDATE OF " + [].concat(columns)
-          .map(c=>(`"${c}"`)).join(', ');
-      }
+      let [ [ action, columns ] ] = (isString(actionType)) 
+        ? [ [ actionType , [ ] ] ]  
+        : Object.entries(actionType);
 
+      action = action.toUpperCase();
 
-      else throw new TypeError(`Event expecting a string or object { update: 'columnName '} `);
+      preposition = preposition.toUpperCase();
 
-      self.Params.Summary = `${preposition} ${paramAction}`
+      //-----
+
+      self.Params.PrepositionAction = `${preposition} ${action}`;
+
+      self.Params.Columns = columns;
+
+      self.Params.Summary = preposition + " " + ((action !== "UPDATE") ? action : ("UPDATE"
+        + ((columns.length) ? " OF " : "") 
+        + columns.map(c=>(`"${c}"`)).join(', ')));
+
+      return self;
+
     },
+
 
     table(t) {
       self.Params.Table = t;
@@ -54,13 +49,13 @@ function Trigger(Name,Params = {}) {
     },
 
     insteadOf(a) {
-      self._parseAction(a,'INSTEAD OF');
+      self.actionPrep(a,'INSTEAD OF');
       return self;
     },
 
     after(a) {
       self.Params.Action = a;
-      self._parseAction(a,'AFTER');
+      self.actionPrep(a,'AFTER');
       return self;
     },
 
@@ -79,20 +74,24 @@ function Trigger(Name,Params = {}) {
 
       return [
         snakeCase(Table),
-        snakeCase(PrepositionAction),
+        self.key,
         ((Columns) ? Columns.map(snakeCase).join(':') : false),
       ].filter(x=>x).join(':')
     },
 
     before(a) {
       self.Params.Action = a;
-      self._parseAction(a,'BEFORE');
+      self.actionPrep(a,'BEFORE');
       return self;
     },
 
     exec(p) {
       self.Params.Procedure = p;
       return self;
+    },
+
+    get key(){
+      return snakeCase(self.Params.PrepositionAction);
     },
 
     get name(){
@@ -115,13 +114,13 @@ function Trigger(Name,Params = {}) {
       }
 
       return `
-      ${ (Drop) ? `DROP TRIGGER IF EXISTS "${Name}" ON "${Table}";\n` : " " }    CREATE TRIGGER "${Name}"
+      ${ (Drop) ? `DROP TRIGGER IF EXISTS "${Name}" ON "${Table}";\n` : "" }\tCREATE TRIGGER "${Name}"
       ${Summary} ON "${Table}"
       ${ (When) ? When : "" } FOR EACH ROW
       EXECUTE PROCEDURE ${Procedure}('${Name}');
       `
     }
-  });
+  };
 
   return self
 }

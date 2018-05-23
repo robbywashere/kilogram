@@ -12,7 +12,7 @@ const { get } = require('lodash');
 
 const { EventEmitter } = require('events');
 
-const uuid = require('uuid');
+const uuidLib = require('uuid');
 
 const Promise = require('bluebird');
 
@@ -30,7 +30,7 @@ class PGListen {
     debug = false,
     pgConfig = defaultConfig, 
     persist = true,
-    uuid = uuid.v4(),
+    uuid = uuidLib.v4(),
     pgClient = pg.Client,
     json = true, 
     channels = [] }={}){
@@ -101,8 +101,8 @@ class PGListen {
   }
 
   async disconnect(unlisten = true){
-    this.persist = false;
     this.events.removeAllListeners();
+    this.persist = false;
     return this.client.end();
   }
 
@@ -129,9 +129,12 @@ class PGListen {
 
     this.client.on('notification', (msg) => {
       this.debug(msg);
+      try {
       const { payload, channel } = msg;
-
       this.events.emit(channel,JSON.parse(payload))
+      } catch(err) {
+        this.events.emit('error', err)
+      }
 
     });
 

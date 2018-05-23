@@ -1,15 +1,17 @@
 
-const { Account, IGAccount } = require('../objects');
+const { Account, Photo, IGAccount } = require('../objects');
 const dbSync = require('../db/sync');
 const { delay } = require('bluebird');
 const assert = require('assert');
 
 const { logger } = require('../lib/logger');
+const minioObject = require('../server-lib/minio/minioObject');
 const Watcher = require('../db/trigger-notify/watch');
 const PGListen = require('../server-lib/pg-listen');
 const { EventEmitter } = require('events');
+const uuidv4 = require('uuid').v4;
 
-describe('trigger notify functionality',function(){
+describe.only('trigger notify functionality',function(){
 
 
   let watcher = {};
@@ -22,7 +24,7 @@ describe('trigger notify functionality',function(){
 
     this.timeout(8500);
 
-     return new Promise((resolve, reject)=>{
+    return new Promise((resolve, reject)=>{
       try {
         let allowConnect = true;
         let count = 0;
@@ -50,11 +52,84 @@ describe('trigger notify functionality',function(){
       }
     });
 
+  })
+
+  it('should should make a table triggerable', async function(){
+
+    this.timeout(5000);
+
+    watcher = new Watcher({ debug: logger.debug });
+
+    await watcher.connect();
+
+    const photoUUID = uuidv4();
+
+    const Q = new Promise((rs,rx) => {
+      watcher.subscribe(Photo.TableTriggers.after_insert, function(payload){
+        try {
+          const { objectName } = payload.data;
+          const { uuid } = minioObject.parse(objectName);
+          assert.equal(uuid, photoUUID);
+          return rs();
+        } catch(e) {
+          rx(e)
+        }
+      })
+    });
+
+    process.nextTick(async ()=> await Photo.create({ uuid: photoUUID }));
+
+    return Q;
 
   })
 
 
-  it(`object columns should 'triggerable'`, async function(){
+  it('should create a Photo object on minio event', async function(){
+    this.timeout(5000);
+    watcher = new Watcher({ debug: logger.debug });
+    await watcher.connect();
+    const photoUUID = uuidv4();
+    const Q = new Promise((rs,rx) => {
+      watcher.subscribe(Photo.TableTriggers.after_insert, function(payload){
+        try {
+          const { objectName } = payload.data;
+          const { uuid } = minioObject.parse(objectName);
+          assert.equal(uuid, photoUUID);
+          return rs();
+        } catch(e) {
+          rx(e)
+        }
+      })
+    });
+    process.nextTick(async ()=> await Photo.create({ uuid: photoUUID }));
+    return Q;
+  });
+
+
+  it('should should make a table triggerable', async function(){
+    this.timeout(5000);
+    watcher = new Watcher({ debug: logger.debug });
+    await watcher.connect();
+    const photoUUID = uuidv4();
+    const Q = new Promise((rs,rx) => {
+      watcher.subscribe(Photo.TableTriggers.after_insert, function(payload){
+        try {
+          const { objectName } = payload.data;
+          const { uuid } = minioObject.parse(objectName);
+          assert.equal(uuid, photoUUID);
+          return rs();
+        } catch(e) {
+          rx(e)
+        }
+      })
+    });
+    process.nextTick(async ()=> await Photo.create({ uuid: photoUUID }));
+    return Q;
+  });
+
+
+  //TODO define a custom Object instead of using IGAccount
+  it(`IGAccount object columns should be 'triggerable'`, async function(){
 
     this.timeout(5000);
 
@@ -85,9 +160,7 @@ describe('trigger notify functionality',function(){
       })
     });
 
-    ig.update({
-      status: 'GOOD'
-    })
+    process.nextTick(async ()=> await ig.update({ status: 'GOOD' }));
 
     return Q;
 

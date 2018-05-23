@@ -21,6 +21,15 @@ function newRegistry(){
   }
 }
 
+
+function triggerFn(table, columns){
+  return Trigger()
+    .drop(true)
+    .after({ 'update': [].concat(columns) })
+    .table(table)
+    .exec(TRIGGER_FN);
+}
+
 function loadObject(object, registry) {
 
   if (object.Init) registry.inits[object.Name] = object.Init;
@@ -79,6 +88,26 @@ function loadObject(object, registry) {
 
   //Triggerables 
   //
+  //
+  function addAfterSyncTriggerQuery(query){
+
+    model.afterSync(async function retryable(retry = true){
+      try {
+        await this.sequelize.query(query);
+      } catch(err) {
+        if (retry && err instanceof this.sequelize.DatabaseError 
+          && String(get(err,'original.code')) === "42883") {
+          logger.error(get(err,'original.message'))
+          logger.debug(`Loading trigger function: ${TRIGGER_FN}  --- then retrying trigger query`);
+          await this.sequelize.query(TriggerSqlFn(TRIGGER_FN))
+          await retryable.bind(this)(false);
+        }
+        else throw err;
+      }
+    })
+  }
+
+
   function mapTriggerables() {
     return Object.entries(object.Properties).reduce((p,[k,v])=>{
       if (v['triggerable']) p.push(k);
@@ -86,10 +115,32 @@ function loadObject(object, registry) {
     },[])
   }
 
+  for (let triggerable of (mapTriggerables()||[])) {
+    const { query, name } = triggerFn(model.tableName, triggerable);
+
+    set(model,`Triggerables.${triggerable}`,{ event: name });
+
+    addAfterSyncTriggerQuery(query);
+
+  }
+
+  (object.TableTriggers||[]).forEach((trigger)=>{
+
+    const [ [ preposition, action ] ] = Object.entries(trigger);
+
+    const { query, name, key } = Trigger()
+      .drop(true)
+      .actionPrep(action,preposition)
+      .table(model.tableName)
+      .exec(TRIGGER_FN);
+
+    set(model,`TableTriggers.${key}`,{ event: name });
 
 
-  model._triggerables = mapTriggerables();
+    addAfterSyncTriggerQuery(query);
+  });
 
+  //Permit Omit and Sanitizations for controller
 
 
   model.sanitizeParams = function sanitizeParams(obj){
@@ -134,14 +185,6 @@ function loadObject(object, registry) {
 
 function initObjects(objectRegistry) {
 
-  function triggerFn(table, columns){
-    return Trigger()
-      .drop(true)
-      .after({ 'update': [].concat(columns) })
-      .table(table)
-      .exec(TRIGGER_FN);
-  }
-
 
 
   Object.keys(objectRegistry.objects).forEach( name => {
@@ -149,30 +192,7 @@ function initObjects(objectRegistry) {
 
     let object = objectRegistry.objects[name];
 
-  
 
-    for (let triggerable of (object._triggerables||[])) {
-      const { query, name } = triggerFn(object.tableName, triggerable);
-
-      set(object,`Triggerables.${triggerable}`,{ event: name });
-
-      object.afterSync(async function retryable(retry = true){
-        try {
-          await this.sequelize.query(query);
-        } catch(err) {
-          if (retry && err instanceof this.sequelize.DatabaseError 
-            && String(get(err,'original.code')) === "42883") {
-             logger.error(get(err,'original.message'))
-             logger.debug(`Loading trigger function: ${TRIGGER_FN}  --- then retrying trigger query`)
-             await this.sequelize.query(TriggerSqlFn(TRIGGER_FN))
-             await retryable.bind(this)(false);
-          }
-          else throw err;
-        }
-      })
-
-
-    }
 
 
 
