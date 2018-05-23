@@ -7,14 +7,22 @@ const config = require('config');
 const get = require('lodash/get');
 const Promise = require('bluebird');
 const { Photo } = require('../../objects');
+const fs = require('fs');
 const { chunk } = require('lodash');
 const minioObj = require('./minioObject');
 const demand = require('../../lib/demand');
+
+const { EventEmitter } = require('events');
 
 const { removeObject,
   listObjects,
   signedURL } = require('./middlewares');
 
+/*https://docs.minio.io/docs/minio-bucket-notification-guide
+ After updating the configuration file, restart the Minio server to put the changes into effect. The server will print a line like SQS ARNs:  arn:minio:sqs::1:postgresql at start-up if there were no errors.
+
+Note that, you can add as many PostgreSQL server endpoint configurations as needed by providing an identifier (like "1" in the example above) for the PostgreSQL instance and an object of per-server configuration parameters
+*/
 
 const ClientConfig =  ()=> ({ //TODO leverage / move to config/default.js
   endPoint: config.get('MINIO_ENDPOINT'),
@@ -91,23 +99,36 @@ class MClient {
   }
 
   listenPGWatcher({ bucket = this.bucket, events }){
-  
+
   }
 
   async listenAny({ bucket = this.bucket, events, Listener }) {
 
-    let listener = await Listener.init();
+    // let listener = await Listener.init();
 
   }
 
   listenPersist({ bucket = this.bucket, client = this.client, events }){
-    let Listener = {};
+
+    let Listener = {
+      emitter: new EventEmitter()
+    };
+
     function makeListener(retry = 0){
       Listener.listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*']);
       let listener = Listener.listener;
       logger.status(`Listening for s3/minio events on ${bucket}....`);
+
       listener.on('notification', events);
+      //TODO: Inject an EE instead of calling events directly from within 
+      //so you have a common interface ee.on('notification', which you may
+      //use for your Watcher/PGlisten or client.listenBucketNotification
+      listener.on('notification', function(data){
+        Listerner.emitter.emit('notification', data)
+      });
+
       listener.on('error', async (err) => {
+        listener.removeAllListeners();
         listener.stop();
         logger.error(err);
         //if (err.code === 'ECONNREFUSED') {
@@ -175,6 +196,19 @@ class MClient {
     //await this.createBucketNotifications();
     //await this.listen({ events: MClient.PhotoEvents() });
     this.listenPersist({ events: MClient.PhotoEvents() });
+  }
+  static getSQSARNS(configPath) {
+    const { notify } = JSON.parse(fs.readFileSync(configPath,'utf-8').toString());
+    return Object.entries(notify).reduce((arnsqs,[type, entries])=>({
+      ...arnsqs, 
+      ...{
+        ...(!(Object.values(entries).some((c)=>c.enable)) ? {} : {
+          [type]: Object.entries(entries)
+          .filter(([,conf]) => conf.enable)
+          .reduce((accum,[name, conf])=>({ ...accum, [name]: `arn:minio:sqs::${name}:${type}` }),{ })
+        })
+      }
+    }),{});
   }
 
   async createBucketNotifications({ bucket = this.bucket, events = [Minio.ObjectCreatedAll, Minio.ObjectRemovedAll], sqsArn = this.sqsArn }={}){

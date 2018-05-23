@@ -43,8 +43,11 @@ module.exports = async function({
 
     logger.debug('Syncing DB and initializing minioClient')
     await syncDb(false);
-
+    //await minioClient.createBucket();
+    //await minioClient.listenPersist();
+    //
     app.minioEventListener = await minioClient.init();
+ 
     return app;
 
   } catch(e) {

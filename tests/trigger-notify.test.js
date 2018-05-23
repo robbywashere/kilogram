@@ -88,7 +88,7 @@ describe.only('trigger notify functionality',function(){
   })
 
 
-  it.only('should create a Photo object on upload minio event', async function(){
+  it('should create a Photo object on upload minio event', async function(){
     this.timeout(5000);
 
     const account = await Account.create({});
