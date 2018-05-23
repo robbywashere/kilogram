@@ -90,6 +90,16 @@ class MClient {
     return listener;
   }
 
+  listenPGWatcher({ bucket = this.bucket, events }){
+  
+  }
+
+  async listenAny({ bucket = this.bucket, events, Listener }) {
+
+    let listener = await Listener.init();
+
+  }
+
   listenPersist({ bucket = this.bucket, client = this.client, events }){
     let Listener = {};
     function makeListener(retry = 0){

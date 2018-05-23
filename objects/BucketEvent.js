@@ -20,7 +20,9 @@ const { get } = require('lodash');
 module.exports = {
   Name: 'BucketEvents',
   TableName: 'bucketevents',
-  PolicyAssert: false,
+  TableTriggers: [{
+    after: 'INSERT' 
+  }],
   Properties:{
     key: { 
       type: STRING,

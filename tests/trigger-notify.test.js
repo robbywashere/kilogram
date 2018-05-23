@@ -1,15 +1,19 @@
 
-const { Account, Photo, IGAccount } = require('../objects');
+const { BucketEvents, Account, Photo, IGAccount } = require('../objects');
 const dbSync = require('../db/sync');
 const { delay } = require('bluebird');
 const assert = require('assert');
-
+const Promise = require('bluebird');
 const { logger } = require('../lib/logger');
 const minioObject = require('../server-lib/minio/minioObject');
+const { MClient } = require('../server-lib/minio');
 const Watcher = require('../db/trigger-notify/watch');
 const PGListen = require('../server-lib/pg-listen');
 const { EventEmitter } = require('events');
 const uuidv4 = require('uuid').v4;
+const { get } = require('lodash');
+
+const minioEventFixture = require('./minioEventFixture.json');
 
 describe.only('trigger notify functionality',function(){
 
@@ -84,25 +88,43 @@ describe.only('trigger notify functionality',function(){
   })
 
 
-  it('should create a Photo object on minio event', async function(){
+  it.only('should create a Photo object on upload minio event', async function(){
     this.timeout(5000);
+
+    const account = await Account.create({});
+    const uuid = uuidv4();
+
+    const objectName = minioObject.create('v4',{ AccountId: account.id, uuid });
+
     watcher = new Watcher({ debug: logger.debug });
     await watcher.connect();
-    const photoUUID = uuidv4();
     const Q = new Promise((rs,rx) => {
-      watcher.subscribe(Photo.TableTriggers.after_insert, function(payload){
+      watcher.subscribe(BucketEvents.TableTriggers.after_insert, async function(payload){
         try {
-          const { objectName } = payload.data;
-          const { uuid } = minioObject.parse(objectName);
-          assert.equal(uuid, photoUUID);
+          const eventName = get(payload,'data.value.Records[0].eventName');
+          const key = get(payload,'data.key');
+          if (eventName === 's3:ObjectCreated:Put') {
+            await MClient.PutPhotoFn({
+              key,
+              bucket: 'mybucket'
+            })
+          }
           return rs();
         } catch(e) {
           rx(e)
         }
       })
     });
-    process.nextTick(async ()=> await Photo.create({ uuid: photoUUID }));
-    return Q;
+    process.nextTick(async ()=> await BucketEvents.create({ 
+      key: objectName,
+      value: minioEventFixture
+    }));
+    await Q;
+
+    const photo = await Photo.findOne({ where: { uuid } });
+
+    assert(photo);
+
   });
 
 

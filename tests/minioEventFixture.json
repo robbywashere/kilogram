@@ -1,0 +1,35 @@
+{
+    "Records": [
+        {
+            "awsRegion": "us-east-1",
+            "eventName": "s3:ObjectCreated:Put",
+            "eventSource": "aws:s3",
+            "eventTime": "2016-10-12T21:18:20Z",
+            "eventVersion": "2.0",
+            "requestParameters": {
+                "sourceIPAddress": "[::1]:39706"
+            },
+            "responseElements": {},
+            "s3": {
+                "bucket": {
+                    "arn": "arn:aws:s3:::images",
+                    "name": "images",
+                    "ownerIdentity": {
+                        "principalId": "minio"
+                    }
+                },
+                "configurationId": "Config",
+                "object": {
+                    "eTag": "1d97bf45ecb37f7a7b699418070df08f",
+                    "key": "myphoto.jpg",
+                    "sequencer": "147CE57C70B31931",
+                    "size": 56060
+                },
+                "s3SchemaVersion": "1.0"
+            },
+            "userIdentity": {
+                "principalId": "minio"
+            }
+        }
+    ]
+}
