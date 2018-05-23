@@ -41,7 +41,7 @@ function runMinio(){
   return minio; 
 }
 
-describe.only('Minio Connect and Reconnect',function(){
+describe('Minio Connect and Reconnect',function(){
 
 
   let minio;

@@ -58,7 +58,7 @@ const StatsQuery = (tableName)=>`
   SELECT 
     sum(case when (status = 'OPEN') then 1 else 0 end) as open,
     sum(case when (status = 'SUCCESS') then 1 else 0 end) as success,
-    sum(case when (status = 'SUCCESS' AND (taskResult != 'NEGATIVE')) then 1 else 0 end) as missions_accomplished,
+    sum(case when (status = 'SUCCESS' AND (taskresult != 'NEGATIVE')) then 1 else 0 end) as missions_accomplished,
     sum(case when (status = 'FAILED') then 1 else 0 end) as failed,
     sum(case when (status = 'SLEEPING') then 1 else 0 end) as sleeping,
     sum(case when (status = 'SPINNING') then 1 else 0 end) as spinning
@@ -72,10 +72,10 @@ const JobMethods = {
   },
   complete: function({ body, resultOf }){
 
-    let taskResult = (typeof resultOf === "undefined") ? 'UNKNOWN' : (!!resultOf) ? 'POSITIVE' : 'NEGATIVE';
+    let taskresult = (typeof resultOf === "undefined") ? 'UNKNOWN' : (!!resultOf) ? 'POSITIVE' : 'NEGATIVE';
 
     return this.update({
-      taskResult,
+      taskresult,
       status: !!get(body,'success') ? 'SUCCESS' : 'FAILED',
       body
     })
@@ -118,7 +118,7 @@ const JobProperties = {
   body: {
     type: sequelize.JSON
   },
-  taskResult: {
+  taskresult: {
     type: ENUM('UNKNOWN','POSITIVE','NEGATIVE'),
   },
   status: {

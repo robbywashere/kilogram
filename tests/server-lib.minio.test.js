@@ -34,7 +34,7 @@ const uuidv4 = require('uuid/v4');
 const uuid = require('uuid');
 
 const objects = require('../objects');
-const { Photo } = objects; 
+const { Account, Photo } = objects; 
 
 
 describe('MClient class', function(){
@@ -321,8 +321,10 @@ describe('MClient class', function(){
 
       const bucket = 'testBucket';
 
+      const account = await Account.create({});
+
       const uuid = uuidv4();
-      const meta = { uuid }
+      const meta = { uuid, AccountId: account.id }
       const key = minioObj.create('v4',meta)
       let putRecord = {}
       set(putRecord,'s3.object.key',key);
@@ -354,9 +356,10 @@ describe('MClient class', function(){
 
     const sandbox = sinon.sandbox.create();
 
+    const UUID = uuidv4();
     beforeEach(async function(){
       await dbsync(true);
-      sandbox.stub(uuid,'v4').callsFake(()=>'UUID');
+      sandbox.stub(uuid,'v4').callsFake(()=>UUID);
     })
     afterEach(function(){
       sandbox.restore();
@@ -381,10 +384,11 @@ describe('MClient class', function(){
         .send({ name: 'filename.jpg', AccountId: user.Accounts[0].id })
         .expect(200);
 
+
       assert.deepEqual(res.body,{ 
-        objectName: "v4_gqR1dWlkpFVVSUSpYWNjb3VudElkAQ__",
+        objectName: minioObj.create('v4',{ uuid: UUID, AccountId: user.Accounts[0].id }),
         url: 'http://fakeurl/photo', 
-        uuid: 'UUID' })
+        uuid: UUID })
 
     })
 
