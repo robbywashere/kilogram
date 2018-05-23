@@ -1,12 +1,13 @@
 const Minio = require('minio');
 const path = require('path');
 const s2p = require('stream-to-promise');
+const Watcher = require('../../db/trigger-notify/watch')
 const Uuid = require('uuid');
 const { logger } = require('../../lib/logger');
 const config = require('config');
 const get = require('lodash/get');
 const Promise = require('bluebird');
-const { Photo } = require('../../objects');
+const { Photo, BucketEvents } = require('../../objects');
 const fs = require('fs');
 const { chunk } = require('lodash');
 const minioObj = require('./minioObject');
@@ -98,15 +99,78 @@ class MClient {
     return listener;
   }
 
-  listenPGWatcher({ bucket = this.bucket, events }){
+    /* listenAny({ 
+    adapter,
+    events = MClient.PhotoEvents()
+  }) {
+    adapter.on('notification', events);
+  }
+  */
+
+  async listenPGWatcherAdapter({
+    sqsArn = this.sqsArn,
+    bucket = this.bucket, /// needed?  
+    events = MClient.PhotoEvents(),
+    watcher = new Watcher({ debug: true }),
+    watcherEventObj = BucketEvents.TableTriggers.after_insert
+  } = {}){
+
+    const EE = new EventEmitter();
+    await Promise.all([
+      this.createBucketNotifications({ sqsArn }),
+      watcher.connect()
+    ]);
+    await watcher.subscribe(watcherEventObj, function(payload){
+      const Records = get(payload,'data.value.Records') || [];
+      for (const record of Records){ 
+        EE.emit('notification', record);
+      }
+    })
+    return { eventEmitter: EE, end: watcher.disconnect.bind(watcher) };
+  }
+
+
+
+  async listenMinioAdapter({ 
+    bucket = this.bucket,
+    minioClient = this.client, 
+    sqsArn = this.sqsArn
+  }={}){
+
+    await this.createBucketNotifications(bucket);
+
+    const EE = new EventEmitter();
+
+    let $ = { eventEmitter: EE };
+
+    function makeListener(){
+      $.listener = minioClient.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*','s3:ObjectRemoved:*']);
+
+      $.end = function() {
+        $.listener.removeAllListeners();
+        $.listener.stop();
+      }
+      logger.status(`Listening for s3/minio events on ${bucket}....`);
+
+      $.listener.on('notification', function(data){
+        EE.emit('notification',data);
+      });
+
+
+      $.listener.on('error', async (err) => {
+        $.end()
+        logger.error(err);
+        logger.status(`listenMinioAdapter offline, attempting reconnect...`);
+        await Promise.delay(3000);
+        makeListener.bind(this)();
+      });
+    }
+    makeListener.bind(this)();
+    return $;
 
   }
 
-  async listenAny({ bucket = this.bucket, events, Listener }) {
 
-    // let listener = await Listener.init();
-
-  }
 
   listenPersist({ bucket = this.bucket, client = this.client, events }){
 
@@ -120,27 +184,11 @@ class MClient {
       logger.status(`Listening for s3/minio events on ${bucket}....`);
 
       listener.on('notification', events);
-      //TODO: Inject an EE instead of calling events directly from within 
-      //so you have a common interface ee.on('notification', which you may
-      //use for your Watcher/PGlisten or client.listenBucketNotification
-      listener.on('notification', function(data){
-        Listerner.emitter.emit('notification', data)
-      });
 
       listener.on('error', async (err) => {
         listener.removeAllListeners();
         listener.stop();
         logger.error(err);
-        //if (err.code === 'ECONNREFUSED') {
-        // const msExp = ((retry > 5) ? 5 : retry);
-        // const delayMs = (2**msExp) * 1000;
-        // logger.status(`
-        // Minio Listener Disconnected:
-        // -  Retry #: ${retry+1}
-        // -  Retying in ${delayMs}ms
-        //`)
-        // await Promise.delay(delayMs)
-        //makeListener.bind(this)(msExp + 1);
         await Promise.delay(3000);
         makeListener.bind(this)();
       });
@@ -198,17 +246,19 @@ class MClient {
     this.listenPersist({ events: MClient.PhotoEvents() });
   }
   static getSQSARNS(configPath) {
-    const { notify } = JSON.parse(fs.readFileSync(configPath,'utf-8').toString());
-    return Object.entries(notify).reduce((arnsqs,[type, entries])=>({
-      ...arnsqs, 
-      ...{
-        ...(!(Object.values(entries).some((c)=>c.enable)) ? {} : {
-          [type]: Object.entries(entries)
-          .filter(([,conf]) => conf.enable)
-          .reduce((accum,[name, conf])=>({ ...accum, [name]: `arn:minio:sqs::${name}:${type}` }),{ })
-        })
-      }
-    }),{});
+    return Object.entries(JSON.parse(fs.readFileSync(configPath,'utf-8').toString()))
+      .reduce((arnsqs,[type, entries])=>(
+        {
+          ...arnsqs, 
+          ...{
+            ...(!(Object.values(entries).some((c)=>c.enable)) ? {} : {
+              [type]: Object.entries(entries)
+              .filter(([,conf]) => conf.enable)
+              .reduce((accum,[name, conf])=>({ ...accum, [name]: `arn:minio:sqs::${name}:${type}` }),{ })
+            })
+          }
+        }
+      ),{});
   }
 
   async createBucketNotifications({ bucket = this.bucket, events = [Minio.ObjectCreatedAll, Minio.ObjectRemovedAll], sqsArn = this.sqsArn }={}){
@@ -222,7 +272,7 @@ class MClient {
       err.message = `Could not create bucket: ${bucket + ""} for notifications for events: ${JSON.stringify(events) + ""}\n` + err;
       throw err;
     }
-    logger.status(`Created notifications for events: ${JSON.stringify(events) + ""} for bucket: ${bucket + ""}`);
+    logger.status(`Created notifications on ${sqsArn} for events: ${JSON.stringify(events) + ""} for bucket: ${bucket + ""}`);
 
   }
 
@@ -303,7 +353,8 @@ async function retryConnRefused3({ fn, retryCount = 1, retryDelayFn = (retries)=
   try {
     return await fn();
   } catch(err) {
-    if (err.code === 'ECONNREFUSED' && retryCount <= max) {
+    //TODO: removing error code check -- its all the same. if (err.code === 'ECONNREFUSED' && retryCount <= max) {
+    if (retryCount <= max) {
       logger.debug(`Error: Connection refused, retrying ${retryCount}/${max} - ${debug}`)
       await Promise.delay(retryDelayFn(retryCount));
       return await retryConnRefused3({ fn, retryCount: retryCount+1, max, retryDelayFn, debug });

@@ -13,9 +13,9 @@ const { EventEmitter } = require('events');
 const uuidv4 = require('uuid').v4;
 const { get } = require('lodash');
 
-const minioEventFixture = require('./minioEventFixture.json');
+const minioEventFixture = require('./fixtures/minio-event.json');
 
-describe.only('trigger notify functionality',function(){
+describe('trigger notify functionality',function(){
 
 
   let watcher = {};

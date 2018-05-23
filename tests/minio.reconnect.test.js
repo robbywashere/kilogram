@@ -7,13 +7,16 @@ const baseServer = require('../baseServer');
 const { MClient } = require('../server-lib/minio');
 const dbSync = require('../db/sync');
 const { exec, spawn } = require('child_process');
+const uuidv4 = require('uuid').v4
 const config = require('config');
 const assert = require('assert');
 const rimraf = require('rimraf');
+const minioObject = require('../server-lib/minio/minioObject');
 const Promise = require('bluebird');
-const {  Account, Photo } = require('../objects');
+const { BucketEvents, Account, Photo } = require('../objects');
 const { logger } = require('../lib/logger');
 const minioObj = require('../server-lib/minio/minioObject');
+const { get } = require('lodash');
 
 const MINIODATADIR = './.minio-test-data';
 function runMinio(){
@@ -21,7 +24,7 @@ function runMinio(){
   const minio = spawn('minio', ['server', './.minio-test-data']);
   minio.stdout.on('data', (data) => {
     minio.emit('data', data);
-    //logger.debug(`stdout: ${data}`);
+    // logger.debug(`minio stdout: ${data}`);
   });
 
   minio.stderr.on('data', (data) => {
@@ -38,18 +41,19 @@ function runMinio(){
   return minio; 
 }
 
-describe.skip('Minio Connect and Reconnect',function(){
+describe.only('Minio Connect and Reconnect',function(){
 
 
   let minio;
-  let Persistener;
+  let Persistener = { Listener: { stop: ()=>{} } };
 
 
   beforeEach(()=>dbSync(true))
 
-  afterEach((done)=>{
+  afterEach(async function(){
+    this.timeout(Infinity);
     try {
-      Persistener.listener.stop();
+      if (get(Persistener,'Listener.stop')) Persistener.Listener.stop();
     } catch(e) { 
       logger.debug(e);
     }
@@ -57,6 +61,7 @@ describe.skip('Minio Connect and Reconnect',function(){
       if (minio) { 
         //kill(minio.pid,'SIGTERM'); 
         process.kill(minio.pid);
+        await new Promise((rs)=>minio.on('close', rs))
         logger.debug('END, killing spawned proc',minio.pid) 
       }
     } catch(e) {
@@ -66,9 +71,85 @@ describe.skip('Minio Connect and Reconnect',function(){
       rimraf(MINIODATADIR, done);
     } catch(e) {
       logger.debug('Error cleaning MINIODATADIR')
-      done();
     }
+
   })
+
+  it('Persistent Listener adapter experiment using listenPGWatcherAdapter',async function(){
+
+    this.timeout(15*1000);
+
+    const account = await Account.create({});
+
+    const uuid = uuidv4();
+
+    const objectName = minioObject.create('v4',{ AccountId: account.id, uuid });
+
+    minio = runMinio();
+
+    await new Promise((rs) => minio.on('open', rs) )
+      .then(()=>logger.status('Minio Startup ...'))
+
+    const minioClient = new MClient({ 
+      // bucket: 'uploads',
+      //     sqsArn: 'arn:minio:sqs::test:postgresql'
+    });
+
+    await minioClient.createBucket().then(()=>logger.status('Init Minio'))
+
+    const adapter = await minioClient.listenPGWatcherAdapter();
+
+    Persistener.Listener.stop = adapter.end;
+
+    adapter.eventEmitter.on('notification', MClient.PhotoEvents());
+
+    await minioClient.client.putObject('uploads', objectName, 'xxxx');
+
+    let photo;
+    while (!(photo = await Photo.findOne({ where: { objectName } }))) {
+      await Promise.delay(1000);
+    }
+
+    assert.equal(photo.objectName, objectName);
+
+
+
+  });
+
+  it('Persistent Listener adapter experiment using listenMinioAdapter',async function(){
+
+    this.timeout(35*1000);
+
+    const account = await Account.create({});
+
+    minio = runMinio();
+
+    await new Promise((rs) => minio.on('open', rs) )
+      .then(()=>logger.status('Minio Startup ...'))
+
+    const minioClient = new MClient();
+
+
+    await minioClient.createBucket().then(()=>logger.status('Init Minio'))
+
+    const adapter = await minioClient.listenMinioAdapter();
+
+    Persistener.Listener.stop = adapter.end;
+
+    adapter.eventEmitter.on('notification',MClient.PhotoEvents());
+
+    const objectName = minioObj.create('v4',{ AccountId: account.id });
+
+    await minioClient.client.putObject('uploads', objectName,'X');
+
+    await Promise.delay(3000);
+
+    const photo = await Photo.findOne({ where: { objectName } });
+
+    assert.equal(photo.objectName, objectName);
+
+  });
+
 
   it('Should persist Minio Event Listeners and Connection',async function(){
 
@@ -117,10 +198,10 @@ describe.skip('Minio Connect and Reconnect',function(){
 
     Persistener.listener.stop();
 
-    await Promise.delay(5000)
+    await Promise.delay(1000)
 
     process.nextTick(()=>process.kill(minio.pid));
-    
+
     await new Promise((rs)=>minio.on('close', rs))
       .then(()=>logger.status('Minio exited'))
 
