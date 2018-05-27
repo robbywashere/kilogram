@@ -6,6 +6,9 @@ const { STRING, ARRAY, TEXT, JSON: JSONType , INTEGER, VIRTUAL, BOOLEAN, Op, Mod
 
 module.exports = {
   Name: 'Notification',
+  TableTriggers: [{
+    after: 'INSERT' 
+  }],
   Properties:{
     reads:{
       type: ARRAY(INTEGER)

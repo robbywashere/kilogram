@@ -5,6 +5,7 @@ const {
 } = require('../server-lib/minio');
 
 const Routes = require('../controllers/minio');
+
 const { signedURL } = require('../server-lib/minio/middlewares');
 
 const EventEmitter = require('events');
@@ -14,9 +15,11 @@ const { Duplex } = require('stream');
 const http = require('http');
 
 const minioObj = require('../server-lib/minio/minioObject');
+
 const sinon = require('sinon');
 
 const Minio = require('minio');
+
 const Promise = require('bluebird');
 
 const assert = require('assert');
@@ -26,14 +29,17 @@ const DBSync = require('../db/sync');
 const { ezUser, exprezz, appLogger } = require('./helpers');
 
 const request = require('supertest');
+
 const dbsync = require('../db/sync');
 
 const { set } = require('lodash');
 
 const uuidv4 = require('uuid/v4');
+
 const uuid = require('uuid');
 
 const objects = require('../objects');
+
 const { Account, Photo } = objects; 
 
 
@@ -57,6 +63,7 @@ describe('MClient class', function(){
       })
       afterEach(function(){
         sandbox.restore(); 
+        callCount = 0;
       })
       it('should Pass custom wrapped client to constructor',
         async function(){
@@ -117,13 +124,18 @@ describe('MClient class', function(){
       })
 
 
-      it ('should attempt given fn, retrying on on error.code == ECONNREFUSED, retrying 5 times before throwing an error', async function(){
+      it('should attempt given fn, retrying on on error.code == ECONNREFUSED, retrying N times before throwing an error', async function(){
 
-        const fn = sinon.spy(async () => { const e = new Error('Error'); e.code = 'ECONNREFUSED'; throw e })
+        const expectedError = new Error('ThEre WaS eRrOr');
+
+        const fn = sinon.spy(async () => { const e = expectedError; e.code = 'ECONNREFUSED'; throw e })
         try {
-          await retryConnRefused(fn)
-        } catch(e) {
-          assert.equal(e.toString().split("\n")[0],"Error: Could not connect to MINIO storage") 
+          await retryConnRefused({ 
+            fn, 
+            max: 5, 
+            retryDelayFn: ()=> 0 }) //because fast testing
+        } catch(err) {
+          assert.equal(expectedError,err) 
         }
         assert.equal(fn.callCount,6);
       });
@@ -341,14 +353,10 @@ describe('MClient class', function(){
       const ps = await Photo.findAll();
       const pMeta = ps[0].get('meta');
       assert.deepEqual(meta,pMeta);
-
       await eventHandler(delRecord);
-
       assert((await Photo.findAll())[0].get('deleted'));
 
-
     })
-
 
   });
 

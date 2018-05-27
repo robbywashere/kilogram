@@ -65,7 +65,7 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
   wrapMethods.forEach(m=>{
     const wfn = client[m];
     if (typeof wfn !== "undefined") {
-      client[m] = (...args) => retryConnRefused3({ ...opts, fn: async ()=>wfn.bind(client)(...args), debug: `Function: ${m}` });
+      client[m] = (...args) => retryConnRefused({ ...opts, fn: async ()=>wfn.bind(client)(...args), debug: `Function: ${m}` });
     }
   })
   return client;
@@ -99,7 +99,7 @@ class MClient {
     return listener;
   }
 
-    /* listenAny({ 
+  /* listenAny({ 
     adapter,
     events = MClient.PhotoEvents()
   }) {
@@ -319,7 +319,8 @@ class MClient {
       try {
         logger.debug('  event meta data',JSON.stringify(minioObj.parse(key)))
       } catch(e) {
-        //swallow?? //TODO: ????
+        logger.error(`Could not parse minio event meta data \n ${key} \n Aborting`)
+        return;
       }
       if (key) {
         try {
@@ -329,85 +330,42 @@ class MClient {
             await delFn({ key })
           }
         } catch(e) {
-          logger.error(e)
+          logger.error(`Could not respond to minio event ${{ event }} for ${{ key }}, encountered error...\n ${e}`)
         }
       }
     }
   }
 }
 
-async function retryConnRefused4({ fn,  retryDelayFn = ()=>3000, debug = '' }) {
-  try {
-    return await fn();
-  } catch(err) {
-    if (err.code === 'ECONNREFUSED') {
-      logger.debug(`Error: Connection refused, retrying ...  - ${debug}`)
-      await Promise.delay(retryDelayFn());
-      return await retryConnRefused4({ fn, retryDelayFn, debug });
-    }
-    throw err;
-  }
-}
 
-async function retryConnRefused3({ fn, retryCount = 1, retryDelayFn = (retries)=>retries*3000, max = 5, debug = '' }) {
+async function retryConnRefused({ 
+  fn, 
+  retryCount = 1, 
+  retryDelayFn = (retries) =>retries*3000, 
+  max = 5, 
+  debug
+}) {
   try {
     return await fn();
   } catch(err) {
     //TODO: removing error code check -- its all the same. if (err.code === 'ECONNREFUSED' && retryCount <= max) {
     if (retryCount <= max) {
-      logger.debug(`Error: Connection refused, retrying ${retryCount}/${max} - ${debug}`)
+      logger.debug(`Error: Connection refused, retrying ${retryCount}/${max} - ${debug || get(fn,'name')}`)
       await Promise.delay(retryDelayFn(retryCount));
-      return await retryConnRefused3({ fn, retryCount: retryCount+1, max, retryDelayFn, debug });
+      return await retryConnRefused({ 
+        fn, 
+        retryCount: retryCount+1, 
+        max, 
+        retryDelayFn, 
+        debug 
+      });
     }
     throw err;
   }
 }
 
-async function retryConnRefused2({ fn, retryCount = 1, max = 5, ms = 3000 }) {
-  try {
-    return await fn();
-  } catch(err) {
-    if (err.code === 'ECONNREFUSED' && retryCount <= max) {
-      await Promise.delay(retryCount*ms);
-      return retryConnRefused2({ fn, retryCount: retryCount+1, max, ms });
-    }
-    throw err;
-  }
-}
-
-async function retryConnRefused(fn, retryCount = 1) {
-  try {
-    return await fn();
-  } catch(err) {
-    if (err.code === 'ECONNREFUSED') {
-      if (retryCount <= 5) {
-        logger(`Could not connect to MINIO storage\n* Trying again in ${retryCount*3} seconds .... Retry #:${retryCount}`) 
-        await Promise.delay(retryCount*3*1000);
-        return retryConnRefused(fn, retryCount+1);
-      }
-      else {
-        throw new Error(`Could not connect to MINIO storage\n* Confirm minio is installed and running.\nTry: $>npm run minio:up \n* refer to README.md for help`)
-      }
-    } else {
-      throw err;
-    }
-  }
-
-
-}
 
 
 
 module.exports = { WrapMinioClient, signedURL, removeObject, retryConnRefused, MClient, ClientConfig, listObjects };
 
-/*
-{ Error: connect ECONNREFUSED 127.0.0.1:9000
-    at Object._errnoException (util.js:1019:11)
-    at _exceptionWithHostPort (util.js:1041:20)
-    at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1175:14)
-  code: 'ECONNREFUSED',
-  errno: 'ECONNREFUSED',
-  syscall: 'connect',
-  address: '127.0.0.1',
-  port: 9000 }
-  */
