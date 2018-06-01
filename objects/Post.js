@@ -25,7 +25,7 @@ module.exports = {
     },
     status: {
       type: ENUM('DRAFT','PUBLISH','PUBLISHED'),
-      defaultValue: 'PUBLISH'
+      defaultValue: 'PUBLISH'//TODO: NO
     }
   },
   Init({ PostJob, Photo, Account, IGAccount }){

@@ -69,6 +69,7 @@
     "seeds:up": "node ./db/seeders/_up.js",
     "seeds:create": "node ./db/seeders/_create.js",
     "seeds:down": "node ./db/seeders/_down.js",
+    "db:triggers": "node ./db/trigger-notify/_getTriggers.js",
     "db:sync": "node ./db/_sync.js",
     "db:up": "node ./db/_up.js",
     "db:down": "node ./db/_down.js",
@@ -98,6 +99,7 @@
     "find-free-port": "^1.2.0",
     "md5-file": "^3.2.3",
     "mocha-clearscreen-reporter": "^1.0.1",
+    "mock-socket": "^7.1.0",
     "nyc": "^11.4.1",
     "sinon": "^4.1.3",
     "stream-array": "^1.1.2"

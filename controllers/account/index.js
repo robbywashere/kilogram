@@ -84,6 +84,7 @@ class AccountResource extends Resource {
 module.exports = function AccountController(){
   const router = new Router();
   const resource = new AccountResource({ model: Account, policy: AccountPolicy, scope: AccountPolicy.scope });
+
   router.get('/', resource.action('index'))
   router.get('/:id', resource.action('show'))
   router.post('/', resource.action('create'))

@@ -15,7 +15,7 @@ const { get } = require('lodash');
 
 const minioEventFixture = require('./fixtures/minio-event.json');
 
-describe('trigger notify functionality',function(){
+describe.only('trigger notify functionality',function(){
 
 
   let watcher = {};

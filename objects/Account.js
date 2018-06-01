@@ -21,7 +21,6 @@ module.exports = {
   },
   ScopeFunctions: true, 
   Scopes: {
-    // withIGAccounts: { include: [ this.sequelize.models.IGAccount ] },
     userScoped: function(user){
       if (!get(user,'Accounts.length')) {
         throw new Error('User record must include Account');
