@@ -46,6 +46,16 @@ watcher.subscribe(IGAccount.Triggerables.status,function(payload){
 
 //https://jazzy.id.au/2017/08/02/socket-io.html
 
+//OR no namespacing and just use fancy room names
+
+
+watcher.subscribe(IGAccount.Triggerables.status,function(payload){
+  const eventName = IGAccount.Triggerables.status.event;
+  const { data: { status, id: IGAccountId, AccountId }} = payload;
+  socketLib.broadcast.to(`/event/${eventName}/room/${AccountUUID}`,eventName,payload);
+})
+
+
 
 //----------------------
 
