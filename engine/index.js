@@ -53,27 +53,8 @@ const run = function(fn, milliseconds){ // Job 'Harness' - Errors should never r
   }, milliseconds);
 }
 
-//const { associations, name } = job.constructor; 
 
-  /*async function runJobWithDevice({ job, device }) {
-  const deviceId = device.get('adbId');
-  const agent = new DeviceAgent.Agent({ deviceId });
-  let jobResult = await Runner.PostJobRun({ 
-    agent, 
-    job, 
-  });
-  if (jobResult && jobResult.success === false) throw new Error(jobResult.error)
-
-  await job.complete(jobResult);
-
-  logger.status(`-- PostJob Run cycle complete job_id: ${job.id}, success: ${jobResult.success}`);
-
-  logger.status(`----- Result: `,(jobResult) ? jobResult : 'None');
-}*/
-
-
-
-function jobsStats(stats = {}, freeDevices = []){
+function allJobsStats(stats = {}, freeDevices = []){
   return { 
     ...zipObject(Object.keys(stats).map(startCase),Object.values(stats)),
     'Free Devices': (freeDevices).length, 
@@ -89,12 +70,13 @@ function jobStats(job){
 }
 
 
-
-
 //TODO: Jobs may not always be device dependent! different function?
 function runJobs({ JobModel = demand('JobModel'), JobRunner = demand('JobRunner') } = {}) {
 
-  const diffLogger = logDiff(logger.status); //Logs only on deltas duh!
+  let diffLog1 = logDiff(logger.status);
+
+  let diffLog2 = logDiff(logger.status);
+
   return async function(){
     let device;
     let job;
@@ -102,8 +84,7 @@ function runJobs({ JobModel = demand('JobModel'), JobRunner = demand('JobRunner'
       const stats = await JobModel.stats();
       const freeDevices = await Device.free();
 
-      logger.status(jobsStats(stats, freeDevices))
-
+      diffLog1(allJobsStats(stats, freeDevices))
 
       if (stats.open > 0 && freeDevices.length > 0) {
         if ((device = await Device.popDevice()) && (job = await JobModel.popJob())) {
@@ -111,10 +92,8 @@ function runJobs({ JobModel = demand('JobModel'), JobRunner = demand('JobRunner'
             const deviceId = device.get('adbId');
             const agent = new DeviceAgent.Agent({ deviceId });
 
-
             await job.denormalize(); // Loads Job data from Id's into 'job' object
-
-            logger.status(jobStats(job));
+            diffLog2(jobStats(job));
 
             let jobResult = await JobRunner({ 
               ...job,
@@ -158,15 +137,13 @@ function runJobs({ JobModel = demand('JobModel'), JobRunner = demand('JobRunner'
 
 const main = function (){
   return [
-
     run(syncDevices,1000),
 
     run(PostJob.initPostJobs,1000), // Turns posts into queued jobs
 
     run(runJobs({ JobModel: PostJob, JobRunner: Runner.PostJobRun }), 2000),
 
-    run(runJobs({ JobModel: VerifyIGJob, JobRunner: Runner.VerifyIGJobRunner }), 2000)
-
+    run(runJobs({ JobModel: VerifyIGJob, JobRunner: Runner.VerifyIGJobRun }), 2000)
   ];
 }
 

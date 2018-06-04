@@ -9,7 +9,7 @@ const { CookieSession } = require('../server-lib/auth/session');
 
 
 /*
- 
+
 const pgTriggers = [
   Notification.TableTriggers.after_insert,
   IGAccount.Triggerables.status
@@ -50,6 +50,15 @@ async function PGEventSockets({
   }
 }
 
+function PGSockets({ pgTriggers, httpServer }) {
+
+  const topics = pgTriggers.map(t=>t.event);
+
+  const socketServer = SocketIOServer({ httpServer, topics })
+
+  return PGEventSockets({ pgTriggers, socketServer  });
+
+}
 
 function SocketIOServer({ 
   httpServer,
@@ -76,4 +85,6 @@ function SocketIOServer({
   });
   return io;
 }
+
+module.exports = { SocketIOServer, PGEventSockets, PGSockets }
 

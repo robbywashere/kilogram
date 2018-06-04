@@ -239,7 +239,7 @@ describe('End To End Test 👍 ',function(){
           const devices = await Device.findAll();
           await devices[0].update({ enabled: true });
           while(!(await PostJob.completed()).length) {
-            await Promise.delay(15000);
+            await Promise.delay(5000);
           }
           TIMERS.forEach(t=>clearInterval(t));
           resolve();
