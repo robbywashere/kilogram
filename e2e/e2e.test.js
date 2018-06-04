@@ -54,28 +54,6 @@ Req.get = (path, args)=> Req({ ...args, path, method: 'GET' })
 let FREE_PORT;
 let PROCESS;
 
-/*function runMinio(){
-  //minio server "$HOME/minio-data/"
-  let stderr = [];
-  const minio = spawn('minio', ['server', './.minio-test-data']);
-  minio.stdout.on('data', (data) => {
-    //>   logger.debug(`stdout: ${data}`);
-  });
-
-
-  minio.stderr.on('data', (data) => {
-    stderr.push(data);
-    //>   console.error(`stderr: ${data}`);
-  });
-
-  minio.on('close', (code) => {
-
-    logger.debug(`child process exited with code ${code}`);
-    if (stderr.length>0) logger.error(stderr.join("\n"));
-  });
-  return minio; 
-}*/
-
 describe('End To End Test 👍 ',function(){
 
 
@@ -135,11 +113,11 @@ describe('End To End Test 👍 ',function(){
     }
   })
 
-  it(' Should signup User, Create new Post, have Post posted', async function(){
+  it('Should signup User, Create new Post, have Post posted', async function(){
 
     this.timeout(Infinity);
 
-    minio =  runMinio();
+    minio = runMinio();
 
     APP = await baseServer();
     const [freePort] = await ffport(3000);
@@ -176,8 +154,9 @@ describe('End To End Test 👍 ',function(){
 
     assert(AccountId)
 
-    const res4 = await Req.post('/api/minio/url',{ AccountId }, { jar })
+    logger.debug(`POST for minio url, AccountId: ${AccountId}`)
 
+    const res4 = await Req.post('/api/minio/url',{ AccountId }, { jar })
 
     const { objectName, uuid, url } = res4.body;
 
@@ -197,7 +176,7 @@ describe('End To End Test 👍 ',function(){
 
     //await Promise.delay(1000);
 
-    let retry =0;
+    let retry = 0;
     while (!(await Photo.findAll()).length && retry++ <= 3){
       logger.debug(`try ${retry} Photo not in DB retrying in 1 sec....`);
       await Promise.delay(1000);
@@ -234,14 +213,14 @@ describe('End To End Test 👍 ',function(){
 
     assert(post.id);
 
-    await PostJob.initJobs();
+    await PostJob.initPostJobs();
 
     const jobs  = await PostJob.outstanding();
 
     assert(jobs.length,1);
 
     if (!RUN_ON_DEVICE) {
-      const doJob = await (await PostJob.popJob()).reloadWithAll();
+      const doJob = await (await PostJob.popJob()).denormalize();
       const fullJob = doJob.toJSON();
       assert.equal(fullJob.Post.id,post.id);
       assert.equal(fullJob.IGAccount.username,igaccount.username);

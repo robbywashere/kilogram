@@ -92,7 +92,7 @@
     "tests:e2e": "mocha ./e2e/e2e.test.js",
     "tests:e2e:device": "export RUN_E2E_ON_DEVICE=true && mocha ./e2e/e2e.test.js",
     "pg:session:up": "psql postgres < ./node_modules/connect-pg-simple/table.sql",
-    "moo": "cowsay",
+    "moo": "cowsay moo",
     "device-node": "node ./engine/run"
   },
   "proxy": "http://127.0.0.1:3000/",

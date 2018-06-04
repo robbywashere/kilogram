@@ -317,7 +317,7 @@ class MClient {
 
       logger.debug('Caught event: ', key, event);
       try {
-        logger.debug('  event meta data',JSON.stringify(minioObj.parse(key)))
+        logger.debug('\tevent meta data',JSON.stringify(minioObj.parse(key)))
       } catch(e) {
         logger.error(`Could not parse minio event meta data \n ${key} \n Aborting`)
         return;
@@ -350,7 +350,7 @@ async function retryConnRefused({
   } catch(err) {
     if (err.code === 'NoSuchBucket') throw err
     if (retryCount <= max) {
-      logger.error('MINIO CLIENT ERROR :', err);
+      logger.debug('MINIO CLIENT ERROR :', err);
       logger.debug(`Minio connect Error: Connection refused ~ retrying ${retryCount}/${max} - ${debug || get(fn,'name')}`)
       await Promise.delay(retryDelayFn(retryCount));
       return await retryConnRefused({ 

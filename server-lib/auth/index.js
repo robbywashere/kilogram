@@ -68,7 +68,7 @@ module.exports = function Auth(app, { appSecret = config.get('APP_SECRET'), sess
   router.get('/auth',function(req, res, next){
     const user = req.user;
     if (!user) { return next(new Forbidden()) }
-    res.send({ user: user.serialize() });
+    res.send({ user });
   });
   router.post('/auth',passport.authenticate('local'), function(req, res){
     //req.user.setPolicy('read', req.user);

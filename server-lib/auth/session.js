@@ -20,8 +20,8 @@ const PGSession = {
   serialize(user, cb) {
     cb(null, user.id);
   },
-  
- async deserialize(id,cb) {
+
+  async deserialize(id,cb) {
     try {
       const user = await User.withAccountsForId(id);
       if (!user) throw new Error('Invalid User/User does not exist');
@@ -44,7 +44,18 @@ const CookieSession = {
     })
   },
   serialize(user,cb) { return cb(null,user.serialize()) }, 
-  deserialize(user, cb) { return cb(null,user) }
+  async deserialize({ id },cb) {
+    try {
+      const user = await User.withAccountsForId(id);
+      if (!user) throw new Error('Invalid User/User does not exist');
+      else {
+        cb(null, user);
+      }
+    } catch(e) {
+      logger.error(e);
+      cb(null, false);
+    }
+  }
 }
 
 module.exports = { CookieSession, PGSession }

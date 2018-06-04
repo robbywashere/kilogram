@@ -161,7 +161,7 @@ const main = function (){
 
     run(syncDevices,1000),
 
-    run(PostJob.initJobs,1000), // Turns posts into queued jobs
+    run(PostJob.initPostJobs,1000), // Turns posts into queued jobs
 
     run(runJobs({ JobModel: PostJob, JobRunner: Runner.PostJobRun }), 2000),
 
