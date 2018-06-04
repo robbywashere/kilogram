@@ -12,76 +12,56 @@ const { get } = require('lodash');
 
 const { Router } = require('express');
 
-const session = require('express-session');
-
-const pgSession = require('connect-pg-simple')(session);
-
 const { Forbidden } = require('http-errors');
 
 const { logger } = require('../../lib/logger');
 
+const { CookieSession, PGSession } = require('./session');
 
-module.exports = function Auth(app) {
 
+module.exports = function Auth(app, { appSecret = config.get('APP_SECRET'), sessionStrategy = CookieSession } = {}) {
 
-  // TODO: app.use(require('body-parser').urlencoded({ extended: true }));
+  // TODO??: app.use(require('body-parser').urlencoded({ extended: true }));
   app.use(require('body-parser').json());
-  app.use(require('cookie-parser')());
-
-
-
-    app.use(session({
-      store: new pgSession({
-        //pool: DB.connectionManager.pool
-        conObject: require('../../db/config')[config.get('NODE_ENV')]
-        //pgPromise: DB.connectionManager.pool._Promise
-      }),
-      secret: config.get('APP_SECRET'), 
-      resave: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
-      saveUninitialized:true,
-      //cookie: {},
-    }));
-
-  if (config.get('NODE_ENV') === 'production') {
-    app.set('trust proxy', 1) // trust first proxy
-    sess.cookie.secure = true // serve secure cookies
-  }
-
+  app.use(sessionStrategy.sessioner({ secret: appSecret }));
   app.use(passport.initialize());
   app.use(passport.session());
 
   passport.use(new Strategy(
     async (username, password, cb) => {
       try {
-        const user = await User.findOne({ where: { email: username } });
-        if (!user) { return cb(null, false); }
+        const user = await User.scope('withAccounts').findOne({ where: { email: username } });
+        if (!user || !user.Accounts) { return cb(null, false); }
         if (!user.verifyPassword(password)) { return cb(null, false); }
-        return cb(null, user);
+        //   const Accounts = user.Accounts.map(A=>({ id : A.id, role: A.UserAccount.role }));
+        // const id = user.id;
+        //   cb(null, user);
+        return cb(null,user);
       } catch(e){
         return cb(e);
       }
     }));
 
-  passport.serializeUser(function(user, cb) {
-    cb(null, user.id);
+  passport.serializeUser(sessionStrategy.serialize);
+  passport.deserializeUser(sessionStrategy.deserialize);
+  /*passport.serializeUser(function(user, cb) {
+    cb(null, user.serialize());
   });
 
-  passport.deserializeUser(async function(id, cb) {
+  passport.deserializeUser(function(user, cb) {
     try {
-      const user = await User.withAccountsForId(id);
-      if (!user) throw new Error('Invalid User/User does not exist');
+      if (!user || !user.Accounts) {
+        throw new Error('Invalid User/User does not exist');
+      }
       else {
-        //user.setPolicy('read', user);
         cb(null, user);
       }
     } catch(e) {
       logger.error(e);
       cb(null, false);
     }
-
   });
-
+  */
   const router = new Router();
 
 
@@ -97,6 +77,7 @@ module.exports = function Auth(app) {
     res.send({ user });
   });
   router.delete('/auth', (req,res) => {
+    if (!req.user) return res.sendStatus(404);
     req.logout();
     res.sendStatus(200);
   })

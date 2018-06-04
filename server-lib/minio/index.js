@@ -348,9 +348,10 @@ async function retryConnRefused({
   try {
     return await fn();
   } catch(err) {
-    //TODO: removing error code check -- its all the same. if (err.code === 'ECONNREFUSED' && retryCount <= max) {
+    if (err.code === 'NoSuchBucket') throw err
     if (retryCount <= max) {
-      logger.debug(`Error: Connection refused, retrying ${retryCount}/${max} - ${debug || get(fn,'name')}`)
+      logger.error('MINIO CLIENT ERROR :', err);
+      logger.debug(`Minio connect Error: Connection refused ~ retrying ${retryCount}/${max} - ${debug || get(fn,'name')}`)
       await Promise.delay(retryDelayFn(retryCount));
       return await retryConnRefused({ 
         fn, 

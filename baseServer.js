@@ -5,6 +5,7 @@ const DB = require('./db');
 const express = require('express');
 //const JWTAuth = require('./server-lib/auth/jwt');
 const Auth = require('./server-lib/auth');
+const { CookieSession, PGSession } = require('./server-lib/auth/session');
 const helmet = require('helmet');
 const { logger } = require('./lib/logger');
 const { MClient } = require('./server-lib/minio');
@@ -15,22 +16,29 @@ module.exports = async function({
   minioClient = new MClient(), 
   auth = Auth,
   syncDb = SyncDb,
+  sessionStrategy = CookieSession,
   errorMiddleware = serverErrors,
   app = express(),
   sequelize = DB
 }= {}) {
   try {
+
     logger.debug('Loading static middlewares and body-parser')
+
     app.use(require('body-parser').json());
+
     app.use(require('serve-static')(__dirname + '/public'));
+
     app.get('/upload-static', (req, res) => {
       res.sendFile(__dirname + '/index.html');
     })
 
     logger.debug('Loading auth')
-    app.use(auth(app));
+
+    app.use(auth(app, { sessionStrategy }));
 
     logger.debug('Initializing controllers')
+
     initController({
       app,
       minioClient,
@@ -38,13 +46,14 @@ module.exports = async function({
     })
 
     logger.debug('Loading error middleware')
+
     app.use(errorMiddleware);
 
 
     logger.debug('Syncing DB and initializing minioClient')
     await syncDb(false);
-    //await minioClient.createBucket();
-    //await minioClient.listenPersist();
+    //   await minioClient.createBucket();
+    //   await minioClient.listenPersist();
     //
     app.minioEventListener = await minioClient.init();
  

@@ -1,5 +1,7 @@
 const {readdirSync, readFileSync } = require('fs');
+const { exec, spawn } = require('child_process');
 const { User, PostJob, Photo, Account, IGAccount, Post } = require('../../objects');
+const rimraf = require('rimraf');
 const minioObj = require('../../server-lib/minio/minioObject');
 const { get } = require('lodash');
 
@@ -19,8 +21,32 @@ function appLogger(app) {
     console.error('>>> express logger',err);
     res.status(err.statusCode || 500)
       .send(err.msg || err.toString());
+    throw err;
   });
 }
+
+
+function runMinio({ log = true, testDir = './.minio-test-data' }={}){
+  let stderr = [];
+  const minio = spawn('minio', ['server', testDir ]);
+  minio.stdout.on('data', (data) => {
+    minio.emit('data', data);
+    if (log) process.stdout.write(`minio stdout: ${data}`);
+  });
+
+  minio.stderr.on('data', (data) => {
+    stderr.push(data);
+    if (log) process.stderr.write(`minio stderr: ${data}`);
+  });
+
+  minio.once('data', ()=> minio.emit('open',{}));
+
+  minio.on('close', (code) => {
+    process.stdout.write(`child process exited with code ${code}`);
+  });
+  return minio; 
+}
+
 
 function exprezz(user = {}){
   const app = require('express')();
@@ -152,4 +178,4 @@ async function createUserPostJob(){
   return post;
 }
 
-module.exports =  { initJob, ezUser, ezUserAccount, fixtures, createAccountUserPostJob, newIGAccount, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz, appLogger  }
+module.exports =  { initJob, runMinio, ezUser, ezUserAccount, fixtures, createAccountUserPostJob, newIGAccount, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz, appLogger  }

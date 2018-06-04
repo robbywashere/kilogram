@@ -70,7 +70,6 @@ module.exports = {
       const { Account } = this.sequelize.models;
       if (!isArray(user.Accounts)) {
         try {
-          logger.debug(`Account does not exist for UserId: ${user.id} - Creating ....`)
           const account = await Account.create();
           await account.addUserAs(user,'admin');
         } catch(e) {

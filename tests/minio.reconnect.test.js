@@ -19,6 +19,7 @@ const minioObj = require('../server-lib/minio/minioObject');
 const { get } = require('lodash');
 
 const MINIODATADIR = './.minio-test-data';
+
 function runMinio(){
   let stderr = [];
   const minio = spawn('minio', ['server', './.minio-test-data']);

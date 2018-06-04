@@ -12,6 +12,7 @@ const rimraf = require('rimraf');
 const Promise = require('bluebird');
 const request = require('request-promise');
 const { PostJob, Device, Photo, IGAccount } = require('../objects');
+const { runMinio } = require('../tests/helpers');
 const { statSync, createReadStream, readdirSync } = require('fs');
 const md5File = require('md5-file');
 const path = require('path');
@@ -53,7 +54,7 @@ Req.get = (path, args)=> Req({ ...args, path, method: 'GET' })
 let FREE_PORT;
 let PROCESS;
 
-function runMinio(){
+/*function runMinio(){
   //minio server "$HOME/minio-data/"
   let stderr = [];
   const minio = spawn('minio', ['server', './.minio-test-data']);
@@ -73,7 +74,7 @@ function runMinio(){
     if (stderr.length>0) logger.error(stderr.join("\n"));
   });
   return minio; 
-}
+}*/
 
 describe('End To End Test 👍 ',function(){
 
@@ -139,6 +140,7 @@ describe('End To End Test 👍 ',function(){
     this.timeout(Infinity);
 
     minio =  runMinio();
+
     APP = await baseServer();
     const [freePort] = await ffport(3000);
     FREE_PORT = freePort;

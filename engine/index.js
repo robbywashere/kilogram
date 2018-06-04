@@ -2,6 +2,7 @@
 const cmds = require('../android/cmds');
 const { PostJob, VerifyIGJob, Device } = require('../objects');
 const { logger } = require('../lib/logger');
+const demand = require('../lib/demand');
 const Runner = require('../python/runner');
 const DeviceAgent  = require('../python/deviceAgent');
 

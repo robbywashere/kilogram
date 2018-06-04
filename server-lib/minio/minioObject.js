@@ -1,8 +1,9 @@
 
 const demand = require('../../lib/demand');
 const bson = require('bson');
+const _ = require('lodash');
 const msgpack = require('msgpack-lite');
-
+const base64url = require('base64-url')
 const DELIMITER = '_';
 //$-_.+!*'()
 
@@ -32,6 +33,27 @@ const b64 = new bass64(BASS64CIPH);
 //
 //
 //
+
+class v5 {
+  static enc(str){
+    return base64url.encode(str)
+  }
+
+  static dec(str){
+    return base64url.decode(str)
+  }
+
+  static parse(objectname) {
+    return msgpack.decode(v5.dec(objectname));
+  }
+  static create(obj){
+    const sortedObj = _(obj).toPairs().sortBy(0).fromPairs().value();
+    return v5.enc(msgpack.encode(sortedObj).toString('base64'));
+  }
+}
+
+
+
 class v4 {
   static enc(str){
     return b64.in(str);
@@ -45,7 +67,7 @@ class v4 {
     return msgpack.decode(v4.dec(objectname));
   }
   static create(obj){
-    return v4.enc(msgpack.encode(obj).toString('base64'))
+    return v4.enc(msgpack.encode(obj).toString('base64'));
   }
 }
 
@@ -93,7 +115,8 @@ class v2 {
 const schemas = {
   v2,
   v3,
-  v4
+  v4,
+  v5
 }
 
 function create(version, ...args) {
