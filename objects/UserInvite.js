@@ -1,12 +1,9 @@
-const crypto = require('crypto');
-const hashify = require('../server-lib/auth/hashify');
 const sequelize = require('sequelize');
-
 const {
-  STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op,
+  STRING
 } = sequelize;
 const cryptoRandomString = require('crypto-random-string');
-const { isSuperAdmin, isLoggedIn } = require('./_helpers');
+const { isLoggedIn } = require('./_helpers');
 
 module.exports = {
   Name: 'UserInvite',
