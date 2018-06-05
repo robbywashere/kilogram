@@ -1,19 +1,19 @@
 
-const { BucketEvents, Account, Photo, IGAccount } = require('../objects');
-const dbSync = require('../db/sync');
+const { BucketEvents, Account, Photo, IGAccount } = require('../../objects');
+const dbSync = require('../../db/sync');
 const { delay } = require('bluebird');
 const assert = require('assert');
 const Promise = require('bluebird');
-const { logger } = require('../lib/logger');
-const minioObject = require('../server-lib/minio/minioObject');
-const { MClient } = require('../server-lib/minio');
-const Watcher = require('../db/trigger-notify/watch');
-const PGListen = require('../server-lib/pg-listen');
+const { logger } = require('../../lib/logger');
+const minioObject = require('../../server-lib/minio/minioObject');
+const { MClient } = require('../../server-lib/minio');
+const Watcher = require('../../db/trigger-notify/watch');
+const PGListen = require('../../server-lib/pg-listen');
 const { EventEmitter } = require('events');
 const uuidv4 = require('uuid').v4;
 const { get } = require('lodash');
 
-const minioEventFixture = require('./fixtures/minio-event.json');
+const minioEventFixture = require('../fixtures/minio-event.json');
 
 describe('trigger notify functionality',function(){
 

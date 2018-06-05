@@ -1,13 +1,13 @@
 const request = require('supertest');
 const assert = require('assert');
 const streamify = require('stream-array')
-const { MClient }  = require('../server-lib/minio');
-const Routes = require('../controllers/minio');
-const { exprezz } = require('./helpers');
+const { MClient }  = require('../../server-lib/minio');
+const Routes = require('../../controllers/minio');
+const { exprezz } = require('../helpers');
 const bucket = 'testbucket';
 const sinon = require('sinon');
-const syncDB = require('../db/sync');
-const { Photo } = require('../objects');
+const syncDB = require('../../db/sync');
+const { Photo } = require('../../objects');
 
 describe('server', function(){
 

@@ -1,20 +1,20 @@
 
-const initController = require('../controllers');
-const { MClient } = require('../server-lib/minio');
-const { loadObjectControllers }  = require('../controllers');
-const { loadObject, initObjects, newRegistry } = require('../server-lib/objectLoader');
+const initController = require('../../controllers');
+const { MClient } = require('../../server-lib/minio');
+const { loadObjectControllers }  = require('../../controllers');
+const { loadObject, initObjects, newRegistry } = require('../../server-lib/objectLoader');
 
-const hashify = require('../server-lib/auth/hashify');
+const hashify = require('../../server-lib/auth/hashify');
 const request = require('supertest');
-const sync = require('../db/sync');
+const sync = require('../../db/sync');
 const express = require('express');
-const { exprezz, ezUser } = require('./helpers'); 
+const { exprezz, ezUser } = require('../helpers'); 
 
 const { STRING, INTEGER } = require('sequelize');
-const { Account, IGAccount, UserInvite, User, UserRecovery, Post } = require('../objects');
+const { Account, IGAccount, UserInvite, User, UserRecovery, Post } = require('../../objects');
 const assert = require('assert');
-const { logger } = require('../lib/logger');
-const DB = require('../db');
+const { logger } = require('../../lib/logger');
+const DB = require('../../db');
 const { get } = require('lodash');
 const Promise = require('bluebird');
 

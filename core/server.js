@@ -2,8 +2,8 @@ const express = require('express');
 const http = require('http');
 const baseServer = require('./baseServer');
 const config = require('config');
-const { logger, levels, getLogLevel } = require('./lib/logger');
-require('./lib/handleUnhandledRejections');
+const { logger, levels, getLogLevel } = require('../lib/logger');
+require('../lib/handleUnhandledRejections');
 
 
 (async ()=>{

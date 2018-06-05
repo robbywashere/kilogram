@@ -1,7 +1,7 @@
 
-const exec = require('../android/exec');
-const cmds = require('../android/cmds');
-const fixies = require('./helpers').fixtures();
+const exec = require('../../android/exec');
+const cmds = require('../../android/cmds');
+const fixies = require('../helpers').fixtures();
 const sinon = require('sinon');
 const assert = require('assert');
 

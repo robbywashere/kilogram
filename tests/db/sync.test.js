@@ -1,6 +1,6 @@
 
 const sinon = require('sinon');
-const dbSync = require('../db/sync');
+const dbSync = require('../../db/sync');
 
 describe('db sync',function(){
 

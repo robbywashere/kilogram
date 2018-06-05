@@ -1,17 +1,17 @@
 
-const Jwt = require('../server-lib/auth/jwt');
-const Auth = require('../server-lib/auth');
+const Jwt = require('../../server-lib/auth/jwt');
+const Auth = require('../../server-lib/auth');
 const express = require('express');
 const assert = require('assert');
 const supertest = require('supertest');
-const { Account, User } = require('../objects');
-const { appLogger } = require('./helpers');
-const DBSync = require('../db/sync');
+const { Account, User } = require('../../objects');
+const { appLogger } = require('../helpers');
+const DBSync = require('../../db/sync');
 
-const { CookieSession, PGSession } = require('../server-lib/auth/session');
+const { CookieSession, PGSession } = require('../../server-lib/auth/session');
 
 
-describe.only('server-lib/auth', function(){
+describe('server-lib/auth', function(){
 
   beforeEach(()=>DBSync(true))
 
@@ -55,7 +55,7 @@ describe.only('server-lib/auth', function(){
       - passport should make available user data on 'request' object'
   `, async function(){
 
-    const user = await User.create({ email: 'test@test.com', password:'blah'})
+    const user = await User.create({ email: 'test@test.com', password:'blah', Accounts: [{}]},{ include: [ Account ] })
 
     const app = new express();
 
@@ -108,7 +108,7 @@ describe.only('server-lib/auth', function(){
   `, async function(){
 
     const cookie = require('cookie');
-    const user = await User.create({ email: 'test@test.com', password:'blah'})
+    const user = await User.create({ email: 'test@test.com', password:'blah', Accounts: [{}]},{ include: [ Account ] })
 
     const app = new express();
 

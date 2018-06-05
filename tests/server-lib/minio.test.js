@@ -2,11 +2,11 @@ const {
   retryConnRefused, 
   MClient,
   WrapMinioClient,
-} = require('../server-lib/minio');
+} = require('../../server-lib/minio');
 
-const Routes = require('../controllers/minio');
+const Routes = require('../../controllers/minio');
 
-const { signedURL } = require('../server-lib/minio/middlewares');
+const { signedURL } = require('../../server-lib/minio/middlewares');
 
 const EventEmitter = require('events');
 
@@ -14,7 +14,7 @@ const { Duplex } = require('stream');
 
 const http = require('http');
 
-const minioObj = require('../server-lib/minio/minioObject');
+const minioObj = require('../../server-lib/minio/minioObject');
 
 const sinon = require('sinon');
 
@@ -24,13 +24,13 @@ const Promise = require('bluebird');
 
 const assert = require('assert');
 
-const DBSync = require('../db/sync');
+const DBSync = require('../../db/sync');
 
-const { ezUser, exprezz, appLogger } = require('./helpers');
+const { ezUser, exprezz, appLogger } = require('../helpers');
 
 const request = require('supertest');
 
-const dbsync = require('../db/sync');
+const dbsync = require('../../db/sync');
 
 const { set } = require('lodash');
 
@@ -38,7 +38,7 @@ const uuidv4 = require('uuid/v4');
 
 const uuid = require('uuid');
 
-const objects = require('../objects');
+const objects = require('../../objects');
 
 const { Account, Photo } = objects; 
 

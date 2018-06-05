@@ -1,5 +1,5 @@
 
-const demandKeys = require('../lib/demandKeys');
+const demandKeys = require('../../lib/demandKeys');
 const assert = require('assert');
 
 describe('demandKeys', function(){

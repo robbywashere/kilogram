@@ -1,7 +1,7 @@
-const mo = require('../server-lib/minio/minioObject');
+const mo = require('../../server-lib/minio/minioObject');
 const uuidv4 = require('uuid/v4');
 const assert = require('assert');
-const { logger } = require('../lib/logger');
+const { logger } = require('../../lib/logger');
 
 describe('minio object store format', function(){
   const uuid = uuidv4();

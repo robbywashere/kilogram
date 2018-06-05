@@ -1,7 +1,7 @@
 
 const assert = require('assert');
 const express = require('express');
-const handler = require('../lib/handler');
+const handler = require('../../lib/handler');
 const sinon = require('sinon');
 const request = require('supertest');
 

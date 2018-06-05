@@ -1,12 +1,12 @@
-const { runJobs, run, main, syncDevices } = require('../engine');
-const { createAccountUserPostJob }  = require('./helpers')
+const { runJobs, run, main, syncDevices } = require('../../engine');
+const { createAccountUserPostJob }  = require('../helpers')
 const sinon = require('sinon');
 const assert = require('assert');
-const cmds = require('../android/cmds');
-const { Device, Post, PostJob } = require('../objects');
-const syncDb = require('../db/sync');
-const runner = require('../python/runner');
-const DeviceAgent = require('../python/deviceAgent')
+const cmds = require('../../android/cmds');
+const { Device, Post, PostJob } = require('../../objects');
+const syncDb = require('../../db/sync');
+const runner = require('../../python/runner');
+const DeviceAgent = require('../../python/deviceAgent')
 const Promise = require('bluebird');
 
 //TODO: Possible memory link, interferes with other tests, must be ran seperately

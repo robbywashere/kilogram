@@ -57,6 +57,7 @@
     "uuid": "^3.1.0"
   },
   "scripts": {
+    "start":"node ./core/server.js",
     "py:install": "pip install -r ./python/requirements.txt",
     "dev:tabs": "export LOG_LEVEL=3 && ./scripts/tab npm run minio:up & ./scripts/tab npm run dev & ./scripts/tab npm run crx:start & ./scripts/tab npm run device-node",
     "crx:start": "export PORT=3001 && react-scripts start",

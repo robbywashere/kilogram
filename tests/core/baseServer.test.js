@@ -1,5 +1,5 @@
 
-const baseServer = require('../baseServer');
+const baseServer = require('../../core/baseServer');
 const request = require('supertest');
 
 describe('baseServer', function(){

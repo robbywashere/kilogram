@@ -2,20 +2,20 @@
 //process.env.PORT = 8185;
 process.env.NODE_ENV='test';
 
-const baseServer = require('../baseServer');
+const baseServer = require('../../core/baseServer');
 
-const { MClient } = require('../server-lib/minio');
-const dbSync = require('../db/sync');
+const { MClient } = require('../../server-lib/minio');
+const dbSync = require('../../db/sync');
 const { exec, spawn } = require('child_process');
 const uuidv4 = require('uuid').v4
 const config = require('config');
 const assert = require('assert');
 const rimraf = require('rimraf');
-const minioObject = require('../server-lib/minio/minioObject');
+const minioObject = require('../../server-lib/minio/minioObject');
 const Promise = require('bluebird');
-const { BucketEvents, Account, Photo } = require('../objects');
-const { logger } = require('../lib/logger');
-const minioObj = require('../server-lib/minio/minioObject');
+const { BucketEvents, Account, Photo } = require('../../objects');
+const { logger } = require('../../lib/logger');
+const minioObj = require('../../server-lib/minio/minioObject');
 const { get } = require('lodash');
 
 const MINIODATADIR = './.minio-test-data';

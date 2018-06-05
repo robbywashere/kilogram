@@ -1,14 +1,14 @@
 
-const SyncDb = require('./db/sync');
-const initController = require('./controllers');
-const DB = require('./db');
+const SyncDb = require('../db/sync');
+const initController = require('../controllers');
+const DB = require('../db');
 const express = require('express');
 //const JWTAuth = require('./server-lib/auth/jwt');
-const Auth = require('./server-lib/auth');
-const { CookieSession, PGSession } = require('./server-lib/auth/session');
+const Auth = require('../server-lib/auth');
+const { CookieSession, PGSession } = require('../server-lib/auth/session');
 const helmet = require('helmet');
-const { logger } = require('./lib/logger');
-const { MClient } = require('./server-lib/minio');
+const { logger } = require('../lib/logger');
+const { MClient } = require('../server-lib/minio');
 const serverErrors = require('./serverErrors');
 
 

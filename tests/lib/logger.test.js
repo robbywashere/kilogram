@@ -1,5 +1,5 @@
 
-const { getLogLevel, logger, makeLogger, setLogLevel, levels } = require('../lib/logger');
+const { getLogLevel, logger, makeLogger, setLogLevel, levels } = require('../../lib/logger');
 const assert = require('assert');
 const sinon = require('sinon');
 

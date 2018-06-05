@@ -1,11 +1,11 @@
-const { NotificationRead, Account, User, Notification } = require('../objects');
+const { NotificationRead, Account, User, Notification } = require('../../objects');
 const sequelize = require('sequelize');
 const { Op, fn, literal} = sequelize;
 
 const assert = require('assert');
-const { ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('./helpers');
+const { ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob  } = require('../helpers');
 
-const dbSync = require('../db/sync');
+const dbSync = require('../../db/sync');
 
 
 describe('Notifications', function(){

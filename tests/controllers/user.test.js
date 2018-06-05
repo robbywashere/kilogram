@@ -1,17 +1,17 @@
 
 const assert = require('assert');
 
-const { loadObjectControllers, } = require('../controllers');
+const { loadObjectControllers, } = require('../../controllers');
 
-const DB = require('../db');
+const DB = require('../../db');
 
-const { exprezz, appLogger, ezUser } = require('./helpers');
+const { exprezz, appLogger, ezUser } = require('../helpers');
 
-const dbSync = require('../db/sync');
+const dbSync = require('../../db/sync');
 
 const request = require('supertest');
 
-const { User, Account } = require('../objects');
+const { User, Account } = require('../../objects');
 
 describe('User Controller', function(){
   before(()=>dbSync(true))

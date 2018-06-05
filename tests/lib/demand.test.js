@@ -1,4 +1,4 @@
-const demand = require('../lib/demand');
+const demand = require('../../lib/demand');
 const assert = require('assert');
 
 describe('demand', function(){

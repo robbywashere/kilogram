@@ -1,17 +1,17 @@
 
 process.env.NODE_ENV = 'test'; // TODO ?
-const { PostJobRun, pullRemoteObject } = require('../python/runner');
-const { Agent } = require('../python/deviceAgent');
+const { PostJobRun, pullRemoteObject } = require('../../python/runner');
+const { Agent } = require('../../python/deviceAgent');
 
 const PythonShell = require('python-shell');
-const { PythonBridge } = require('../python/bridge');
+const { PythonBridge } = require('../../python/bridge');
 const sinon = require('sinon');
 const assert = require('assert');
-const sync = require('../db/sync');
-const { Post, Device, User, Photo } = require('../objects');
-const minio = require('../server-lib/minio');
+const sync = require('../../db/sync');
+const { Post, Device, User, Photo } = require('../../objects');
+const minio = require('../../server-lib/minio');
 const { MClient } = minio; 
-const { createAccountUserPostJob } = require('./helpers');
+const { createAccountUserPostJob } = require('../helpers');
 
 
 describe('jobs/', function(){
