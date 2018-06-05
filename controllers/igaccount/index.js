@@ -5,21 +5,20 @@ const AuthPolicy = require('../lib/authPolicy');
 const { Router } = require('express');
 
 class IGAccountPolicy extends AuthPolicy {
-
-  _adminOnly(){
-    return this.user.isAccountRole(this.instance.id,"admin")
+  _adminOnly() {
+    return this.user.isAccountRole(this.instance.id, 'admin');
   }
 
-  _accounts(){
+  _accounts() {
     const accountIds = this.user.accountIds();
     return accountIds.includes(this.instance.AccountId);
   }
 
-  async _accountAndAdmin(){
+  async _accountAndAdmin() {
     return this._accounts() && (await this._adminOnly());
   }
 
-  index(){
+  index() {
     return true;
   }
 
@@ -27,25 +26,24 @@ class IGAccountPolicy extends AuthPolicy {
     return this._accountAndAdmin();
   }
 
-  destroy(){
+  destroy() {
     return this._accountAndAdmin();
   }
 
-  show(){
+  show() {
     return this._accounts();
   }
 
-  create(){ 
+  create() {
     return this._accounts();
   }
-
 }
 
 
-module.exports = function IGAccountController(){
+module.exports = function IGAccountController() {
   const router = new Router();
   const resource = new Resource({ model: IGAccount, policy: IGAccountPolicy });
-  router.get('/verified', resource.action('index',{ scope: 'verified', index: true }));
+  router.get('/verified', resource.action('index', { scope: 'verified', index: true }));
   router.use(resource.resource());
   return router;
-}
+};

@@ -1,17 +1,18 @@
 const sequelize = require('sequelize');
+
 const { ENUM } = sequelize;
 
 module.exports = {
   Name: 'UserAccount',
-  Properties:{
+  Properties: {
     role: {
-      type: ENUM('member','admin'),
+      type: ENUM('member', 'admin'),
       allowNull: false,
       defaultValue: 'member',
-      /*validate: {
+      /* validate: {
           isIn: [['member', 'admin']]
-      }*/
-    }
+      } */
+    },
   },
-}
+};
 

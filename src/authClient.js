@@ -1,6 +1,6 @@
 // in src/authClient.js
 import { AUTH_CHECK, AUTH_LOGIN, AUTH_ERROR, AUTH_LOGOUT } from 'admin-on-rest';
-import axios from 'axios'; //TODO: NO!
+import axios from 'axios'; // TODO: NO!
 import { fetchJson } from 'admin-on-rest/lib/util/fetch';
 
 export const sessionClient = (type, params) => {
@@ -18,7 +18,7 @@ export const sessionClient = (type, params) => {
     return axios.delete('/auth');
   }
   return Promise.resolve();
-}
+};
 
 export const jwtAuthClient = async (type, params) => {
   if (type === AUTH_LOGIN) {
@@ -31,22 +31,19 @@ export const jwtAuthClient = async (type, params) => {
     if (status === 401 || status === 403) {
       throw new Error('AUTH_ERROR');
     }
-  } 
+  }
   if (type === AUTH_CHECK) {
     if (localStorage.getItem('token')) return;
-    throw new Error('AUTH_CHECK') ;
+    throw new Error('AUTH_CHECK');
   }
   if (type === AUTH_LOGOUT) {
     return axios.delete('/auth');
   }
-}
+};
 
-export const httpClient = (url, options = {}) => { 
+export const httpClient = (url, options = {}) => {
   const token = localStorage.getItem('token');
   if (token) options.headers.set('Authorization', `Bearer ${token}`);
   fetchJson(url, { ...options, credentials: 'include' });
 };
-
-
-
 

@@ -3,59 +3,57 @@ const { User, Account } = require('../../objects');
 const DBSync = require('../../db/sync');
 const { Op } = require('sequelize');
 
-describe('User object', function(){
-  beforeEach(()=>DBSync(true))
+describe('User object', () => {
+  beforeEach(() => DBSync(true));
 
-  it('should create a new Account when there is no Account for User', async function(){
+  it('should create a new Account when there is no Account for User', async () => {
     await User.removeHook('afterCreate');
     const user = await User.create({
       email: 'test@test.com',
       password: 'blah',
     });
-    await user.reloadWithAccounts()
-    assert.equal(user.Accounts.length, 1)
-  })
+    await user.reloadWithAccounts();
+    assert.equal(user.Accounts.length, 1);
+  });
 
-  it('should create a new Account when included in object', async function(){
-    User.options.hooks = {}
+  it('should create a new Account when included in object', async () => {
+    User.options.hooks = {};
     const user = await User.create({
       email: 'test@test.com',
       password: 'blah',
-      Accounts: {}
-    },{ include: Account });
+      Accounts: {},
+    }, { include: Account });
 
-    await user.reloadWithAccounts()
-    assert.equal(user.Accounts.length, 1)
-  })
+    await user.reloadWithAccounts();
+    assert.equal(user.Accounts.length, 1);
+  });
 
-  it('should scope other users to same account', async function(){
-    User.options.hooks = {}
+  it('should scope other users to same account', async () => {
+    User.options.hooks = {};
     const user = await User.create({
       email: 'test@test.com',
       password: 'blah',
-      Accounts: {}
-    },{ include: Account });
+      Accounts: {},
+    }, { include: Account });
 
-    const user2 =  await User.create({
+    const user2 = await User.create({
       email: 'test2@test.com',
       password: 'blah',
-      Accounts: {}
-    },{ include: Account });
+      Accounts: {},
+    }, { include: Account });
 
-    const user3 =  await User.create({
+    const user3 = await User.create({
       email: 'test3@test.com',
       password: 'blah',
-      Accounts: {}
-    },{ include: Account });
+      Accounts: {},
+    }, { include: Account });
 
-    await user.reloadWithAccounts()
+    await user.reloadWithAccounts();
     await user2.addAccount(user.Accounts[0]);
-    assert.equal(user.Accounts.length, 1)
+    assert.equal(user.Accounts.length, 1);
 
     const users = await User.accountsScoped(user);
 
-    assert.deepEqual(users.map(u=>u.id),[1,2])
-
-
-  })
-})
+    assert.deepEqual(users.map(u => u.id), [1, 2]);
+  });
+});

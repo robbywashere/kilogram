@@ -3,9 +3,9 @@ const { get } = require('lodash');
 const logServerErrors = (require('../controllers/lib/logServerErrors'))(logger.error);
 
 module.exports = function (err, req, res, next) {
-  err.status = (typeof get(err,'status') !== "undefined") ? err.status : 500;
+  err.status = (typeof get(err, 'status') !== 'undefined') ? err.status : 500;
   logServerErrors(err);
-  //TODO: logUserErrors(err); ???
+  // TODO: logUserErrors(err); ???
   res.status(err.status)
     .send(err);
-}
+};

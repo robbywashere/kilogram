@@ -1,16 +1,15 @@
 
 module.exports = class BasePolicy {
-
-  constructor({ instance, user, params }={}){
+  constructor({ instance, user, params } = {}) {
     this.params = params;
     this.instance = instance;
     this.user = user;
   }
-  static authorizeRequest(req){
-    //no-op
+  static authorizeRequest(req) {
+    // no-op
   }
 
-    /*show(){
+  /* show(){
     return false;
   }
 
@@ -40,10 +39,10 @@ module.exports = class BasePolicy {
 
   collectionEdit(){
     return false;
-  }*/
+  } */
 
-  default(){
+  default() {
     return false;
   }
-}
+};
 

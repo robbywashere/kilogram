@@ -2,7 +2,7 @@
 import React from 'react';
 import { List, Datagrid, TextField, BooleanField, DateField } from 'admin-on-rest';
 
-export const DeviceList = (props) => (
+export const DeviceList = props => (
   <List {...props}>
     <Datagrid>
       <TextField source="id" />
@@ -10,8 +10,8 @@ export const DeviceList = (props) => (
       <BooleanField source="enabled" />
       <BooleanField source="online" />
       <BooleanField source="idle" />
-      <DateField source="updatedAt" label="Updated at" showTime/>
-      <DateField source="createdAt" label="Created at" showTime/>
+      <DateField source="updatedAt" label="Updated at" showTime />
+      <DateField source="createdAt" label="Created at" showTime />
     </Datagrid>
   </List>
 );

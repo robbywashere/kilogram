@@ -1,6 +1,6 @@
 // in src/authClient.js
 import { AUTH_LOGIN, AUTH_ERROR, AUTH_LOGOUT } from 'admin-on-rest';
-import axios from 'axios'; //TODO: NO!
+import axios from 'axios'; // TODO: NO!
 
 export default (type, params) => {
   if (type === AUTH_LOGIN) {
@@ -17,10 +17,9 @@ export default (type, params) => {
     return axios.delete('/auth');
   }
   return Promise.resolve();
-}
+};
 
 export const jwt = async (type, params) => {
-
   if (type === AUTH_LOGIN) {
     const { username, password } = params;
     const { token } = await axios.post('/auth', { username, password });
@@ -36,5 +35,4 @@ export const jwt = async (type, params) => {
     return axios.delete('/auth');
   }
   return Promise.resolve();
-
-}
+};

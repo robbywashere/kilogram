@@ -2,17 +2,16 @@ const sequelize = require('sequelize');
 
 module.exports = {
   Name: '',
-  Properties:{
+  Properties: {
   },
   ScopeFunctions: true,
   Scopes: {
   },
-  Init(){
-  }, 
+  Init() {
+  },
   Methods: {
   },
   StaticMethods: {
-  }
-}
-
+  },
+};
 

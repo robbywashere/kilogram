@@ -3,7 +3,7 @@ const SyncDb = require('../db/sync');
 const initController = require('../controllers');
 const DB = require('../db');
 const express = require('express');
-//const JWTAuth = require('./server-lib/auth/jwt');
+// const JWTAuth = require('./server-lib/auth/jwt');
 const Auth = require('../server-lib/auth');
 const { CookieSession, PGSession } = require('../server-lib/auth/session');
 const helmet = require('helmet');
@@ -12,55 +12,53 @@ const { MClient } = require('../server-lib/minio');
 const serverErrors = require('./serverErrors');
 
 
-module.exports = async function({
-  minioClient = new MClient(), 
+module.exports = async function ({
+  minioClient = new MClient(),
   auth = Auth,
   syncDb = SyncDb,
   sessionStrategy = CookieSession,
   errorMiddleware = serverErrors,
   app = express(),
-  sequelize = DB
-}= {}) {
+  sequelize = DB,
+} = {}) {
   try {
-
-    logger.debug('Loading static middlewares and body-parser')
+    logger.debug('Loading static middlewares and body-parser');
 
     app.use(require('body-parser').json());
 
-    app.use(require('serve-static')(__dirname + '/public'));
+    app.use(require('serve-static')(`${__dirname}/public`));
 
     app.get('/upload-static', (req, res) => {
-      res.sendFile(__dirname + '/index.html');
-    })
+      res.sendFile(`${__dirname}/index.html`);
+    });
 
-    logger.debug('Loading auth')
+    logger.debug('Loading auth');
 
     app.use(auth(app, { sessionStrategy }));
 
-    logger.debug('Initializing controllers')
+    logger.debug('Initializing controllers');
 
     initController({
       app,
       minioClient,
-      sequelize: DB
-    })
+      sequelize: DB,
+    });
 
-    logger.debug('Loading error middleware')
+    logger.debug('Loading error middleware');
 
     app.use(errorMiddleware);
 
 
-    logger.debug('Syncing DB and initializing minioClient')
+    logger.debug('Syncing DB and initializing minioClient');
     await syncDb(false);
     //   await minioClient.createBucket();
     //   await minioClient.listenPersist();
     //
     app.minioEventListener = await minioClient.init();
- 
-    return app;
 
-  } catch(e) {
-    logger.critical('Failed to start server!',e); //TODO: all .critical logged errors should send email/notification to admin
+    return app;
+  } catch (e) {
+    logger.critical('Failed to start server!', e); // TODO: all .critical logged errors should send email/notification to admin
     throw e;
   }
-}
+};

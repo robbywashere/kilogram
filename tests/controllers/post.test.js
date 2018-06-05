@@ -2,39 +2,42 @@
 
 const assert = require('assert');
 
-const { loadObjectControllers, } = require('../../controllers');
+const { loadObjectControllers } = require('../../controllers');
 
 const PostController = require('../../controllers/post');
 
 const DB = require('../../db');
 
-const { exprezz, ezUser, appLogger, newIGAccount } = require('../helpers');
+const {
+  exprezz, ezUser, appLogger, newIGAccount,
+} = require('../helpers');
 
 const dbSync = require('../../db/sync');
 
 const request = require('supertest');
 
-const { User, Photo, IGAccount, Account, Post } = require('../../objects');
+const {
+  User, Photo, IGAccount, Account, Post,
+} = require('../../objects');
 
 const minioObj = require('../../server-lib/minio/minioObject');
 
-describe('Post Controller', function(){
-  beforeEach(()=>dbSync(true))
+describe('Post Controller', () => {
+  beforeEach(() => dbSync(true));
 
 
-  it('Should not only allow post creation for users not member of Account and subsequent IGAccount',async function(){
-
-    const user = await ezUser({ 
-      Accounts: { } }, { 
-        include: [ Account ] 
-      });
+  it('Should not only allow post creation for users not member of Account and subsequent IGAccount', async () => {
+    const user = await ezUser({ Accounts: { } }, {
+      include: [Account],
+    });
 
 
-    const badUser = await ezUser({ 
+    const badUser = await ezUser({
       email: 'badUser@baduser.com',
-      Accounts: { } }, { 
-        include: [ Account ] 
-      });
+      Accounts: { },
+    }, {
+      include: [Account],
+    });
 
     const igAccount = await newIGAccount(user);
 
@@ -46,24 +49,19 @@ describe('Post Controller', function(){
 
     const res = await request(app)
       .post('/')
-      .send({ 
-        AccountId: user.Accounts[0].id, 
-        postDate: new Date(), 
+      .send({
+        AccountId: user.Accounts[0].id,
+        postDate: new Date(),
         IGAccountId: igAccount.id,
-        photoUUID: photo.uuid
+        photoUUID: photo.uuid,
       })
-      .expect(403)
+      .expect(403);
+  });
 
-
-  })
-
-  it('Should only allow post creation for users of member of Account and IGAccount',async function(){
-
-
-    const user = await ezUser({ 
-      Accounts: { } }, { 
-        include: [ Account ] 
-      });
+  it('Should only allow post creation for users of member of Account and IGAccount', async () => {
+    const user = await ezUser({ Accounts: { } }, {
+      include: [Account],
+    });
 
     const igAccount = await newIGAccount(user);
 
@@ -75,12 +73,12 @@ describe('Post Controller', function(){
 
     const res = await request(app)
       .post('/')
-      .send({ 
-        AccountId: user.Accounts[0].id, 
-        postDate: new Date(), 
+      .send({
+        AccountId: user.Accounts[0].id,
+        postDate: new Date(),
         IGAccountId: igAccount.id,
-        photoUUID: photo.uuid
+        photoUUID: photo.uuid,
       })
-      .expect(200)
-  })
-})
+      .expect(200);
+  });
+});

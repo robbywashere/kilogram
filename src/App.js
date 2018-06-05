@@ -18,13 +18,13 @@ const prefix = 'admin';
 const location = `${window.location.origin}/${prefix}`;
 
 const App = () => (
-  <Admin restClient={epilogueClient(location, http )} authClient={sessionClient} >
-    <Resource name="devices" label='Devices' list={DeviceList} />
-    <Resource name="jobs" label='Jobs' list={JobList} />
-    <Resource name="accounts"  label='Accounts' list={AccountList} />
-    <Resource name="users" label='Users' list={UserList} />
-    <Resource name="photos" label='Photos' list={PhotoList} />
-    <Resource name="bucketevents" label='Bucket Events' list={BucketEventList} />
+  <Admin restClient={epilogueClient(location, http)} authClient={sessionClient} >
+    <Resource name="devices" label="Devices" list={DeviceList} />
+    <Resource name="jobs" label="Jobs" list={JobList} />
+    <Resource name="accounts" label="Accounts" list={AccountList} />
+    <Resource name="users" label="Users" list={UserList} />
+    <Resource name="photos" label="Photos" list={PhotoList} />
+    <Resource name="bucketevents" label="Bucket Events" list={BucketEventList} />
   </Admin>
 );
 

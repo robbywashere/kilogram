@@ -1,7 +1,7 @@
 
 const assert = require('assert');
 
-const { loadObjectControllers, } = require('../../controllers');
+const { loadObjectControllers } = require('../../controllers');
 
 const DB = require('../../db');
 
@@ -18,12 +18,9 @@ const IGAccountController = require('../../controllers/igaccount');
 
 const { User, IGAccount, Account } = require('../../objects');
 
-describe('IGAccount Controller', function(){
-  beforeEach(()=>dbSync(true))
-  it('should create igaccount for user, not allow igaccount creation when not member of account, not allow repeat usernames for same account', async function(){
-  
-
-
+describe('IGAccount Controller', () => {
+  beforeEach(() => dbSync(true));
+  it('should create igaccount for user, not allow igaccount creation when not member of account, not allow repeat usernames for same account', async () => {
     const user = await ezUser();
 
     await user.reloadWithAccounts();
@@ -35,12 +32,12 @@ describe('IGAccount Controller', function(){
       username: 'username',
       password: 'password',
       AccountId: account.id
-    })*/
+    }) */
 
 
     assert(account);
 
-    //await account.addIGAccount(igAccount);
+    // await account.addIGAccount(igAccount);
 
     const app = exprezz(user);
 
@@ -49,13 +46,12 @@ describe('IGAccount Controller', function(){
     app.use(serverErrors);
 
 
-
     const res1 = await request(app)
       .post('/')
       .send({
         username: 'username',
         password: 'password',
-        AccountId: account.id
+        AccountId: account.id,
       })
       .expect(200);
 
@@ -64,22 +60,21 @@ describe('IGAccount Controller', function(){
       .send({
         username: 'username',
         password: 'password',
-        AccountId: account.id
+        AccountId: account.id,
       })
       .expect(400);
 
 
-    assert.equal(res3.body.message,'Validation error');
-    
+    assert.equal(res3.body.message, 'Validation error');
+
     const res2 = await request(app)
       .get('/')
       .expect(200);
 
-    assert.equal(res2.body.length,1)
+    assert.equal(res2.body.length, 1);
     assert(res2.body[0].id);
     assert(!res2.body[0].password);
-    assert.equal(res2.body[0].AccountId,account.id);
-
+    assert.equal(res2.body[0].AccountId, account.id);
 
 
     const res4 = await request(app)
@@ -87,13 +82,8 @@ describe('IGAccount Controller', function(){
       .send({
         username: 'username9999',
         password: 'password',
-        AccountId: notMyAccount.id
+        AccountId: notMyAccount.id,
       })
       .expect(403);
-
-
-
-  
   });
-
-})
+});

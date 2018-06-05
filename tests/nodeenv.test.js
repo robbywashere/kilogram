@@ -2,16 +2,16 @@
 const assert = require('assert');
 
 
-describe('process.env.NODE_ENV', function(){
-  it(`should equal 'test'`, function(){
-    assert.equal(process.env.NODE_ENV, 'test')
+describe('process.env.NODE_ENV', () => {
+  it('should equal \'test\'', () => {
+    assert.equal(process.env.NODE_ENV, 'test');
     const config = require('config');
-    assert.equal(config.NODE_ENV, 'test')
-  })
+    assert.equal(config.NODE_ENV, 'test');
+  });
 
-  it(`should only use 'test' database`, function(){
+  it('should only use \'test\' database', () => {
     const db = require('../db');
     const dbConfig = require('../db/config');
-    assert.equal(db.config.database,dbConfig['test'].database)
-  })
-})
+    assert.equal(db.config.database, dbConfig.test.database);
+  });
+});

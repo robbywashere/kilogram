@@ -25,5 +25,5 @@ module.exports = (name = 'trigger_notify_event') => `CREATE OR REPLACE FUNCTION 
         -- Result is ignored since this is an AFTER trigger
         RETURN NULL; 
     END;
-$$ LANGUAGE plpgsql;`
+$$ LANGUAGE plpgsql;`;
 

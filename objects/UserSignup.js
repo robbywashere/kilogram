@@ -1,40 +1,43 @@
 const sequelize = require('sequelize');
 const crypto = require('crypto');
 const hashify = require('../server-lib/auth/hashify');
-const { STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
+
+const {
+  STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op,
+} = sequelize;
 const cryptoRandomString = require('crypto-random-string');
 
-const createdAt  = { [Op.gte] : sequelize.fn(`NOW() - INTERVAL '24 hours' --`) }
+const createdAt = { [Op.gte]: sequelize.fn('NOW() - INTERVAL \'24 hours\' --') };
 
 module.exports = {
   Name: 'UserSignup',
-  Properties:{
+  Properties: {
     key: {
       type: STRING,
-      defaultValue: ()=> cryptoRandomString(32)
+      defaultValue: () => cryptoRandomString(32),
     },
   },
-  PolicyScopes:{},
+  PolicyScopes: {},
   Authorize: {
-    all: function(user){
-      return user.admin
+    all(user) {
+      return user.admin;
     },
   },
-  PolicyAttributes:{},
+  PolicyAttributes: {},
   PolicyAssert: true,
-  ScopeFunctions: true, 
+  ScopeFunctions: true,
   Scopes: {
-    forKey: function(key) { return { where: { key, createdAt },  include: [ this.sequelize.models.User ] } }
+    forKey(key) { return { where: { key, createdAt }, include: [this.sequelize.models.User] }; },
   },
-  AuthorizeInstance:{},
+  AuthorizeInstance: {},
   Hooks: {
   },
-  Methods:{
+  Methods: {
   },
   StaticMethods: {
   },
-  Init({ User }){
+  Init({ User }) {
     this.belongsTo(User);
   },
-}
+};
 

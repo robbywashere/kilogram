@@ -1,10 +1,13 @@
 const sequelize = require('sequelize');
 const { get } = require('lodash');
-const { STRING, ENUM, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
 
-//Turns oustanding posts into Jobs
-//this exists since we are essentially #bulkCreate'ing from a subselect
-//not currently possibly or feasible or optimizied to do in sequelize ;)
+const {
+  STRING, ENUM, INTEGER, VIRTUAL, BOOLEAN, Op,
+} = sequelize;
+
+// Turns oustanding posts into Jobs
+// this exists since we are essentially #bulkCreate'ing from a subselect
+// not currently possibly or feasible or optimizied to do in sequelize ;)
 const InitPostJobQuery = `
   INSERT INTO
     "PostJobs"
@@ -28,12 +31,12 @@ const InitPostJobQuery = `
       AND 
         "Posts"."status" = 'PUBLISH'
     )
-`
+`;
 
 
-//TODO: https://blog.2ndquadrant.com/what-is-select-skip-locked-for-in-postgresql-9-5/
+// TODO: https://blog.2ndquadrant.com/what-is-select-skip-locked-for-in-postgresql-9-5/
 
-const GetJobQuery = (tableName) => `
+const GetJobQuery = tableName => `
   UPDATE 
       "${tableName}"
   SET 
@@ -51,10 +54,10 @@ const GetJobQuery = (tableName) => `
           LIMIT 1
       )
   RETURNING *;
-`
+`;
 
 
-const StatsQuery = (tableName)=>`
+const StatsQuery = tableName => `
   SELECT 
     sum(case when (status = 'OPEN') then 1 else 0 end) as open,
     sum(case when (status = 'SUCCESS') then 1 else 0 end) as success,
@@ -67,48 +70,44 @@ const StatsQuery = (tableName)=>`
 
 
 const JobMethods = {
-  denormalize: function(){
+  denormalize() {
     return this.reload({ include: [{ all: true }] }); //
   },
-  complete: function({ body, resultOf }){
-
-    let taskresult = (typeof resultOf === "undefined") ? 'UNKNOWN' : (!!resultOf) ? 'POSITIVE' : 'NEGATIVE';
+  complete({ body, resultOf }) {
+    const taskresult = (typeof resultOf === 'undefined') ? 'UNKNOWN' : (resultOf) ? 'POSITIVE' : 'NEGATIVE';
 
     return this.update({
       taskresult,
-      status: !!get(body,'success') ? 'SUCCESS' : 'FAILED',
-      body
-    })
-
+      status: get(body, 'success') ? 'SUCCESS' : 'FAILED',
+      body,
+    });
   },
-  backout: function (err, sleep = false) { 
-    let error = (typeof err !== "object") ? String(error) : err;
+  backout(err, sleep = false) {
+    const error = (typeof err !== 'object') ? String(error) : err;
     return this.update({
       status: (sleep) ? 'SLEEPING' : 'FAILED',
-      body: error
-    })
-
-  }
-}
+      body: error,
+    });
+  },
+};
 
 const JobStaticMethods = {
 
-  stats: async function(){
-    return this.$.query(StatsQuery(this.tableName)).spread( r =>{
-      //Object.keys(JSON.parse(JSON.stringify(get(r,0)))).reduce( (p,n) => ({ ...p, [n] :(parseInt(result[key],10)||0) }),{});
-      const result = JSON.parse(JSON.stringify(get(r,0)));
-      for (let key of Object.keys(result)) result[key] = parseInt(result[key],10)||0;
+  async stats() {
+    return this.$.query(StatsQuery(this.tableName)).spread((r) => {
+      // Object.keys(JSON.parse(JSON.stringify(get(r,0)))).reduce( (p,n) => ({ ...p, [n] :(parseInt(result[key],10)||0) }),{});
+      const result = JSON.parse(JSON.stringify(get(r, 0)));
+      for (const key of Object.keys(result)) result[key] = parseInt(result[key], 10) || 0;
       return result;
-
     });
   },
-  popJob: async function(){ return get((await this.$.query(GetJobQuery(this.tableName), { type: sequelize.QueryTypes.SELECT, model: this })),0) }
-}
+  async popJob() { return get((await this.$.query(GetJobQuery(this.tableName), { type: sequelize.QueryTypes.SELECT, model: this })), 0); },
+};
 
 /*
  *
  * Job itself, did what it was told --- status = SUCCESS
- * 
+ *
  * result of job was not good --- result = NEGATIVE vs result = POSTIVE
  *
  *
@@ -116,26 +115,26 @@ const JobStaticMethods = {
 
 const JobProperties = {
   body: {
-    type: sequelize.JSON
+    type: sequelize.JSON,
   },
   taskresult: {
-    type: ENUM('UNKNOWN','POSITIVE','NEGATIVE'),
+    type: ENUM('UNKNOWN', 'POSITIVE', 'NEGATIVE'),
   },
   status: {
-    type: ENUM('OPEN','SPINNING','SUCCESS','SLEEPING','FAILED'),
-    defaultValue: 'OPEN'
+    type: ENUM('OPEN', 'SPINNING', 'SUCCESS', 'SLEEPING', 'FAILED'),
+    defaultValue: 'OPEN',
   },
-}
+};
 
 
 const JobScopes = {
-  withAll: { include: [ { all: true } ] },
+  withAll: { include: [{ all: true }] },
   outstanding: { where: { status: 'OPEN' } },
   sleeping: { where: { status: 'SLEEPING' } },
   completed: { where: { status: 'SUCCESS' } },
   failed: { where: { status: 'FAILED' } },
-  inProgress:  { where: { status: 'SPINNING' } }
-}
+  inProgress: { where: { status: 'SPINNING' } },
+};
 
 
 module.exports = {
@@ -151,5 +150,5 @@ module.exports = {
     Scopes: JobScopes,
     StaticMethods: JobStaticMethods,
     Methods: JobMethods,
-  }
-}
+  },
+};

@@ -1,33 +1,32 @@
-const { 
-  JobProperties, 
-  JobScopes, 
-  JobMethods, 
-  JobStaticMethods ,
+const {
+  JobProperties,
+  JobScopes,
+  JobMethods,
+  JobStaticMethods,
   InitPostJobQuery,
 } = require('./_jobs');
 
 
 module.exports = {
   Name: 'VerifyIGJob',
-  Properties:{
+  Properties: {
     ...JobProperties,
   },
   ScopeFunctions: true,
   Scopes: {
     ...JobScopes,
   },
-  Init({ IGAccount }){
-    this.belongsTo(IGAccount, { foreignKey: { allowNull: false }});
-  }, 
+  Init({ IGAccount }) {
+    this.belongsTo(IGAccount, { foreignKey: { allowNull: false } });
+  },
   Methods: {
     ...JobMethods,
-    denormalize: function() {
+    denormalize() {
       return this.reloadWithDeps();
-    }
+    },
   },
   StaticMethods: {
     ...JobStaticMethods,
   },
-}
-
+};
 

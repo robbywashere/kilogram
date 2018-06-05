@@ -1,6 +1,9 @@
 const sequelize = require('sequelize');
 const SEQ = require('../db');
-const { STRING, DATE, INTEGER, VIRTUAL, BOOLEAN, Op } = sequelize;
+
+const {
+  STRING, DATE, INTEGER, VIRTUAL, BOOLEAN, Op,
+} = sequelize;
 const { get } = require('lodash');
 
 
@@ -8,15 +11,15 @@ module.exports = {
   Name: 'BucketEvents',
   TableName: 'bucketevents',
   TableTriggers: [{
-    after: 'INSERT' 
+    after: 'INSERT',
   }],
-  Properties:{
-    key: { 
+  Properties: {
+    key: {
       type: STRING,
-      unique: true
+      unique: true,
     },
     value: {
-      type: sequelize.JSON
+      type: sequelize.JSON,
     },
     createdAt: {
       type: DATE,
@@ -25,13 +28,12 @@ module.exports = {
     updatedAt: {
       type: DATE,
       defaultValue: sequelize.literal('NOW()'),
-    }
+    },
   },
-  AuthorizeInstance:{},
-  Init(){
-  }, 
+  AuthorizeInstance: {},
+  Init() {
+  },
   StaticMethods: {
-  }
-}
-
+  },
+};
 

@@ -5,8 +5,7 @@ const AuthPolicy = require('../lib/authPolicy');
 const { Router } = require('express');
 
 class UserPolicy extends AuthPolicy {
-
-  index(){
+  index() {
     return true;
   }
 
@@ -14,30 +13,29 @@ class UserPolicy extends AuthPolicy {
     return this.instance.id === user.id;
   }
 
-  async destroy(){
-    return false; 
-  }
-
-  async show(){
-    return true;
-  }
-
-  async create(){ 
+  async destroy() {
     return false;
   }
 
+  async show() {
+    return true;
+  }
+
+  async create() {
+    return false;
+  }
 }
 
 
-module.exports = function UserController(){
+module.exports = function UserController() {
   const router = new Router();
   const resource = new Resource({ model: User, policy: UserPolicy, scope: User.accountsScoped });
 
-  router.get('/:id/accounts', resource.action('show',{ 
-    include: [ Account ]
+  router.get('/:id/accounts', resource.action('show', {
+    include: [Account],
   }));
 
   router.use(resource.resource());
 
   return router;
-}
+};

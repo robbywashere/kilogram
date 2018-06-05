@@ -7,9 +7,8 @@ const pug = require('pug');
 
 function compile(path) {
   const template = slurpFile(path);
-  const name = get(path.split('/').slice(-1),0);
-  const key = get(name.split('.'),0);
-  return [ key, pug.compile(template) ];
-
+  const name = get(path.split('/').slice(-1), 0);
+  const key = get(name.split('.'), 0);
+  return [key, pug.compile(template)];
 }
-module.exports = _.fromPairs(slurpDir2(__dirname, forExt('pug'))(compile))
+module.exports = _.fromPairs(slurpDir2(__dirname, forExt('pug'))(compile));

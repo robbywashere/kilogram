@@ -1,5 +1,7 @@
 
-const { BucketEvents, Account, Photo, IGAccount } = require('../../objects');
+const {
+  BucketEvents, Account, Photo, IGAccount,
+} = require('../../objects');
 const dbSync = require('../../db/sync');
 const { delay } = require('bluebird');
 const assert = require('assert');
@@ -15,51 +17,45 @@ const { get } = require('lodash');
 
 const minioEventFixture = require('../fixtures/minio-event.json');
 
-describe('trigger notify functionality',function(){
-
-
+describe('trigger notify functionality', () => {
   let watcher = {};
 
-  beforeEach(()=>dbSync(true));
-  afterEach(()=>((typeof watcher.disconnect === "function") ? watcher.disconnect() : null))
+  beforeEach(() => dbSync(true));
+  afterEach(() => ((typeof watcher.disconnect === 'function') ? watcher.disconnect() : null));
 
-  //TODO: move 
-  it('should persist PGListen connections', async function(){
-
+  // TODO: move
+  it('should persist PGListen connections', async function () {
     this.timeout(8500);
 
-    return new Promise((resolve, reject)=>{
+    return new Promise((resolve, reject) => {
       try {
         let allowConnect = true;
         let count = 0;
 
         const pgClient = class Client extends EventEmitter {
-          connect(){
+          connect() {
             count++;
             if (count === 4) {
-              allowConnect = true; 
-              this.on('connect',resolve);
+              allowConnect = true;
+              this.on('connect', resolve);
             }
-            if (allowConnect) process.nextTick(()=>this.emit('connect'));
+            if (allowConnect) process.nextTick(() => this.emit('connect'));
             else {
-              process.nextTick(()=>this.emit('end'));
+              process.nextTick(() => this.emit('end'));
             }
           }
-        }
+        };
         const pgListener = new PGListen({ debug: true, pgClient });
         pgListener.connect();
         allowConnect = false;
         pgListener.client.emit('end');
-      }
-      catch(e) {
+      } catch (e) {
         reject(e);
       }
     });
+  });
 
-  })
-
-  it('should should make a table triggerable', async function(){
-
+  it('should should make a table triggerable', async function () {
     this.timeout(5000);
 
     watcher = new Watcher({ debug: logger.debug });
@@ -68,91 +64,88 @@ describe('trigger notify functionality',function(){
 
     const photoUUID = uuidv4();
 
-    const Q = new Promise((rs,rx) => {
-      watcher.subscribe(Photo.TableTriggers.after_insert, function(payload){
+    const Q = new Promise((rs, rx) => {
+      watcher.subscribe(Photo.TableTriggers.after_insert, (payload) => {
         try {
           const { objectName } = payload.data;
           const { uuid } = minioObject.parse(objectName);
           assert.equal(uuid, photoUUID);
           return rs();
-        } catch(e) {
-          rx(e)
+        } catch (e) {
+          rx(e);
         }
-      })
+      });
     });
 
-    process.nextTick(async ()=> await Photo.create({ uuid: photoUUID }));
+    process.nextTick(async () => await Photo.create({ uuid: photoUUID }));
 
     return Q;
+  });
 
-  })
 
-
-  it('should create a Photo object on upload minio event', async function(){
+  it('should create a Photo object on upload minio event', async function () {
     this.timeout(5000);
 
     const account = await Account.create({});
     const uuid = uuidv4();
 
-    const objectName = minioObject.create('v4',{ AccountId: account.id, uuid });
+    const objectName = minioObject.create('v4', { AccountId: account.id, uuid });
 
     watcher = new Watcher({ debug: logger.debug });
     await watcher.connect();
-    const Q = new Promise((rs,rx) => {
-      watcher.subscribe(BucketEvents.TableTriggers.after_insert, async function(payload){
+    const Q = new Promise((rs, rx) => {
+      watcher.subscribe(BucketEvents.TableTriggers.after_insert, async (payload) => {
         try {
-          const eventName = get(payload,'data.value.Records[0].eventName');
-          const key = get(payload,'data.key');
+          const eventName = get(payload, 'data.value.Records[0].eventName');
+          const key = get(payload, 'data.key');
           if (eventName === 's3:ObjectCreated:Put') {
             await MClient.PutPhotoFn({
               key,
-              bucket: 'mybucket'
-            })
+              bucket: 'mybucket',
+            });
           }
           return rs();
-        } catch(e) {
-          rx(e)
+        } catch (e) {
+          rx(e);
         }
-      })
+      });
     });
-    process.nextTick(async ()=> await BucketEvents.create({ 
+    process.nextTick(async () => await BucketEvents.create({
       key: objectName,
-      value: minioEventFixture
+      value: minioEventFixture,
     }));
     await Q;
 
     const photo = await Photo.findOne({ where: { uuid } });
 
     assert(photo);
-
   });
 
 
-  it('should should make a table triggerable', async function(){
+  it('should should make a table triggerable', async function () {
     this.timeout(5000);
     watcher = new Watcher({ debug: logger.debug });
     await watcher.connect();
     const photoUUID = uuidv4();
-    const Q = new Promise((rs,rx) => {
-      watcher.subscribe(Photo.TableTriggers.after_insert, function(payload){
+    const Q = new Promise((rs, rx) => {
+      watcher.subscribe(Photo.TableTriggers.after_insert, (payload) => {
         try {
           const { objectName } = payload.data;
           const { uuid } = minioObject.parse(objectName);
           assert.equal(uuid, photoUUID);
           return rs();
-        } catch(e) {
-          rx(e)
+        } catch (e) {
+          rx(e);
         }
-      })
+      });
     });
-    process.nextTick(async ()=> await Photo.create({ uuid: photoUUID }));
+    process.nextTick(async () => await Photo.create({ uuid: photoUUID }));
     return Q;
   });
 
 
-  //TODO define a custom Object instead of using IGAccount
-  it(`IGAccount object columns should be 'triggerable'`, async function(){
-
+  // TODO define a custom Object instead of using IGAccount
+  it('IGAccount object columns should be \'triggerable\'', async function () {
     this.timeout(5000);
 
     watcher = new Watcher({ debug: logger.debug });
@@ -161,37 +154,29 @@ describe('trigger notify functionality',function(){
 
     const account = await Account.create();
 
-    const ig = await IGAccount.create({ 
-      username: 'ribbit', 
+    const ig = await IGAccount.create({
+      username: 'ribbit',
       password: 'secret',
-      AccountId: account.id
+      AccountId: account.id,
     });
 
 
-    const Q = new Promise((rs,rx) => {
-      watcher.subscribe(IGAccount.Triggerables.status, function(payload){
-        const { data: { status, id, AccountId }} = payload;
+    const Q = new Promise((rs, rx) => {
+      watcher.subscribe(IGAccount.Triggerables.status, (payload) => {
+        const { data: { status, id, AccountId } } = payload;
         try {
           assert.equal(status, 'GOOD');
-          assert.equal(id,ig.id);
-          assert.equal(AccountId,ig.AccountId);
+          assert.equal(id, ig.id);
+          assert.equal(AccountId, ig.AccountId);
           return rs();
-        } catch(e) {
-          rx(e)
+        } catch (e) {
+          rx(e);
         }
-      })
+      });
     });
 
-    process.nextTick(async ()=> await ig.update({ status: 'GOOD' }));
+    process.nextTick(async () => await ig.update({ status: 'GOOD' }));
 
     return Q;
-
-  })
-
-
-
-
-
-
-
+  });
 });

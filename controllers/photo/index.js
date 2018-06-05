@@ -4,30 +4,28 @@ const AuthPolicy = require('../lib/authPolicy');
 const { Router } = require('express');
 
 class PhotoPolicy extends AuthPolicy {
-
-  async _accounts(){
+  async _accounts() {
     const accountIds = this.user.accountIds();
     return accountIds.includes(this.instance.AccountId);
   }
 
-  index(){
+  index() {
     return true;
   }
 
-  destroy(){
+  destroy() {
     return this._accounts();
   }
 
-  show(){
+  show() {
     return this._accounts();
   }
-
 }
 
 
-module.exports = function PhotoController(){
+module.exports = function PhotoController() {
   const router = new Router();
   const resource = new Resource({ model: Photo, policy: PhotoPolicy });
   router.use(resource.resource());
   return router;
-}
+};

@@ -4,37 +4,35 @@ const AuthPolicy = require('../lib/authPolicy');
 const { Router } = require('express');
 
 class PostPolicy extends AuthPolicy {
-
-  async _accounts(){
+  async _accounts() {
     const accountIds = this.user.accountIds();
     return accountIds.includes(this.instance.AccountId);
   }
 
-  index(){
+  index() {
     return true;
   }
   edit() {
     return this._accounts();
   }
 
-  destroy(){
+  destroy() {
     return this._accounts();
   }
 
-  show(){
+  show() {
     return this._accounts();
   }
 
-  create(){ 
+  create() {
     return this._accounts();
   }
-
 }
 
 
-module.exports = function PostController(){
+module.exports = function PostController() {
   const router = new Router();
   const resource = new Resource({ model: Post, policy: PostPolicy });
   router.use(resource.resource());
   return router;
-}
+};

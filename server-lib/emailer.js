@@ -1,14 +1,12 @@
 const { logger } = require('../lib/logger');
 
 module.exports = class Emailer {
+  constructor() {
 
-  constructor(){
-  
   }
 
   async send({ to, msg }) {
-    logger(`Sending email TO: ${to}, \n MSG: ${msg}`)
+    logger(`Sending email TO: ${to}, \n MSG: ${msg}`);
     return true;
   }
-
-}
+};

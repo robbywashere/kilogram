@@ -1,1 +1,1 @@
-module.exports = { $:require('child-process-promise').exec };
+module.exports = { $: require('child-process-promise').exec };

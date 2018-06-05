@@ -6,28 +6,22 @@ const sinon = require('sinon');
 const request = require('supertest');
 
 
-
-describe('lib.handler',function(){
-
-  it('should catch error, log them, then call the next function with said error', async function(){
-
+describe('lib.handler', () => {
+  it('should catch error, log them, then call the next function with said error', async () => {
     const app = express();
 
-    const middleware = async function(){
+    const middleware = async function () {
       throw new Error('TEST_ERROR');
-    }
+    };
 
     const logger = sinon.spy();
 
-    app.get('/',handler(middleware,logger));
+    app.get('/', handler(middleware, logger));
 
     const res = await request(app)
       .get('/')
-      .expect(500)
+      .expect(500);
 
-    assert.equal('TEST_ERROR',logger.getCall(0).args[0].message);
-
-  })
-
-
-})
+    assert.equal('TEST_ERROR', logger.getCall(0).args[0].message);
+  });
+});
