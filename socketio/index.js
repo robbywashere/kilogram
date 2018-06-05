@@ -7,26 +7,6 @@ const { IGAccount, Notification } = require('../objects');
 const { CookieSession } = require('../server-lib/auth/session');
 
 
-
-/*
-
-const pgTriggers = [
-  Notification.TableTriggers.after_insert,
-  IGAccount.Triggerables.status
-];
-
-
-const topics = pgTriggers.map(t=>t.event);
-
-const socketServer = SocketIOServer({ httpServer, topics })
-
-await PGEventSockets({ pgTriggers, socketServer  });
-
-
-
-*/
-
-
 function room({ AccountId, topic }) {
   return `${AccountId}#${topic}`
 }
@@ -50,26 +30,16 @@ async function PGEventSockets({
   }
 }
 
-function PGSockets({ pgTriggers, httpServer }) {
 
-  const topics = pgTriggers.map(t=>t.event);
-
-  const socketServer = SocketIOServer({ httpServer, topics })
-
-  return PGEventSockets({ pgTriggers, socketServer  });
-
-}
-
-function SocketIOServer({ 
-  httpServer,
-  sessionStrategy = CookieSession,
+function SocketIOApp({ 
+  ioServer,
+  sessionStrategy,
   topics = []
 }) {
-  const io = socketio(httpServer);
-  io.use(function(socket,next){
+  ioServer.use(function(socket,next){
     sessionStrategy.sessioner(socket.request,{},next);
   }); 
-  io.on('connection',function(socket){
+  ioServer.on('connection',function(socket){
     const user = get(socket,'request.session.passport.user');
     if (!user) throw new Unauthorized('need a login cuz.')
     //TODO, add callback after all have been join to emit 'OK'
@@ -84,6 +54,13 @@ function SocketIOServer({
     }
   });
   return io;
+}
+
+function PGSockets({ pgTriggers, httpServer, sessionStrategy }) {
+  const topics = pgTriggers.map(t=>t.event);
+  const ioServer = socketio(httpServer);
+  const socketServer = SocketIOServer({ ioServer, topics, sessionStrategy })
+  return PGEventSockets({ pgTriggers, socketServer });
 }
 
 module.exports = { SocketIOServer, PGEventSockets, PGSockets }
