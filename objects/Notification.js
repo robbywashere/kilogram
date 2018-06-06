@@ -12,15 +12,6 @@ module.exports = {
     after: 'INSERT',
   }],
   Properties: {
-    reads: {
-      type: ARRAY(INTEGER),
-    },
-    title: {
-      type: STRING,
-    },
-    text: {
-      type: TEXT,
-    },
     body: {
       type: JSONType,
     },

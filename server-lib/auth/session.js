@@ -38,7 +38,7 @@ const PGSession = {
 
 const CookieSession = {
   sessioner({ secret = demand('CookieSession requires { secret: <String> } ') }) {
-    return cookieSession({
+    return new cookieSession({
       name: 'session',
       secret,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours

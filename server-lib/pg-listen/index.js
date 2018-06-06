@@ -61,6 +61,7 @@ class PGListen {
     this.channels.add(channel);
     this.events.on(channel, fn);
     if (this.connected) await this.listen(channel);
+    else await this.connect();
   }
   async unsubscribe(channel) {
     this.channels.delete(channel);
