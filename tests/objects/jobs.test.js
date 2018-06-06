@@ -1,10 +1,10 @@
 
 process.env.NODE_ENV = 'test'; // TODO ?
-const { PostJobRun, pullRemoteObject } = require('../../python/runner');
-const { Agent } = require('../../python/deviceAgent');
+const { PostJobRun, pullRemoteObject } = require('../../android/python/runner');
+const { Agent } = require('../../android/python/deviceAgent');
 
 const PythonShell = require('python-shell');
-const { PythonBridge } = require('../../python/bridge');
+const { PythonBridge } = require('../../android/python/bridge');
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../../db/sync');

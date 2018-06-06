@@ -3,8 +3,8 @@ const cmds = require('../android/cmds');
 const { PostJob, VerifyIGJob, Device } = require('../objects');
 const { logger } = require('../lib/logger');
 const demand = require('../lib/demand');
-const Runner = require('../python/runner');
-const DeviceAgent = require('../python/deviceAgent');
+const Runner = require('../android/python/runner');
+const DeviceAgent = require('../android/python/deviceAgent');
 
 const {
   get, isUndefined, zipObject, startCase, fromPairs, clone, isEqual,

@@ -52,6 +52,7 @@
     "route-parser": "^0.0.5",
     "sequelize": "^4.28.6",
     "socket.io": "^2.1.1",
+    "socket.io-client": "^2.1.1",
     "stream-to-promise": "^2.2.0",
     "supertest": "^3.0.0",
     "tree-kill": "^1.2.0",
@@ -59,7 +60,7 @@
     "uuid": "^3.1.0"
   },
   "scripts": {
-    "start": "node ./core/server.js",
+    "start": "node ./server/index.js",
     "py:install": "pip install -r ./python/requirements.txt",
     "dev:tabs": "export LOG_LEVEL=3 && ./scripts/tab npm run minio:up & ./scripts/tab npm run dev & ./scripts/tab npm run crx:start & ./scripts/tab npm run device-node",
     "crx:start": "export PORT=3001 && react-scripts start",

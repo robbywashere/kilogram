@@ -2,7 +2,7 @@
 //process.env.PORT = 8185;
 process.env.NODE_ENV='test';
 
-const baseServer = require('../../core/baseServer');
+const baseServer = require('../../server/baseServer');
 
 const { MClient } = require('../../server-lib/minio');
 const dbSync = require('../../db/sync');

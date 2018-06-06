@@ -2,11 +2,12 @@ const session = require('express-session');
 const cookieSession = require('cookie-session');
 const { logger } = require('../../lib/logger');
 const { User } = require('../../objects');
+const demand = require('../../lib/demand');
 const pgSession = require('connect-pg-simple')(session);
 const config = require('config');
 
 const PGSession = {
-  sessioner({ secret = config.get('APP_SECRET') }) {
+  sessioner({ secret = demand('PGSession requires { secret: <String> } ') }) {
     return session({
       store: new pgSession({
         conObject: require('../../db/config')[config.get('NODE_ENV')],
@@ -36,7 +37,7 @@ const PGSession = {
 };
 
 const CookieSession = {
-  sessioner({ secret = config.get('APP_SECRET') }) {
+  sessioner({ secret = demand('CookieSession requires { secret: <String> } ') }) {
     return cookieSession({
       name: 'session',
       secret,

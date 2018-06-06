@@ -1,6 +1,6 @@
 const config = require('config');
 const Promise = require('bluebird');
-const { logger } = require('../lib/logger');
+const { logger } = require('../../lib/logger');
 const PythonShell = require('python-shell');
 
 

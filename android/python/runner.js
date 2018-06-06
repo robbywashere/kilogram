@@ -4,9 +4,9 @@
 // for now ... each Job should have a withDeps' which loads all Dependencies to execute said job - this comes down to a Join Statement which would have to replicated in python without the help of sequelize ORM -
 // Being that 'Jobs' are essentially ephmemeral the best case executing immediently in the case of passing this off to Python, perhaps the data should be denormalized and stored as JSON inside the table
 //
-const demand = require('../lib/demand');
+const demand = require('../../lib/demand');
 
-const minio = require('../server-lib/minio');
+const minio = require('../../server-lib/minio');
 
 const { get } = require('lodash');
 

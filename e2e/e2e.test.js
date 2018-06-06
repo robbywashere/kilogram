@@ -1,7 +1,7 @@
 // process.env.PORT = 8185;
 process.env.NODE_ENV = 'test';
 
-const baseServer = require('../core/baseServer');
+const baseServer = require('../server/baseServer');
 const ffport = require('find-free-port');
 const dbSync = require('../db/sync');
 const { exec, spawn } = require('child_process');

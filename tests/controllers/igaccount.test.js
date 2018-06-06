@@ -12,7 +12,7 @@ const express = require('express');
 const dbSync = require('../../db/sync');
 
 const request = require('supertest');
-const serverErrors = require('../../core/serverErrors');
+const serverErrors = require('../../server/serverErrors');
 
 const IGAccountController = require('../../controllers/igaccount');
 

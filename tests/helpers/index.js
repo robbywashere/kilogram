@@ -116,8 +116,8 @@ function ezUser(opts, moreOpts) {
   }, opts), moreOpts);
 }
 
-function ezUserAccount() {
-  return ezUser({ Accounts: {} }, { include: [Account] });
+function ezUserAccount(opts) {
+  return ezUser({ ...opts, Accounts: {} }, { include: [Account] });
 }
 
 async function createAccountUserPost() {
