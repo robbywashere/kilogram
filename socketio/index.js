@@ -63,17 +63,18 @@ async function PGEventSockets({
 
 function SocketIOApp({
   socketServer = demand('socketServer'),
-  sessioner = demand('sessioner'),
+  sessionStrategy = demand('sessionStrategy'),
   topics = [],
 }) {
   socketServer.use((socket, next) => {
-    sessioner(socket.request, {}, next);
+    sessionStrategy.sessioner(socket.request, {}, next);
   });
+
+  //  socketServer.on('error',(e)=>logger.error(e));
 
   socketServer.on('connection', (socket) => {
     try {
       const user = get(socket, 'request.session.passport.user');
-
       if (!user) throw new Unauthorized('Unauthorized');
       // TODO, add callback after all have been join to emit 'OK'
       for (const topic of topics) {
@@ -93,12 +94,12 @@ function SocketIOApp({
 
 function PGSockets({
   pgTriggers = [],
-  sessioner = demand('sessioner'),
+  sessionStrategy = demand('sessionStrategy'),
   socketServer = demand('socketServer'),
   debug = ()=>{},
 }) {
   const topics = pgTriggers.map(t => t.event);
-  const socketApp = SocketIOApp({ socketServer, topics, sessioner });
+  const socketApp = SocketIOApp({ socketServer, topics, sessionStrategy });
   return PGEventSockets({ pgTriggers, socketApp, debug });
 }
 

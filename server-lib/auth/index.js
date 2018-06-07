@@ -8,6 +8,8 @@ const config = require('config');
 
 const DB = require('../../db');
 
+const demand = require('../../lib/demand');
+
 const { get } = require('lodash');
 
 const { Router } = require('express');
@@ -20,10 +22,10 @@ const { CookieSession, PGSession } = require('./session');
 
 //TODO: dep inj initialized sessioner({ secret })
 
-module.exports = function Auth(app, { sessioner = demand('sessioner') }) {
+module.exports = function Auth(app, { sessionStrategy = demand('sessionStrategy') }) {
   // TODO??: app.use(require('body-parser').urlencoded({ extended: true }));
   app.use(require('body-parser').json());
-  app.use(sessioner);
+  app.use(sessionStrategy.sessioner);
   app.use(passport.initialize());
   app.use(passport.session());
 

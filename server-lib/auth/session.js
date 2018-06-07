@@ -5,54 +5,35 @@ const { User } = require('../../objects');
 const demand = require('../../lib/demand');
 const pgSession = require('connect-pg-simple')(session);
 const config = require('config');
+const pgConnectConfig = require('../../db/config')[config.get('NODE_ENV')];
 
-const PGSession = {
 
-  sessioner({ secret = demand('PGSession requires { secret: <String> } ') }) {
-    return session({
-      store: new pgSession({
-        conObject: require('../../db/config')[config.get('NODE_ENV')],
-      }),
-      secret,
-      resave: false,
-      cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
-      saveUninitialized: true,
-    });
-  },
-  serialize(user, cb) {
-    cb(null, user.id);
-  },
-
-  async deserialize(id, cb) {
-    try {
-      const user = await User.withAccountsForId(id);
-      if (!user) throw new Error('Invalid User/User does not exist');
-      else {
-        cb(null, user);
-      }
-    } catch (e) {
-      logger.error(e);
-      cb(null, false);
+class PGSessionClass {
+  constructor({ secret = demand('PGSessionClass requires { secret: <String> } ') } = {}) {
+    this.secret = secret;
+  }
+  get sessioner() {
+    if (typeof this._sessioner === 'undefined') {
+      return this.init();
     }
-  },
-};
+    return this._sessioner;
+  }
 
-class PGSessionClass  {
-
-  sessioner({ secret = demand('PGSessionClass requires { secret: <String> } ') }) {
-    return session({
+  init({ secret = this.secret } = {}) {
+    this._sessioner = session({
       store: new pgSession({
-        conObject: require('../../db/config')[config.get('NODE_ENV')],
+        conObject: pgConnectConfig 
       }),
       secret,
       resave: false,
       cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
       saveUninitialized: true,
     });
+    return this._sessioner;
   }
 
   serialize(user, cb) {
-    cb(null, user.id);
+    cb(null,user.id);
   }
 
   async deserialize(id, cb) {
@@ -67,22 +48,27 @@ class PGSessionClass  {
       cb(null, false);
     }
   }
-};
-
+}
 
 
 class CookieSessionClass {
-
-  constructor({ secret = demand('CookieSessionClass requires { secret: <String> } ') }){
+  constructor({ secret = demand('CookieSessionClass requires { secret: <String> } ') }) {
     this.secret = secret;
   }
 
-  sessioner({ secret = this.secret } = {}) {
-    return new cookieSession({
+  get sessioner() {
+    if (typeof this._sessioner === 'undefined') {
+      return this.init();
+    }
+    return this._sessioner;
+  }
+  init({ secret = this.secret } = {}) {
+    this._sessioner = new cookieSession({
       name: 'session',
       secret,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
+    return this._sessioner;
   }
 
   serialize(user, cb) { return cb(null, user.serialize()); }
@@ -99,31 +85,7 @@ class CookieSessionClass {
       cb(null, false);
     }
   }
-};
+}
 
 
-
-const CookieSession = {
-  sessioner({ secret = demand('CookieSession requires { secret: <String> } ') }) {
-    return new cookieSession({
-      name: 'session',
-      secret,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    });
-  },
-  serialize(user, cb) { return cb(null, user.serialize()); },
-  async deserialize({ id }, cb) {
-    try {
-      const user = await User.withAccountsForId(id);
-      if (!user) throw new Error('Invalid User/User does not exist');
-      else {
-        cb(null, user);
-      }
-    } catch (e) {
-      logger.error(e);
-      cb(null, false);
-    }
-  },
-};
-
-module.exports = { CookieSession, PGSession, CookieSessionClass, PGSessionClass };
+module.exports = { CookieSessionClass, PGSessionClass };
