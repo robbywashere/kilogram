@@ -20,10 +20,10 @@ const { CookieSession, PGSession } = require('./session');
 
 //TODO: dep inj initialized sessioner({ secret })
 
-module.exports = function Auth(app, { appSecret = config.get('APP_SECRET'), sessionStrategy = CookieSession } = {}) {
+module.exports = function Auth(app, { sessioner = demand('sessioner') }) {
   // TODO??: app.use(require('body-parser').urlencoded({ extended: true }));
   app.use(require('body-parser').json());
-  app.use(sessionStrategy.sessioner({ secret: appSecret }));
+  app.use(sessioner);
   app.use(passport.initialize());
   app.use(passport.session());
 

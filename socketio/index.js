@@ -1,4 +1,5 @@
 const socketio = require('socket.io');
+const demand = require('../lib/demand');
 const express = require('express');
 const { logger } = require('../lib/logger');
 const { get } = require('lodash');
@@ -37,10 +38,12 @@ function SocketIORoom({ AccountId, topic }) {
 
 // TODO: will probably have to class this funcition
 async function PGEventSockets({
-  pgTriggers,
-  socketServer,
+  pgTriggers = [],
+  socketApp = demand('socketApp'),
+  debug
 }) {
-  const watcher = new Watcher({ debug: logger.debug });
+
+  const watcher = new Watcher({ debug });
   for (const trigger of pgTriggers) {
     await watcher.subscribe(trigger, ({ data }) => {
       try {
@@ -48,7 +51,7 @@ async function PGEventSockets({
         const room = SocketIORoom({
           AccountId, topic: trigger.event,
         });
-        socketServer.to(room).emit('client:push', data);
+        socketApp.to(room).emit('client:push', data);
       } catch (e) {
         logger.error(e);
       }
@@ -59,23 +62,15 @@ async function PGEventSockets({
 
 
 function SocketIOApp({
-  ioServer,
-  sessionStrategy,
+  socketServer = demand('socketServer'),
+  sessioner = demand('sessioner'),
   topics = [],
-  appSecret = config.get('APP_SECRET'),
 }) {
-  // ioServer.on('error',(e)=>console.log(e));
-  //
-
-  const sessioner = sessionStrategy.sessioner({ secret: appSecret });
-
-  ioServer.use((socket, next) => {
-    console.log(socket.id)
-    console.log(socket.request.headers)
+  socketServer.use((socket, next) => {
     sessioner(socket.request, {}, next);
   });
 
-  ioServer.on('connection', (socket) => {
+  socketServer.on('connection', (socket) => {
     try {
       const user = get(socket, 'request.session.passport.user');
 
@@ -84,9 +79,7 @@ function SocketIOApp({
       for (const topic of topics) {
         for (const { id: AccountId } of user.Accounts) {
           const room = SocketIORoom({ AccountId, topic });
-          logger.debug({ room }, socket.id);
           socket.join(room, () => {
-            //  console.log({room, socket: socket.id, AccountId });
             socket.emit('client:joined', room);
           });
         }
@@ -95,17 +88,18 @@ function SocketIOApp({
       socket.emit('client:error', e);
     }
   });
-  return ioServer;
+  return socketServer;
 }
 
 function PGSockets({
-  pgTriggers,
-  sessionStrategy,
-  ioServer,
+  pgTriggers = [],
+  sessioner = demand('sessioner'),
+  socketServer = demand('socketServer'),
+  debug = ()=>{},
 }) {
   const topics = pgTriggers.map(t => t.event);
-  const socketServer = SocketIOApp({ ioServer, topics, sessionStrategy });
-  return PGEventSockets({ pgTriggers, socketServer });
+  const socketApp = SocketIOApp({ socketServer, topics, sessioner });
+  return PGEventSockets({ pgTriggers, socketApp, debug });
 }
 
 module.exports = {

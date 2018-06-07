@@ -7,6 +7,7 @@ const pgSession = require('connect-pg-simple')(session);
 const config = require('config');
 
 const PGSession = {
+
   sessioner({ secret = demand('PGSession requires { secret: <String> } ') }) {
     return session({
       store: new pgSession({
@@ -36,6 +37,72 @@ const PGSession = {
   },
 };
 
+class PGSessionClass  {
+
+  sessioner({ secret = demand('PGSessionClass requires { secret: <String> } ') }) {
+    return session({
+      store: new pgSession({
+        conObject: require('../../db/config')[config.get('NODE_ENV')],
+      }),
+      secret,
+      resave: false,
+      cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
+      saveUninitialized: true,
+    });
+  }
+
+  serialize(user, cb) {
+    cb(null, user.id);
+  }
+
+  async deserialize(id, cb) {
+    try {
+      const user = await User.withAccountsForId(id);
+      if (!user) throw new Error('Invalid User/User does not exist');
+      else {
+        cb(null, user);
+      }
+    } catch (e) {
+      logger.error(e);
+      cb(null, false);
+    }
+  }
+};
+
+
+
+class CookieSessionClass {
+
+  constructor({ secret = demand('CookieSessionClass requires { secret: <String> } ') }){
+    this.secret = secret;
+  }
+
+  sessioner({ secret = this.secret } = {}) {
+    return new cookieSession({
+      name: 'session',
+      secret,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+  }
+
+  serialize(user, cb) { return cb(null, user.serialize()); }
+
+  async deserialize({ id }, cb) {
+    try {
+      const user = await User.withAccountsForId(id);
+      if (!user) throw new Error('Invalid User/User does not exist');
+      else {
+        cb(null, user);
+      }
+    } catch (e) {
+      logger.error(e);
+      cb(null, false);
+    }
+  }
+};
+
+
+
 const CookieSession = {
   sessioner({ secret = demand('CookieSession requires { secret: <String> } ') }) {
     return new cookieSession({
@@ -59,4 +126,4 @@ const CookieSession = {
   },
 };
 
-module.exports = { CookieSession, PGSession };
+module.exports = { CookieSession, PGSession, CookieSessionClass, PGSessionClass };
