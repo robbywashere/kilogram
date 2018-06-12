@@ -26,7 +26,7 @@ describe('Socket Server pushes from postgres updates', () => {
     }
   });
 
-  it.only(`\t-should establish a connection between socketio server and client
+  it(`\t-should establish a connection between socketio server and client
 \t-should share http.Server with express
 \t-should be .on(connect'ed
 \t-should be authenticated using shared session strategy between socketio and express
@@ -175,6 +175,6 @@ describe('Socket Server pushes from postgres updates', () => {
     const resUser2 = (await user2sockResp);
 
     assert.deepEqual(resUser2.body, { msg: 'hello user 2' });
-  }).timeout(10000);
+  }).timeout(20*1000);
 });
 

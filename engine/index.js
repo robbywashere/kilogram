@@ -126,11 +126,60 @@ function runJobs({ JobModel = demand('JobModel'), JobRunner = demand('JobRunner'
         logger.status(`Freeing device-adbId: ${device.adbId}`);
         await device.setFree();
       }
-      /* if (job && job.status === 'SPINNING') {
+      if (job && job.status === 'SPINNING') {
         await job.update({ status: 'OPEN' });
-      } */
+      } 
     }
   };
+}
+
+
+function runJobsAsDeviceNode({ 
+  nodeName = demand('nodeName'), 
+  JobModel = demand('JobModel'), 
+  JobRunner = demand('JobRunner') 
+} = {}) {
+  return async function () {
+    let device;
+    let job;
+    try {
+      if ((device = await Device.popNodeDevice(nodeName)) && (job = await JobModel.popJob())) {
+        try {
+          const deviceId = device.get('adbId');
+          const agent = new DeviceAgent.Agent({ deviceId });
+
+          await job.denormalize(); 
+
+          const jobResult = await JobRunner({
+            ...job,
+            agent,
+            job,
+          });
+
+          if (!get(jobResult, 'success')) throw new Error(jobResult.error);
+
+          await job.complete({ body: jobResult });
+
+          logger.status(`-- ${JobModel.name} Run cycle complete Job Id: ${job.id}, success: ${jobResult.success}`);
+          logger.status('----- Result: ', (jobResult) || 'None');
+        } catch (err) {
+          await job.backout(err); 
+          logger.error(`-- Error running Job: ${job.id}`); 
+          throw err;
+        }
+      }
+    }  catch (e) {
+      try { logger.error(JSON.stringify(e, null, 4)); } catch (e) {}
+    } finally {
+      if (device) {
+        logger.status(`Freeing device-adbId: ${device.adbId}`);
+        await device.setFree();
+      }
+      if (job && job.status === 'SPINNING') {
+        await job.update({ status: 'OPEN' });
+      } 
+    } 
+  }
 }
 
 
@@ -147,5 +196,5 @@ const main = function () {
 };
 
 module.exports = {
-  runJobs, run, main, syncDevices,
+  runJobs, runJobsAsDeviceNode, run, main, syncDevices,
 };

@@ -131,7 +131,7 @@ describe('Notifications', () => {
       UserId: user2.id,
     });
     // Should contain ALL unread notfis for User2
-    assert.deepEqual(user2AllUnreadNotifs.map(un => un.id), [1, 2, 3]);
+    assert.deepEqual(user2AllUnreadNotifs.map(un => un.id).sort(), [1, 2, 3]);
 
     await Notification.markAllAsRead(user2.id);
 

@@ -33,6 +33,7 @@ module.exports = {
   PORT: process.env.PORT,
   LOG_LEVEL: logLevel(process.env.LOG_LEVEL),
   MINIO_SQS_ARN: process.env.MINIO_SQS_ARN,
+  DEVICE_NODE_NAME: process.env.DEVICE_NODE_NAME,
   MINIO_ENDPOINT: process.env.MINIO_ENDPOINT,
   MINIO_PORT: process.env.MINIO_PORT,
   MINIO_SECURE: process.env.MINIO_SECURE,

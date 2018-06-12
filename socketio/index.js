@@ -44,19 +44,23 @@ async function PGEventSockets({
 }) {
 
   const watcher = new Watcher({ debug });
-  for (const trigger of pgTriggers) {
-    await watcher.subscribe(trigger, ({ data }) => {
-      try {
-        const { AccountId } = data;
-        const room = SocketIORoom({
-          AccountId, topic: trigger.event,
-        });
-        socketApp.to(room).emit('client:push', data);
-      } catch (e) {
-        logger.error(e);
-      }
-    });
-  }
+  await Promise.all(pgTriggers
+    .map(trigger => watcher
+      .subscribe(trigger, ({ data }) => {
+        try {
+          const { AccountId } = data;
+          const room = SocketIORoom({
+            AccountId, topic: trigger.event,
+          });
+          socketApp.to(room).emit('client:push', data);
+        } catch (e) {
+          logger.error(e);
+        }
+      })
+    ));
+
+
+
   return watcher;
 }
 
@@ -70,7 +74,6 @@ function SocketIOApp({
     sessionStrategy.sessioner(socket.request, {}, next);
   });
 
-  //  socketServer.on('error',(e)=>logger.error(e));
 
   socketServer.on('connection', (socket) => {
     try {

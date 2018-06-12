@@ -6,9 +6,10 @@ const { Device } = require('../../objects');
 
 
 describe('Devices', () => {
+
   beforeEach(async () => sync(true));
 
-  describe('#popDevice', () => {
+  describe('popDevice', () => {
     it('should pop an available device', async () => {
       await Device.create({
         adbId: 'popdid',
@@ -18,6 +19,22 @@ describe('Devices', () => {
       });
 
       const device = await Device.popDevice();
+
+      assert.equal(device.get('adbId'), 'popdid');
+    });
+  });
+
+  describe('popNodeDevice', () => {
+    it('should pop an nodeName specified available device', async () => {
+      await Device.create({
+        adbId: 'popdid',
+        online: true,
+        idle: true,
+        enabled: true,
+        nodeName: 'specialPlace'
+      });
+
+      const device = await Device.popNodeDevice('specialPlace');
 
       assert.equal(device.get('adbId'), 'popdid');
     });
@@ -126,7 +143,7 @@ describe('Devices', () => {
 
       await d.save({
         silent: true,
-        fields: ['updatedAt', 'idle', 'online', 'adbId'],
+        fields: ['updatedAt', 'idle', 'online', 'adbId', 'nodeName'],
       });
 
       const zombies = await Device.zombies();

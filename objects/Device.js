@@ -1,5 +1,5 @@
 const sequelize = require('sequelize');
-
+const config = require('config');
 const {
   STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op,
 } = sequelize;
@@ -23,6 +23,33 @@ const PopDeviceQuery = `
               online=true
           AND
               enabled=true
+          ORDER BY 
+              id asc
+          FOR UPDATE SKIP LOCKED
+          LIMIT 1 
+      )
+  RETURNING *;
+`;
+
+const PopNodeDeviceQuery = (nodeName)=>`
+  UPDATE 
+      "Devices"
+  SET 
+      idle=false
+  WHERE
+      id in (
+          SELECT
+              id
+          FROM
+              "Devices"
+          WHERE
+              idle=true
+          AND 
+              online=true
+          AND
+              enabled=true
+          AND
+              "nodeName"='${nodeName}'
           ORDER BY 
               id asc
           FOR UPDATE SKIP LOCKED
@@ -55,15 +82,13 @@ module.exports = {
       permit: true,
       type: STRING,
     },
-  },
-  PolicyScopes: { },
-  PolicyAssert: true,
-  PolicyAttributes: { all: true },
-  Authorize: {
-    all: isSuperAdmin,
-  },
-  AuthorizeInstance: {
-    all: isSuperAdmin,
+    nodeName: {
+      type: STRING,
+      allowNull: false,
+      defaultValue(){ 
+        return config.get('DEVICE_NODE_NAME');
+      }
+    },
   },
   ScopeFunctions: true,
   Scopes: {
@@ -93,7 +118,8 @@ module.exports = {
     },
   },
   StaticMethods: {
-    async popDevice() { return get((await this.$.query(PopDeviceQuery, { type: sequelize.QueryTypes.SELECT, model: this })), 0); },
+    async popDevice() { return get((await this.sequelize.query(PopDeviceQuery, { type: sequelize.QueryTypes.SELECT, model: this })), 0); },
+    async popNodeDevice(nodeName) { return get((await this.sequelize.query(PopNodeDeviceQuery(nodeName), { type: sequelize.QueryTypes.SELECT, model: this })), 0); },
     setFreeById(adbId) {
       return this.update({
         idle: true,
@@ -117,7 +143,7 @@ module.exports = {
 
       const fIds = ids.filter(id => !exists.includes(id));
       if (fIds.length > 0) {
-        newDevices = fIds.map(adbId => ({ online: true, idle: true, adbId }));
+        let newDevices = fIds.map(adbId => ({ online: true, idle: true, adbId }));
         return this.bulkCreate(newDevices, { returning: true, raw: true }).map(d => d.get('adbId'));
       }
       return [];

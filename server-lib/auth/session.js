@@ -33,10 +33,10 @@ class PGSessionClass {
   }
 
   serialize(user, cb) {
-    cb(null,user.id);
+    cb(null,user.serialize());
   }
 
-  async deserialize(id, cb) {
+  async deserialize({ id }, cb) {
     try {
       const user = await User.withAccountsForId(id);
       if (!user) throw new Error('Invalid User/User does not exist');
@@ -75,7 +75,7 @@ class CookieSessionClass {
 
   async deserialize({ id }, cb) {
     try {
-      const user = await User.withAccountsForId(id);
+      const user = await User.withAccountsForId(id); //nessa?
       if (!user) throw new Error('Invalid User/User does not exist');
       else {
         cb(null, user);
