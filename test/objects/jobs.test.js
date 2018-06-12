@@ -17,7 +17,7 @@ const { MClient } = minio;
 const { createAccountUserPostJob } = require('../helpers');
 
 
-describe.only('jobs/', () => {
+describe('jobs/', () => {
   let minioStub;
 
   beforeEach(() => sync(true));
