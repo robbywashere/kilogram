@@ -1,10 +1,10 @@
 
 process.env.NODE_ENV = 'test'; // TODO ?
-const { PostJobRun, pullRemoteObject } = require('../../android/python/runner');
-const { Agent } = require('../../android/python/deviceAgent');
+const { PostJobRun, pullRemoteObject } = require('../../android/runner');
+const { Agent } = require('../../android/deviceAgent');
 
 const PythonShell = require('python-shell');
-const { PythonBridge } = require('../../android/python/bridge');
+const { PythonBridge } = require('../../android/bridge');
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../../db/sync');
@@ -17,7 +17,7 @@ const { MClient } = minio;
 const { createAccountUserPostJob } = require('../helpers');
 
 
-describe('jobs/', () => {
+describe.only('jobs/', () => {
   let minioStub;
 
   beforeEach(() => sync(true));

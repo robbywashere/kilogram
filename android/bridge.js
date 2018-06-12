@@ -1,6 +1,6 @@
 const config = require('config');
 const Promise = require('bluebird');
-const { logger } = require('../../lib/logger');
+const { logger } = require('../lib/logger');
 const PythonShell = require('python-shell');
 
 
@@ -13,7 +13,7 @@ class PythonBridge {
   static shell() {
     return new PythonShell('coupling.py', {
       pythonPath: config.get('PYTHON_PATH'),
-      scriptPath: `${__dirname}/../python`,
+      scriptPath: `${__dirname}`,
       mode: 'json',
       parser: (output) => {
         try {

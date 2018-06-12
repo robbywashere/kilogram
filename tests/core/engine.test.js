@@ -7,8 +7,8 @@ const assert = require('assert');
 const cmds = require('../../android/cmds');
 const { Device, Post, PostJob } = require('../../objects');
 const syncDb = require('../../db/sync');
-const runner = require('../../android/python/runner');
-const DeviceAgent = require('../../android/python/deviceAgent');
+const runner = require('../../android/runner');
+const DeviceAgent = require('../../android/deviceAgent');
 const Promise = require('bluebird');
 
 // TODO: Possible memory link, interferes with other tests, must be ran seperately
