@@ -14,7 +14,8 @@ class IGDevice:
     def __init__(self, device_id):
         self.device_id = device_id
         self.device = Device(device_id)
-        self.photo_posted = False
+        self.completed = False
+        self.result = None
 
 
     def wake(self):
@@ -30,6 +31,7 @@ class IGDevice:
 
     def setup(self):
         self.wake()
+        #TODO: Add network error handling
         self.device.watcher("NotNow").when(text="Not Now",resourceId="com.instagram.android:id/button_negative").press.back()
 
     def open_ig(self):
@@ -53,7 +55,6 @@ class IGDevice:
 
     def loginAndPhoto(self, username, password):
         self.close_ig()
-        self.open_ig()
         self.login(username, password)
         self.photo_mode()
 
@@ -104,12 +105,14 @@ class IGDevice:
         self.device(text='Next').click()
         self.describe(desc)
         self.device(text='Share').click()
-        self.photo_posted = True
+        self.completed = True
+        self.result = True
 
     def verify_ig_dance(self, username, password): 
         self.clean_slate()
         self.open_ig()
         self.login(username, password)
+        #check something
         
     def full_dance(self, username, password, localfile,  desc = ""):
         if localfile is None:

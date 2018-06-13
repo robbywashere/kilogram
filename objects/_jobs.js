@@ -57,6 +57,7 @@ const GetJobQuery = tableName => `
 `;
 
 
+// TODO: add epoch?
 const StatsQuery = tableName => `
   SELECT 
     sum(case when (status = 'OPEN') then 1 else 0 end) as open,
@@ -73,9 +74,11 @@ const JobMethods = {
   denormalize() {
     return this.reload({ include: [{ all: true }] }); //
   },
-  complete({ body, resultOf }) {
-    const taskresult = (typeof resultOf === 'undefined') ? 'UNKNOWN' : (resultOf) ? 'POSITIVE' : 'NEGATIVE';
-
+  // success is true or false, based on if the job ran as it should
+  // taskResult is the outcome of the task
+  // TODO: 'success' should be changed to completedJobRun or something similar
+  complete({ body }) {
+    const taskresult = (typeof body.result !== 'boolean') ? 'UNKNOWN' : (body.result) ? 'POSITIVE' : 'NEGATIVE';
     return this.update({
       taskresult,
       status: get(body, 'success') ? 'SUCCESS' : 'FAILED',
@@ -95,7 +98,6 @@ const JobStaticMethods = {
 
   async stats() {
     return this.$.query(StatsQuery(this.tableName)).spread((r) => {
-      // Object.keys(JSON.parse(JSON.stringify(get(r,0)))).reduce( (p,n) => ({ ...p, [n] :(parseInt(result[key],10)||0) }),{});
       const result = JSON.parse(JSON.stringify(get(r, 0)));
       for (const key of Object.keys(result)) result[key] = parseInt(result[key], 10) || 0;
       return result;

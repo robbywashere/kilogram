@@ -1,4 +1,5 @@
 const { PythonBridge } = require('./bridge');
+const demand = require('../lib/demand');
 const { Device } = require('../objects');
 
 class Agent {
