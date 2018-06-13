@@ -95,7 +95,7 @@ function Trigger(Name, Params = {}) {
     },
 
     get name() {
-      return (self.Params.Name) ? Self.Params.Name : self.computeName();
+      return (self.Params.Name) ? self.Params.Name : self.computeName();
     },
 
     get query() {
