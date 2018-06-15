@@ -31,6 +31,12 @@ module.exports = {
     },
   },
   Hooks: {
+    /* TODO: async afterUpdate() {
+     * if username !== previous.username ||
+          password !== previous.password
+          this.status = 'UNVERIFIED'
+          VerifyIGJob.create()
+    } */
     async afterCreate({ id }) {
       const { VerifyIGJob } = this.sequelize.models;
       return VerifyIGJob.create({
