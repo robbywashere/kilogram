@@ -5,123 +5,152 @@ const { createAccountUserPostJob } = require('../helpers');
 const sinon = require('sinon');
 const assert = require('assert');
 const cmds = require('../../android/cmds');
-const { Device, Post, PostJob } = require('../../objects');
+const { Account, IGAccount, Device, Post, PostJob } = require('../../objects');
 const syncDb = require('../../db/sync');
 const runner = require('../../android/runner');
 const DeviceAgent = require('../../android/deviceAgent');
 const Promise = require('bluebird');
 
 // TODO: Possible memory link, interferes with other tests, must be ran seperately
-describe('engine', () => {
-  let agentStub;
+//
+describe('engine tests', () => {
 
-  let jobRunStub;
+  describe('engine main()', ()=>{
 
-  const sandbox = sinon.sandbox.create();
+    throw new Error('complete me');
 
-  beforeEach(async () => {
-    await syncDb(true);
-    const adbDevicesStub = sandbox.stub(cmds, 'adbDevices').resolves(['adbId1', 'adbId2']);
+    let timers = [];
+    beforeEach(()=>syncDb(true))
+    afterEach( ()=>timers.forEach(clearInterval))
 
-    const deviceIdSpy = sinon.spy();
+    it ('should be awesome',async ()=>{
 
-    const agentStubInstance = sinon.spy(() => sinon.createStubInstance(DeviceAgent.Agent));
+      const DeviceFactory = (n)=>Device.create({
+        adbId: `adbId${n}`,
+        idle: true,
+        online: true,
+        enabled: true,
+        nodeName: 'HOME1'
+      });
 
-    agentStub = sandbox.stub(DeviceAgent, 'Agent').returns(agentStubInstance());
+      const d1 = await DeviceFactory(1); 
+      const d2 = await DeviceFactory(2); 
+      const d3 = await DeviceFactory(3); 
 
-    jobRunStub = sandbox.stub(runner, 'PostJobRun').resolves((async () => {
-      await Promise.delay(200);
-      return { success: true };
-    })());
+      timers = main({ nodeName: 'HOME1' });
+
+    });
   });
 
-  afterEach(() => {
-    sandbox.restore();
+  describe('engine1',()=> {
+    let agentStub;
+    let jobRunStub;
+    const sandbox = sinon.sandbox.create();
+
+    beforeEach(async () => {
+      await syncDb(true);
+      const adbDevicesStub = sandbox.stub(cmds, 'adbDevices').resolves(['adbId1', 'adbId2']);
+      const deviceIdSpy = sinon.spy();
+      const agentStubInstance = sinon.spy(() => sinon.createStubInstance(DeviceAgent.Agent));
+
+      agentStub = sandbox.stub(DeviceAgent, 'Agent').returns(agentStubInstance());
+
+      jobRunStub = sandbox.stub(runner, 'PostJobRun').resolves((async () => {
+        await Promise.delay(200);
+        return { success: true };
+      })());
+    });
+
+    afterEach(() => {
+      sandbox.restore();
+    });
+
+
+
+    it('should match queued PostJobs to free devices', async () => {
+      const d1 = await Device.create({
+        adbId: 'adbId1',
+        idle: true,
+        online: true,
+        enabled: true,
+      });
+
+      const d2 = await Device.create({
+        adbId: 'adbId2',
+        idle: false,
+        online: true,
+        enabled: true,
+      });
+
+      const p = (await createAccountUserPostJob()).post;
+
+
+      const jobRunner = sinon.stub().resolves((async () => {
+        await Promise.delay(200);
+        return { success: true };
+      })());
+
+      await runJobs({ nodeName: 'HOME1', jobRunner, JobModel: PostJob })();
+
+      const { agent, job } = jobRunner.getCall(0).args[0];
+
+      assert(agent.constructor instanceof sinon.constructor);
+
+      assert.equal(job.id, p.PostJob.id);
+
+      assert(agentStub.calledWith({ deviceId: 'adbId1' }));
+
+      await d1.reload();
+
+      assert(d1.idle);
+    });
+
+
+    it('should run a function every x amount of milli seconds', async function () {
+      this.timeout(5000);
+
+      let called = 0;
+      const fn = () => { called++; return Promise.resolve(); };
+      const timer = run(fn, 500);
+      await Promise.delay(1000);
+      timer.close();
+      assert(called, 2);
+    });
+
+
+    it('should sync plugged in devices to db', async () => {
+      const d1 = await Device.create({
+        adbId: 'adbId1',
+        idle: true,
+        online: false,
+      });
+
+      const d2 = await Device.create({
+        adbId: 'adbId2',
+        idle: false,
+        online: false,
+      });
+
+      const d3 = await Device.create({
+        adbId: 'adbId3',
+        idle: false,
+        online: true,
+      });
+
+      await syncDevices();
+
+      await d1.reload();
+      await d2.reload();
+      await d3.reload();
+
+      assert(d1.get('online'));
+      assert(d1.get('idle'));
+
+      assert(d2.get('online'));
+      assert(d2.get('idle'));
+
+      assert(!d3.get('online'));
+    });
   });
 
-
-  it('should match queued PostJobs to free devices', async () => {
-    const d1 = await Device.create({
-      adbId: 'adbId1',
-      idle: true,
-      online: true,
-      enabled: true,
-    });
-
-    const d2 = await Device.create({
-      adbId: 'adbId2',
-      idle: false,
-      online: true,
-      enabled: true,
-    });
-
-    const p = (await createAccountUserPostJob()).post;
-
-
-    const jobRunner = sinon.stub().resolves((async () => {
-      await Promise.delay(200);
-      return { success: true };
-    })());
-
-    await runJobs({ nodeName: 'HOME1', jobRunner, JobModel: PostJob })();
-
-    const { agent, job } = jobRunner.getCall(0).args[0];
-
-    assert(agent.constructor instanceof sinon.constructor);
-
-    assert.equal(job.id, p.PostJob.id);
-
-    assert(agentStub.calledWith({ deviceId: 'adbId1' }));
-
-    await d1.reload();
-
-    assert(d1.idle);
-  });
-
-
-  it('should run a function every x amount of milli seconds', async function () {
-    this.timeout(5000);
-
-    let called = 0;
-    const fn = () => { called++; return Promise.resolve(); };
-    const timer = run(fn, 500);
-    await Promise.delay(1000);
-    timer.close();
-    assert(called, 2);
-  });
-
-
-  it('should sync plugged in devices to db', async () => {
-    const d1 = await Device.create({
-      adbId: 'adbId1',
-      idle: true,
-      online: false,
-    });
-
-    const d2 = await Device.create({
-      adbId: 'adbId2',
-      idle: false,
-      online: false,
-    });
-
-    const d3 = await Device.create({
-      adbId: 'adbId3',
-      idle: false,
-      online: true,
-    });
-
-    await syncDevices();
-
-    await d1.reload();
-    await d2.reload();
-    await d3.reload();
-
-    assert(d1.get('online'));
-    assert(d1.get('idle'));
-
-    assert(d2.get('online'));
-    assert(d2.get('idle'));
-
-    assert(!d3.get('online'));
-  });
 });

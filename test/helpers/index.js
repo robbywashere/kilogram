@@ -79,6 +79,23 @@ async function initJob({ id, AccountId, IGAccountId }) {
 function newIGAccount(user) {
   return IGAccount.create({ username: 'username', password: 'password', AccountId: user.Accounts[0].id });
 }
+
+async function createUserAccountIGAccount() {
+  const user = await User.create({
+    password: 'blah',
+    email: 'test@test.com',
+    Accounts: {},
+  }, { include: [Account] });
+  const account = user.Accounts[0];
+  const igAccount = await newIGAccount(user);
+
+
+  return {
+    account, igAccount, user,
+  };
+}
+
+
 async function createAccountUserPostJob() {
   const user = await User.create({
     password: 'blah',
