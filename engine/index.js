@@ -1,6 +1,6 @@
-
 const cmds = require('../android/cmds');
 const { PostJob, VerifyIGJob, Device } = require('../objects');
+const config = require('config');
 const { logger } = require('../lib/logger');
 const demand = require('../lib/demand');
 const Runner = require('../android/runner');
@@ -15,7 +15,6 @@ const {
 // TODO: error handling is bonkers
 // TODO: assure jobs run in priority order, by ids since incremental
 // TODO: !!!Jobs are essentially state machines, and maybe should be implimented more clearly as such to assist in better logging and error handling
-
 
 function logDiff(logFn = console.log) {
   let oldStatus = {};
@@ -71,73 +70,10 @@ function jobStats(job) {
     }, {}),
   };
 }
-
-
-// TODO: Jobs may not always be device dependent! different function?
-function runJobs({ JobModel = demand('JobModel'), JobRunner = demand('JobRunner') } = {}) {
-  const diffLog1 = logDiff(logger.status);
-
-  const diffLog2 = logDiff(logger.status);
-
-  return async function () {
-    let device;
-    let job;
-    try {
-      const stats = await JobModel.stats();
-      const freeDevices = await Device.free();
-
-      diffLog1(allJobsStats(stats, freeDevices));
-
-      if (stats.open > 0 && freeDevices.length > 0) {
-        if ((device = await Device.popDevice()) && (job = await JobModel.popJob())) {
-          try {
-            const deviceId = device.get('adbId');
-            const agent = new DeviceAgent.Agent({ deviceId });
-
-            await job.denormalize(); // Loads Job data from Id's into 'job' object
-            diffLog2(jobStats(job));
-
-            const jobResult = await JobRunner({
-              ...job,
-              agent,
-              job,
-            });
-
-            // TODO: this needs more robust handling!
-            if (!get(jobResult, 'success')) throw new Error(jobResult.error);
-
-            await job.complete({ body: jobResult });
-
-            logger.status(`-- ${JobModel.name} Run cycle complete Job Id: ${job.id}, success: ${jobResult.success}`);
-            logger.status('----- Result: ', (jobResult) || 'None');
-          } catch (err) {
-            // TRY if fails critical error?
-            await job.backout(err); // TODO !!!: backing out of job puts job in sleep mode, retry? retry with count?
-            logger.error(`-- Error running Job: ${job.id}`); // TODO: logger.status??
-            throw err;
-          }
-        }
-      }
-    } catch (e) {
-      logger.error(`Error running 'runJobs' in engine/index.js,\n${e}`);
-      try { logger.error(JSON.stringify(e, null, 4)); } catch (e) {}
-    } finally {
-      if (device) {
-        logger.status(`Freeing device-adbId: ${device.adbId}`);
-        await device.setFree();
-      }
-      if (job && job.status === 'SPINNING') {
-        await job.update({ status: 'OPEN' });
-      } 
-    }
-  };
-}
-
-
-function runJobsAsDeviceNode({ 
-  nodeName = demand('nodeName'), 
-  JobModel = demand('JobModel'), 
-  JobRunner = demand('JobRunner') 
+function runJobs({
+  nodeName = demand('nodeName'),
+  JobModel = demand('JobModel'),
+  jobRunner = demand('jobRunner'),
 } = {}) {
   return async function () {
     let device;
@@ -147,29 +83,15 @@ function runJobsAsDeviceNode({
         try {
           const deviceId = device.get('adbId');
           const agent = new DeviceAgent.Agent({ deviceId });
-
-          await job.denormalize(); 
-
-          const jobResult = await JobRunner({
-            ...job,
-            agent,
-            job,
-          });
-
-          if (!get(jobResult, 'success')) throw new Error(jobResult.error);
-
-          await job.complete({ body: jobResult });
-
-          logger.status(`-- ${JobModel.name} Run cycle complete Job Id: ${job.id}, success: ${jobResult.success}`);
-          logger.status('----- Result: ', (jobResult) || 'None');
+          await job.denormalize();
+          await jobRunner({ ...job, agent, job });
         } catch (err) {
-          await job.backout(err); 
-          logger.error(`-- Error running Job: ${job.id}`); 
-          throw err;
+          await job.backout(err, true); // weird error shoulda been handled, sleep the job and TODO: exec later?
+          logger.error(`-- Unexpected error occurred running Job: ${job.id}`);
         }
       }
-    }  catch (e) {
-      try { logger.error(JSON.stringify(e, null, 4)); } catch (e) {}
+    } catch (err) {
+      logger.error(err);
     } finally {
       if (device) {
         logger.status(`Freeing device-adbId: ${device.adbId}`);
@@ -177,24 +99,24 @@ function runJobsAsDeviceNode({
       }
       if (job && job.status === 'SPINNING') {
         await job.update({ status: 'OPEN' });
-      } 
-    } 
-  }
+      }
+    }
+  };
 }
 
 
-const main = function () {
+const main = function ({ nodeName = config.get('DEVICE_NODE_NAME') } = demand('{ nodeName: <String> }')) {
   return [
     run(syncDevices, 1000),
 
     run(PostJob.initPostJobs, 1000), // Turns posts into queued jobs
 
-    run(runJobs({ JobModel: PostJob, JobRunner: Runner.PostJobRun }), 2000),
+    run(runJobs({ nodeName, JobModel: PostJob, jobRunner: Runner.PostJobRun }), 2000),
 
-    run(runJobs({ JobModel: VerifyIGJob, JobRunner: Runner.VerifyIGJobRun }), 2000),
+    run(runJobs({ nodeName, JobModel: VerifyIGJob, jobRunner: Runner.VerifyIGJobRun }), 2000),
   ];
 };
 
 module.exports = {
-  runJobs, runJobsAsDeviceNode, run, main, syncDevices,
+  runJobs, run, main, syncDevices,
 };

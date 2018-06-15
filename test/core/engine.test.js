@@ -58,14 +58,14 @@ describe('engine', () => {
     const p = (await createAccountUserPostJob()).post;
 
 
-    const JobRunner = sinon.stub().resolves((async () => {
+    const jobRunner = sinon.stub().resolves((async () => {
       await Promise.delay(200);
       return { success: true };
     })());
 
-    await runJobs({ JobRunner, JobModel: PostJob })();
+    await runJobs({ nodeName: 'HOME1', jobRunner, JobModel: PostJob })();
 
-    const { agent, job } = JobRunner.getCall(0).args[0];
+    const { agent, job } = jobRunner.getCall(0).args[0];
 
     assert(agent.constructor instanceof sinon.constructor);
 

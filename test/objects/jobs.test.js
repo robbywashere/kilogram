@@ -1,7 +1,8 @@
-
 process.env.NODE_ENV = 'test'; // TODO ?
-const { PostJobRun, pullRemoteObject } = require('../../android/runner');
+const { PostJobRun, VerifyIGJobRun, pullRemoteObject } = require('../../android/runner');
 const { Agent } = require('../../android/deviceAgent');
+const { JobMethods } = require('../../objects/_jobs');
+const IGAccount = require('../../objects/IGAccount');
 
 const PythonShell = require('python-shell');
 const { PythonBridge } = require('../../android/bridge');
@@ -22,145 +23,216 @@ describe('jobs/', () => {
 
   beforeEach(() => sync(true));
 
+  describe('function VerifyIGJobRun', () => {
+    let agent;
+    let job;
+    let IGAccountFactory = (opts = {}) => ({
+      ...IGAccount.Methods,
+      username: 'username',
+      password: 'password',
+      async update(props) {
+        Object.assign(this, props);
+      },
+      ...opts,
+    });
+    let igAccount; 
+
+    beforeEach(() => {
+      igAccount = IGAccountFactory({ status: 'UNVERIFIED' });
+      job = new function () {
+        return ({
+          ...JobMethods,
+          async update(props) {
+            Object.assign(this, props);
+          },
+          attempts: 0,
+        });
+      }();
+
+
+    });
+
+    it('should verify a good IGAccount', async () => {
+      agent = {
+        exec:() => ({
+          success: true,
+          body: { login: true },
+        }),
+      };
+
+      await VerifyIGJobRun({ job, IGAccount: igAccount, agent });
+      assert.equal(igAccount.status, 'GOOD')
+
+    });
+    it('should fail a bad IGAccount', async () => {
+      agent = {
+        exec:() => ({
+          success: true,
+          body: { login: false, type: 'creds_error' },
+        }),
+      };
+      await VerifyIGJobRun({ job, IGAccount: igAccount, agent });
+      assert.equal(igAccount.status, 'FAILED')
+    });
+
+    it('should retry 3 times an unknown error logging in IGAccount', async () => {
+      agent = {
+        exec:() => ({
+          success: true,
+          body: { login: false, type: 'unknown' },
+        }),
+      };
+      await VerifyIGJobRun({ job, IGAccount: igAccount, agent });
+      assert.equal(igAccount.status, 'UNVERIFIED');
+
+      assert.equal(job.attempts, 1);
+      assert.equal(job.status, 'OPEN');
+
+      await VerifyIGJobRun({ job, IGAccount: igAccount, agent });
+      assert.equal(job.attempts, 2);
+      assert.equal(job.status, 'OPEN');
+
+      await VerifyIGJobRun({ job, IGAccount: igAccount, agent });
+      assert.equal(job.attempts, 3);
+      assert.equal(job.status, 'OPEN');
+
+      await VerifyIGJobRun({ job, IGAccount: igAccount, agent });
+      assert.equal(job.status, 'FAILED');
+
+    });
+
+  });
 
   describe('function PostJobRun', () => {
-    // TODO: PostJobRun job argument is kept normalized intentionally, keeping the interface
-    // generic and leaving it up to the function 'PostJobRun' to be responsible for fetching its own data dependents
-    // Abondanodnninedning
-    it.skip('should take argument, \'job\' then agent.exec with proper data arguments', async () => {
-      const agent = { exec: sinon.spy(() => { throw new Error('ERROR!'); }) };
-
-      const {
-        account, igAccount, user, post, job,
-      } = await createAccountUserPostJob();
-
-      await post.reload({ include: [Photo] });
-
-      const minioClient = {
-        pullPhoto: sinon.mock().returns(Promise.resolve('/tmpfile')),
-      };
-
-      job.update = sinon.spy();
-
-      await PostJobRun({ job, agent, minioClient }, false);
-
-      assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0], { name: post.Photo.objectName });
-
-      assert(agent.exec.calledWith({
-        cmd: 'full_dance',
-        args: {
-          username: igAccount.username,
-          password: igAccount.password,
-          desc: post.text,
-          localfile: '/tmpfile',
-        },
-      }));
+    describe('PostJob / IGDevice.full_dance 💃', () => {
+      let minioClient;
+      let IGAccount;
+      let Post;
+      let agent;
+      let job;
+      let photo;
 
 
-      assert(jobUpdateSpy.calledWith({
-        success: false,
-      }));
-    });
+      beforeEach(() => {
+        minioClient = {
+          pullPhoto: sinon.spy(() => Promise.resolve('/tmpfile')),
+        };
 
-
-    // const { account, igAccount, user, post, job } = await createAccountUserPostJob()
-    // ????TODO: PostJobRun no longer handles its errors, the error is to be handled by the caller, therefore this should be tested - runJobs()
-    it.skip('should run a job via sending a \'full_dance\' cmd sent to python bridge and properly respond to errors', async () => {
-      const execSpy = sinon.spy(() => { throw new Error('ERROR!'); });
-      const jobUpdateSpy = sinon.spy();
-
-      const minioClient = {
-        pullPhoto: sinon.mock().returns(Promise.resolve('/tmpfile')),
-      };
-
-      const igAccount = {
-        username: 'username',
-        password: 'password',
-      };
-      const post = {
-        text: '#description',
-      };
-      const agent = {
-        exec: execSpy,
-      };
-
-      const job = {
-        update: jobUpdateSpy,
-      };
-      const photo = {
-        objectName: 'objectName',
-      };
-
-
-      await PostJobRun({ job, agent, minioClient }, false);
-
-      assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0], { name: 'objectName' });
-
-      assert(execSpy.calledWith({
-        cmd: 'full_dance',
-        args: {
+        IGAccount = {
           username: 'username',
           password: 'password',
-          desc: '#description',
-          localfile: '/tmpfile',
-        },
-      }));
+          fail: sinon.spy(() => Promise.resolve({})),
+        };
+        Post = {
+          text: '#description',
+          Photo: { objectName: 'objectName' },
+        };
+        agent = {
+          exec: sinon.spy(async () => ({ success: true })),
+        };
 
-
-      assert(jobUpdateSpy.calledWith({
-        success: false,
-      }));
-    });
-
-    it('should run a job downloading photo then sending a \'full_dance\' cmd to python bridge updating the job with the body', async () => {
-      const minioClient = {
-        pullPhoto: sinon.mock().returns(Promise.resolve('/tmpfile')),
-      };
-
-      const IGAccount = {
-        username: 'username',
-        password: 'password',
-      };
-      const Post = {
-        text: '#description',
-        Photo: { objectName: 'objectName' },
-      };
-      const agent = {
-        exec: sinon.spy(() => ({ success: true })),
-      };
-      const job = {
-        update: sinon.spy(),
-      };
-      const photo = {
-        objectName: 'objectName',
-      };
-
-
-      await PostJobRun({
-        job, agent, Post, IGAccount, minioClient,
+        job = new function () {
+          return ({
+            complete: sinon.mock().returns(Promise.resolve({})),
+            fail: sinon.mock().returns(Promise.resolve({})),
+            retryTimes() {
+              sinon.mock().returns(Promise.resolve({}));
+            },
+            attempts: 0,
+          });
+        }();
+        photo = {
+          objectName: 'objectName',
+        };
       });
 
-      assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0], { name: 'objectName' });
+      it('should download Post.Photo from minio store', async () => {
+        await PostJobRun({
+          job, agent, Post, IGAccount, minioClient,
+        });
+        assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0], { name: 'objectName' });
+      });
 
-      assert.deepEqual(
-        agent.exec.getCall(0).args[0],
-        {
-          cmd: 'full_dance',
-          args: {
-            username: 'username',
-            password: 'password',
-            desc: '#description',
-            localfile: '/tmpfile',
+      it('should send \'full_dance\' cmd to python bridge with correct args', async () => {
+        await PostJobRun({
+          job, agent, Post, IGAccount, minioClient,
+        });
+        assert.deepEqual(
+          agent.exec.getCall(0).args[0],
+          {
+            cmd: 'full_dance',
+            args: {
+              username: 'username',
+              password: 'password',
+              desc: '#description',
+              localfile: '/tmpfile',
+            },
           },
-        },
-      );
-      assert.deepEqual(
-        job.update.getCall(0).args[0],
-        { success: true },
-      );
+        );
+      });
+
+      it('should mark job as completed', async () => {
+        await PostJobRun({
+          job, agent, Post, IGAccount, minioClient,
+        });
+        assert(job.complete.calledOnce);
+      });
+
+      it('should fail job, and mark IGAccount as failed, when credentials are BAD', async () => {
+        const body = {
+          login: false,
+          type: 'creds_error',
+        };
+        agent = {
+          exec: async () => ({ success: false, body }),
+        };
+        await PostJobRun({
+          job, agent, Post, IGAccount, minioClient,
+        });
+        assert(job.fail.calledOnce);
+        assert(IGAccount.fail.calledOnce);
+      });
+
+      it('should job.retryTimes(n), when credentials results are unknown, failing on the 3rd try', async () => {
+        job = new function () {
+          return ({
+            ...JobMethods,
+            async update(props) {
+              Object.assign(this, props);
+            },
+            attempts: 0,
+          });
+        }();
+
+        agent = {
+          exec: async () => ({ success: false, body: { login: false, type: 'unknown' } }),
+        };
+
+        await PostJobRun({
+          job, agent, Post, IGAccount, minioClient,
+        });
+        assert.equal(job.attempts, 1);
+        assert.equal(job.status, 'OPEN');
+        await PostJobRun({
+          job, agent, Post, IGAccount, minioClient,
+        });
+        assert.equal(job.attempts, 2);
+        assert.equal(job.status, 'OPEN');
+        await PostJobRun({
+          job, agent, Post, IGAccount, minioClient,
+        });
+        assert.equal(job.attempts, 3);
+        assert.equal(job.status, 'OPEN');
+        await PostJobRun({
+          job, agent, Post, IGAccount, minioClient,
+        });
+        assert.equal(job.attempts, 3);
+        assert.equal(job.status, 'FAILED');
+      });
     });
   });
 
+  // TODO: MOVE THIS
   describe('class Agent', () => {
     const sandbox = sinon.sandbox.create();
 

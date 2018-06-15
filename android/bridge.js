@@ -2,12 +2,14 @@ const config = require('config');
 const Promise = require('bluebird');
 const { logger } = require('../lib/logger');
 const PythonShell = require('python-shell');
+//const { EventEmitter } = require('events');
 
 
 class PythonBridge {
   constructor(deviceId, log = logger) {
     this.deviceId = deviceId;
     this.logger = log;
+    // this.events = new EventEmitter();
   }
 
   static shell() {
@@ -25,7 +27,14 @@ class PythonBridge {
     });
   }
 
-  cmd(method, args = {}, outputFn = () => {}) {
+  //this.eventEmitter.on( ig:exception
+  //                      ig:payload
+  //                      ig:client_err:not_authorized
+  //                      ig:stdout
+  //                      ig:stderr
+  //                      ig:end
+
+  cmd(method, args = {}) {
     return new Promise((resolve, reject) => {
       const shell = PythonBridge.shell();
       shell.send({
@@ -40,8 +49,9 @@ class PythonBridge {
 
       shell.on('message', (message) => {
         if (typeof message === 'object') {
-          outputFn(message);
-          this.lastMsg = message;
+          //TODO: instead of a single result, move the data flow
+          //to event an emitter of this class
+          this.result = message;
         } else {
           this.logger(` Device ID: ${this.deviceId} - ${message}`);
         }
@@ -50,7 +60,7 @@ class PythonBridge {
       shell.end((err) => {
         if (err) reject(err);
         this.logger(`Method: ${method} - finished`);
-        resolve(this.lastMsg);
+        resolve(this.result);
       });
     });
   }

@@ -34,9 +34,14 @@ async function PostJobRun({
     },
   });
 
-  await job.update(result);
+  if (result.success) {
+    return job.complete();
+  }
 
-  return result;
+  if (get(result, 'body.type') === 'creds_error') {
+    return Promise.all([job.fail(), IGAccount.fail()]);
+  }
+  return job.retryTimes({ max: 3, body: result.body });
 }
 
 
@@ -52,8 +57,16 @@ async function VerifyIGJobRun({
       password: IGAccount.password,
     },
   });
-  await job.update(result);
-  return result;
+  if (result.success) { 
+    const body = get(result,'body',{});
+    if (body.login === true) {
+     return Promise.all([job.complete(), IGAccount.good()]);
+    }
+    if (body.login === false && body.type === 'creds_error') {
+      return Promise.all([job.complete(), IGAccount.fail()]);
+    }
+  }
+  return job.retryTimes({ max: 3, body: result.body });
 }
 
 

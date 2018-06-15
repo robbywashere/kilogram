@@ -48,6 +48,12 @@ module.exports = {
     verified: { where: { status: 'GOOD' } },
   },
   Methods: {
+    good(){
+      return this.update({ status: 'GOOD' })
+    },
+    fail(){
+      return this.update({ status: 'FAILED' })
+    }
   },
   StaticMethods: {
   },

@@ -1,4 +1,5 @@
 const sequelize = require('sequelize');
+const demand = require('../lib/demand');
 const { get } = require('lodash');
 
 const {
@@ -57,11 +58,11 @@ const GetJobQuery = tableName => `
 `;
 
 
+// TODO: add epoch?
 const StatsQuery = tableName => `
   SELECT 
     sum(case when (status = 'OPEN') then 1 else 0 end) as open,
     sum(case when (status = 'SUCCESS') then 1 else 0 end) as success,
-    sum(case when (status = 'SUCCESS' AND (taskresult != 'NEGATIVE')) then 1 else 0 end) as missions_accomplished,
     sum(case when (status = 'FAILED') then 1 else 0 end) as failed,
     sum(case when (status = 'SLEEPING') then 1 else 0 end) as sleeping,
     sum(case when (status = 'SPINNING') then 1 else 0 end) as spinning
@@ -69,16 +70,39 @@ const StatsQuery = tableName => `
 `;
 
 
+// sum(case when (status = 'SUCCESS' AND (taskresult != 'NEGATIVE')) then 1 else 0 end) as missions_accomplished,
+
 const JobMethods = {
   denormalize() {
     return this.reload({ include: [{ all: true }] }); //
   },
-  complete({ body, resultOf }) {
-    const taskresult = (typeof resultOf === 'undefined') ? 'UNKNOWN' : (resultOf) ? 'POSITIVE' : 'NEGATIVE';
-
+  complete(body) {
     return this.update({
-      taskresult,
-      status: get(body, 'success') ? 'SUCCESS' : 'FAILED',
+      status: 'SUCCESS',
+      body,
+    });
+  },
+  retryTimes({ body, max = 3}) {
+    if (this.attempts >= max) {
+      return this.fail(body);
+    }
+    return this.retry();
+  },
+  retryThrice(body) {
+    if (this.attempts < 3) {
+      return this.fail(body);
+    }
+    return this.retry();
+  },
+  retry() {
+    return this.update({
+      status: 'OPEN',
+      attempts: this.attempts + 1,
+    });
+  },
+  fail(body) {
+    return this.update({
+      status: 'FAILED',
       body,
     });
   },
@@ -95,7 +119,6 @@ const JobStaticMethods = {
 
   async stats() {
     return this.$.query(StatsQuery(this.tableName)).spread((r) => {
-      // Object.keys(JSON.parse(JSON.stringify(get(r,0)))).reduce( (p,n) => ({ ...p, [n] :(parseInt(result[key],10)||0) }),{});
       const result = JSON.parse(JSON.stringify(get(r, 0)));
       for (const key of Object.keys(result)) result[key] = parseInt(result[key], 10) || 0;
       return result;
@@ -104,21 +127,14 @@ const JobStaticMethods = {
   async popJob() { return get((await this.$.query(GetJobQuery(this.tableName), { type: sequelize.QueryTypes.SELECT, model: this })), 0); },
 };
 
-/*
- *
- * Job itself, did what it was told --- status = SUCCESS
- *
- * result of job was not good --- result = NEGATIVE vs result = POSTIVE
- *
- *
- */
 
 const JobProperties = {
   body: {
     type: sequelize.JSON,
   },
-  taskresult: {
-    type: ENUM('UNKNOWN', 'POSITIVE', 'NEGATIVE'),
+  attempts: {
+    type: INTEGER,
+    defaultValue: 0,
   },
   status: {
     type: ENUM('OPEN', 'SPINNING', 'SUCCESS', 'SLEEPING', 'FAILED'),
