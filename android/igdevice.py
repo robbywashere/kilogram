@@ -17,6 +17,7 @@ class IGDevice:
         self.device_id = device_id
         self.device = Device(device_id)
         self.completed = False
+        self.result = None
         self.body = None
 
 
@@ -49,9 +50,6 @@ class IGDevice:
             count += 1
 
         return result
-
-
-
 
     def wake(self):
         if self.device.screen == "off":
@@ -150,11 +148,9 @@ class IGDevice:
         self.clean_slate()
         self.open_ig()
         self.login(username, password)
-
         login_result = self.waitForLogin()
         self.body = login_result
         self.completed = True
-
 
     def full_dance(self, username, password, localfile,  desc = ""):
         if localfile is None:
