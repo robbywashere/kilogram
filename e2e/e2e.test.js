@@ -246,18 +246,30 @@ describe('End To End Test 👍 ', () => {
     assert(post.id);
 
     TIMERS = main({ nodeName: NODE_NAME });
+
+
+    logger.debug('Waiting for device .....');
     while (!(await Device.findAll()).length) {
-      logger.debug('Waiting for device .....');
-      await Promise.delay(250);
+      await Promise.delay(0);
     }
-     const devices = await Device.findAll(); // ?? TODO: NEEDED?
-     await devices[0].update({ enabled: true }); // ?? NEEDED?
 
-    logger.debug('Waiting for post to complete ...');
+    const devices = await Device.findAll();
+    await devices[0].update({ enabled: true });
+
+    logger.debug('Waiting for IGAccount Verify .....');
+    while (!(await IGAccount.verified()).length) {
+      await Promise.delay(0);
+    }
+    logger.debug('IGAccount Verified!');
+
+
+    logger.debug('Waiting for Post to complete ...');
     while (!(await PostJob.completed()).length) {
-      await Promise.delay(250);
+      await Promise.delay(0);
     }
+    logger.debug('Post to completed!');
 
+    logger.debug('Now Additional Checks.....');
     const pjs = await PostJob.findAll();
     assert.equal(pjs.length, 1);
     assert(pjs[0].isCompleted())
