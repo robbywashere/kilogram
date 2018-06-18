@@ -9,6 +9,9 @@ const { isLoggedIn } = require('./_helpers');
 // TODO unique true composite key constraint { AccountId, username }
 //
 
+const GOOD = 'GOOD',
+  FAILED = 'FAILED',
+  UNVERIFIED = 'UNVERIFIED';
 
 module.exports = {
   Name: 'IGAccount',
@@ -22,21 +25,20 @@ module.exports = {
       type: STRING,
       allowNull: false,
       unique: 'igaccount_account',
-      // permit: false,
+      permit: false,
     },
     status: {
-      type: ENUM('UNVERIFIED', 'GOOD', 'FAILED'),
-      defaultValue: 'UNVERIFIED',
+      type: ENUM(UNVERIFIED,GOOD,FAILED),
+      defaultValue: UNVERIFIED,
       triggerable: true,
     },
   },
   Hooks: {
-    /* TODO: async afterUpdate() {
-     * if username !== previous.username ||
-          password !== previous.password
-          this.status = 'UNVERIFIED'
-          VerifyIGJob.create()
-    } */
+    async beforeUpdate(igAccount) {
+      if (igAccount.password !== igAccount._previousDataValues.password) {
+        igAccount.set('status',UNVERIFIED);
+      }
+    }, 
     async afterCreate({ id }) {
       const { VerifyIGJob } = this.sequelize.models;
       return VerifyIGJob.create({
@@ -45,17 +47,23 @@ module.exports = {
     },
   },
   Scopes: {
-    verified: { where: { status: 'GOOD' } },
+    verified: { where: { status: GOOD } },
   },
   Methods: {
     good(){
-      return this.update({ status: 'GOOD' })
+      return this.update({ status: GOOD })
     },
     fail(){
-      return this.update({ status: 'FAILED' })
-    }
+      return this.update({ status: FAILED })
+    },
+    unverify(){
+      return this.update({ status: UNVERIFIED })
+    },
   },
   StaticMethods: {
+    get statusTypes() {
+      return ({ GOOD, FAILED, UNVERIFIED });
+    }
   },
   Init() {
   },

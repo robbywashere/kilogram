@@ -4,7 +4,7 @@ const {
   JobMethods,
   JobStaticMethods,
   InitPostJobQuery,
-} = require('./_jobs');
+} = require('./_JobsBase');
 
 
 module.exports = {
@@ -17,12 +17,12 @@ module.exports = {
     ...JobScopes,
   },
   Init({ IGAccount }) {
-    this.belongsTo(IGAccount, { foreignKey: { allowNull: false } });
+    this.belongsTo(IGAccount, { onDelete: 'cascade', foreignKey: { allowNull: false } });
   },
   Methods: {
     ...JobMethods,
     denormalize() {
-      return this.reloadWithDeps();
+      return this.reloadWithAll();
     },
   },
   StaticMethods: {

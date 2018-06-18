@@ -1,5 +1,7 @@
 const sequelize = require('sequelize');
+const cmds = require('../android/cmds');
 const config = require('config');
+
 const {
   STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op,
 } = sequelize;
@@ -31,7 +33,7 @@ const PopDeviceQuery = `
   RETURNING *;
 `;
 
-const PopNodeDeviceQuery = (nodeName)=>`
+const PopNodeDeviceQuery = nodeName => `
   UPDATE 
       "Devices"
   SET 
@@ -85,9 +87,9 @@ module.exports = {
     nodeName: {
       type: STRING,
       allowNull: false,
-      defaultValue(){ 
+      defaultValue() {
         return config.get('DEVICE_NODE_NAME');
-      }
+      },
     },
   },
   ScopeFunctions: true,
@@ -96,6 +98,7 @@ module.exports = {
     disabled: { where: { enabled: false } },
     free: { where: { idle: true, online: true, enabled: true } },
     dangling: { where: { online: false, idle: false } },
+    inProgress: { where: { online: true, enabled: true, idle: false } },
     zombies: {
       where: {
         online: true,
@@ -107,6 +110,9 @@ module.exports = {
     },
   },
   Methods: {
+    isInProgress(){
+      return (this.online && this.enabled && !this.idle)
+    },
     setFree() {
       return this.set('idle', true).save();
     },
@@ -118,7 +124,13 @@ module.exports = {
     },
   },
   StaticMethods: {
+    async syncDevices() {
+      const devs = await cmds.adbDevices();
+      await this.freeDanglingByIds(devs);
+      return this.syncAll(devs);
+    },
     async popDevice() { return get((await this.sequelize.query(PopDeviceQuery, { type: sequelize.QueryTypes.SELECT, model: this })), 0); },
+
     async popNodeDevice(nodeName) { return get((await this.sequelize.query(PopNodeDeviceQuery(nodeName), { type: sequelize.QueryTypes.SELECT, model: this })), 0); },
     setFreeById(adbId) {
       return this.update({
@@ -143,7 +155,7 @@ module.exports = {
 
       const fIds = ids.filter(id => !exists.includes(id));
       if (fIds.length > 0) {
-        let newDevices = fIds.map(adbId => ({ online: true, idle: true, adbId }));
+        const newDevices = fIds.map(adbId => ({ online: true, idle: true, adbId }));
         return this.bulkCreate(newDevices, { returning: true, raw: true }).map(d => d.get('adbId'));
       }
       return [];

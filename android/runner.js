@@ -8,21 +8,23 @@ const demand = require('../lib/demand');
 
 const minio = require('../server-lib/minio');
 
-const { get } = require('lodash');
+const { get, chain, isUndefined } = require('lodash');
+const _ = require('lodash');
 
 
 async function PostJobRun({
   job = demand('job'),
   IGAccount = demand('IGAccount'),
   Post = demand('Post'),
-  // Photo = demand('Photo')- I wish for a flatter dep injection :(
   agent = demand('agent'),
-  minioClient = (new minio.MClient()),
+  minioClient,
 }) {
-  // TODO: I wish for a flatter dep injection :(
-  if (typeof get(Post, 'Photo.objectName') === 'undefined') throw new Error(`Post ${Post.id} does not have a .Photo.objectName`);
 
-  const localfile = await minioClient.pullPhoto({ name: Post.Photo.objectName });
+  const mc = (typeof minioClient !== "undefined") ? minioClient : (new minio.MClient());
+
+  if (isUndefined(get(Post,'Photo.objectName'))) throw new Error(`Post ${Post.id} does not have a .Photo.objectName`);
+
+  const localfile = await mc.pullPhoto({ name: Post.Photo.objectName });
 
   const result = await agent.exec({
     cmd: 'full_dance',

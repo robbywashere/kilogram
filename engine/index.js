@@ -41,6 +41,7 @@ function logDeviceSync(result) {
   }
 }
 
+// TODO: move me?
 async function syncDevices() {
   const devs = await cmds.adbDevices();
   await Device.freeDanglingByIds(devs); // TODO:???
@@ -50,7 +51,7 @@ async function syncDevices() {
 
 const run = function (fn, milliseconds) { // Job 'Harness' - Errors should never reach this point?
   return setInterval(() => {
-    fn().catch(e => logger.critical(`Unhandled exception in function: ${fn.name}`, e));
+    fn().catch(e => logger.critical(`Unhandled exception in engine 'run' harness : ${fn.name}`, e));
   }, milliseconds);
 };
 
@@ -78,42 +79,44 @@ function runJobs({
   return async function () {
     let device;
     let job;
-    try {
-      if ((device = await Device.popNodeDevice(nodeName)) && (job = await JobModel.popJob())) {
-        try {
-          const deviceId = device.get('adbId');
-          const agent = new DeviceAgent.Agent({ deviceId });
-          await job.denormalize();
-          await jobRunner({ ...job, agent, job });
-        } catch (err) {
-          await job.backout(err, true); // weird error shoulda been handled, sleep the job and TODO: exec later?
-          logger.error(`-- Unexpected error occurred running Job: ${job.id}`);
-        }
+    if ((device = await Device.popNodeDevice(nodeName)) && (job = await JobModel.popJob())) {
+      try {
+        const deviceId = device.get('adbId');
+        const agent = new DeviceAgent.Agent({ deviceId });
+        await job.denormalize();
+        await jobRunner({ ...job, agent, job });
+      } catch (err) {
+        await job.backout(err, true); // jobRunner should handle this?
+        logger.error(`-- Unexpected error occurred running ${JobModel.name}: ${job.id} \n ${err}`);
       }
-    } catch (err) {
-      logger.error(err);
-    } finally {
-      if (device) {
-        logger.status(`Freeing device-adbId: ${device.adbId}`);
-        await device.setFree();
-      }
-      if (job && job.status === 'SPINNING') {
-        await job.update({ status: 'OPEN' });
-      }
-    }
+    } 
+    if (device) await device.setFree();
   };
 }
 
 
-const main = function ({ nodeName = config.get('DEVICE_NODE_NAME') } = demand('{ nodeName: <String> }')) {
+const main = function ({ 
+  nodeName = (config.get('DEVICE_NODE_NAME') || demand('{ nodeName: <String> }')),
+  interval = 1000
+}) {
   return [
-    run(syncDevices, 1000),
 
-    run(PostJob.initPostJobs, 1000), // Turns posts into queued jobs
+    // this will run on a master node
+    run(PostJob.initPostJobs.bind(PostJob), interval), // Turns posts into queued jobs
+    // These will run on a device node
+    run(syncDevices, interval),
 
-    run(runJobs({ nodeName, JobModel: PostJob, jobRunner: Runner.PostJobRun }), 2000),
+    run(runJobs({
+      nodeName,
+      JobModel: PostJob,
+      jobRunner: Runner.PostJobRun,
+    }), interval),
 
-    run(runJobs({ nodeName, JobModel: VerifyIGJob, jobRunner: Runner.VerifyIGJobRun }), 2000),
+    run(runJobs({
+      nodeName, 
+      JobModel: VerifyIGJob, 
+      jobRunner: Runner.VerifyIGJobRun,
+    }), interval),
   ];
 };
 

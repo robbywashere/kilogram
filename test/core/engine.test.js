@@ -1,48 +1,130 @@
 const {
   runJobs, run, main, syncDevices,
 } = require('../../engine');
-const { createAccountUserPostJob } = require('../helpers');
+const {
+  createAccountUserPostJob,
+  createUserAccountIGAccountPhotoPost,
+} = require('../helpers');
 const sinon = require('sinon');
 const assert = require('assert');
 const cmds = require('../../android/cmds');
-const { Account, IGAccount, Device, Post, PostJob } = require('../../objects');
+const {
+  Account, IGAccount, Device, Post, PostJob, VerifyIGJob
+} = require('../../objects');
 const syncDb = require('../../db/sync');
-const runner = require('../../android/runner');
+const Runner = require('../../android/runner');
 const DeviceAgent = require('../../android/deviceAgent');
+
 const Promise = require('bluebird');
+
+// TODO: ADD useFakeTimers
 
 // TODO: Possible memory link, interferes with other tests, must be ran seperately
 //
+const DeviceFactory = n => Device.create({
+  adbId: `adbId${n}`,
+  idle: true,
+  online: true,
+  enabled: true,
+  nodeName: 'HOME1',
+});
+
 describe('engine tests', () => {
+  describe('main()', () => {
+    let Device1,
+      Device2,
+      Device3,
+      timers = [],
+      photo,
+      post,
+      user,
+      account,
+      igAccount,
+      sandbox,
+      PostJobRun_STUB,
+      VerifyIGJobRun_STUB;
 
-  describe('engine main()', ()=>{
 
-    throw new Error('complete me');
+    beforeEach(async () => {
+      await syncDb(true);
+      ({
+        user, account, photo, post, igAccount,
+      } = await createUserAccountIGAccountPhotoPost());
+      await igAccount.good();
+      
+      Device1 = await DeviceFactory(1);
+      Device2 = await DeviceFactory(2);
+      Device3 = await DeviceFactory(3);
+      sandbox = sinon.sandbox.create();
+      sandbox.stub(cmds, 'adbDevices').resolves([Device1, Device2, Device3].map(d => d.adbId));
+      PostJobRun_STUB = sandbox.stub(Runner, 'PostJobRun').resolves(async () => {});
+      VerifyIGJobRun_STUB = sandbox.stub(Runner, 'VerifyIGJobRun').resolves(async () => {});
+      timers = main({ nodeName: 'HOME1', interval: 500 });
+    });
 
-    let timers = [];
-    beforeEach(()=>syncDb(true))
-    afterEach( ()=>timers.forEach(clearInterval))
+    afterEach(() => {
+      timers.forEach(clearInterval);
+      timers = [];
+      try { sandbox.restore(); } catch (e) { /* */ }
+    });
+    // await createAccountUserPostJob()
 
-    it ('should be awesome',async ()=>{
+    it('shoud run and return an array of timers<setInterval>', async () => {
+      assert(timers.length > 0);
+    });
 
-      const DeviceFactory = (n)=>Device.create({
-        adbId: `adbId${n}`,
-        idle: true,
-        online: true,
-        enabled: true,
-        nodeName: 'HOME1'
-      });
 
-      const d1 = await DeviceFactory(1); 
-      const d2 = await DeviceFactory(2); 
-      const d3 = await DeviceFactory(3); 
+    it('\t should put PostJob in progress with device', async () => {
 
-      timers = main({ nodeName: 'HOME1' });
+
+      while (!(await PostJob.inProgress()).length) {
+        /* Wait for job  */
+      }
+
+      const pj = await PostJob.findOne();
+
+      assert(pj);
+
+      assert(pj.isInProgress());
+
+      // while (!(await Device.inProgress()).length) {/* Wait for device */}
+
+      let agent;
+      while(true) {
+        try {
+          ({ agent } = PostJobRun_STUB.getCall(0).args[0]);
+          break;
+        } catch(e) {}
+        await new Promise(rs=>process.nextTick(rs))
+      }
+      assert(agent.deviceId);
 
     });
+
+
+    it('\t Should put VerifyIGJob in progress with device', async () => {
+      while (!(await VerifyIGJob.inProgress()).length) {
+        /* */
+      }
+      const vij = await VerifyIGJob.findOne();
+      assert(vij);
+      assert(vij.isInProgress());
+
+      let agent;
+      while(true) {
+        try {
+          ({ agent } = VerifyIGJobRun_STUB.getCall(0).args[0]);
+          break;
+        } catch(e) {}
+        await new Promise(rs=>process.nextTick(rs))
+      }
+      assert(agent.deviceId);
+
+    })
   });
 
-  describe('engine1',()=> {
+
+  describe('engine unit', () => {
     let agentStub;
     let jobRunStub;
     const sandbox = sinon.sandbox.create();
@@ -55,8 +137,7 @@ describe('engine tests', () => {
 
       agentStub = sandbox.stub(DeviceAgent, 'Agent').returns(agentStubInstance());
 
-      jobRunStub = sandbox.stub(runner, 'PostJobRun').resolves((async () => {
-        await Promise.delay(200);
+      jobRunStub = sandbox.stub(Runner, 'PostJobRun').resolves((async () => {
         return { success: true };
       })());
     });
@@ -64,7 +145,6 @@ describe('engine tests', () => {
     afterEach(() => {
       sandbox.restore();
     });
-
 
 
     it('should match queued PostJobs to free devices', async () => {
@@ -86,7 +166,6 @@ describe('engine tests', () => {
 
 
       const jobRunner = sinon.stub().resolves((async () => {
-        await Promise.delay(200);
         return { success: true };
       })());
 
@@ -152,5 +231,4 @@ describe('engine tests', () => {
       assert(!d3.get('online'));
     });
   });
-
 });

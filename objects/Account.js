@@ -45,7 +45,7 @@ module.exports = {
   },
   Init({ User, Account, IGAccount }) {
     this.belongsToMany(User, { through: 'UserAccount' });
-    this.hasMany(IGAccount, { foreignKey: { allowNull: false, unique: 'igaccount_account' } });
+    this.hasMany(IGAccount, { onDelete: 'cascade', foreignKey: { allowNull: false, unique: 'igaccount_account' } });
     this.addScope('withIgAccounts', { include: [IGAccount] });
     this.addScope('withUsers', { include: [User] });
   },

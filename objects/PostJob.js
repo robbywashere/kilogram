@@ -5,8 +5,8 @@ const {
   JobMethods,
   JobStaticMethods,
   InitPostJobQuery,
-} = require('./_jobs');
-const $seq = require('../db'); // TODO: not a fan of this since it could lead to circular dep bug problems and should be avoided
+} = require('./_JobsBase');
+const db = require('../db'); //TODO: possible circular dep?
 
 module.exports = {
   Name: 'PostJob',
@@ -26,7 +26,7 @@ module.exports = {
     Post, Photo, IGAccount, Account,
   }) {
     this.belongsTo(Post, { foreignKey: { unique: true } });
-    this.belongsTo(Account, { foreignKey: { allowNull: false } });
+    this.belongsTo(Account, { onDelete: 'cascade', foreignKey: { allowNull: false } });
     this.belongsTo(IGAccount, { foreignKey: { allowNull: false } });
     this.addScope('withPost', { include: [{ model: Post, include: [Photo] }] });
     this.addScope('withDeps', { include: [IGAccount, { model: Post, include: [Photo] }] });
@@ -34,32 +34,31 @@ module.exports = {
   Methods: {
     ...JobMethods,
     denormalize() {
-      return this.reloadWithDeps();
+      return this.reloadWithAll();
     },
   },
   StaticMethods: {
     ...JobStaticMethods,
-    async initPostJob2() { // lol huh?
-      return $seq.models.PostJob.create({
+    /*async initPostJob2() {
+      return db.models.PostJob.create({
         PostId: '$Post.id$',
         IGAccountId: '$Post.IGAccountId$',
         AccountId: '$Post.AccountId$',
       }, {
         include: [{
-          model: $seq.models.Post,
+          model: db.models.Post,
           where: {
             postDate: {
               [Op.lte]: sequelize.fn('NOW()'),
             },
             '$PostJobs.PostId$': null,
           },
-          include: [$seq.models.PostJob],
+          include: [db.models.PostJob],
         }],
       });
-    },
-    // TODO: move this to a ServiceObject/ ServiceFunction type thing? do not like $seq
+    },*/
     async initPostJobs() {
-      return $seq.query(InitPostJobQuery, { type: sequelize.QueryTypes.INSERT, model: $seq.models.PostJob });
+      return this.sequelize.query(InitPostJobQuery, { type: sequelize.QueryTypes.INSERT, model: this.sequelize.models.PostJob });
     },
   },
 };

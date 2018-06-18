@@ -35,8 +35,8 @@ module.exports = {
   Init({
     PostJob, Photo, Account, IGAccount,
   }) {
-    this.belongsTo(Account, { foreignKey: { allowNull: false } });
-    this.belongsTo(IGAccount, { foreignKey: { allowNull: false } });
+    this.belongsTo(Account, { onDelete: 'cascade', foreignKey: { allowNull: false } });
+    this.belongsTo(IGAccount, { onDelete: 'cascade', foreignKey: { allowNull: false } });
     this.hasOne(PostJob);
     this.belongsTo(Photo);
     this.addScope('withJob', { include: [PostJob] });
@@ -56,6 +56,9 @@ module.exports = {
       for (const instance of instances) {
         await this.mapToPhoto(instance);
       }
+    },
+    beforeDelete({ id }) {
+      return this.sequelize.models.PostJob.destroy({ where: { status: 'OPEN', PostId: id }})
     },
     beforeCreate(instance) {
       return this.mapToPhoto(instance);

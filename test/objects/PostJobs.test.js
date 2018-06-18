@@ -15,7 +15,34 @@ const { times, constant } = require('lodash');
 describe('objects/PostJob', () => {
   beforeEach(async () => await sync(true));
 
-  it.skip('should only create jobs for Post.status = PUBLISH', async () => {
+  it('should only initPostJobs for Posts with verified IGAccounts', async () => {
+    const user = await ezUserAccount();
+    const account = user.Accounts[0];
+    const igaccount = await newIGAccount(user);
+    await igaccount.fail();
+    const photo = await Photo.create({});
+
+    const props = {
+      postDate: sequelize.fn('NOW'),
+      UserId: user.id,
+      AccountId: account.id,
+      IGAccountId: igaccount.id,
+      photoUUID: photo.uuid,
+    };
+
+
+    const post = await Post.create(props);
+
+    await PostJob.initPostJobs();
+    const jobSearch1 = await PostJob.findAll();
+    assert.equal(jobSearch1.length,0);
+
+    await igaccount.good();
+
+    await PostJob.initPostJobs();
+    const jobSearch2 = await PostJob.findAll();
+    assert.equal(jobSearch2.length,1);
+
   });
 
 
@@ -23,6 +50,7 @@ describe('objects/PostJob', () => {
     const user = await ezUserAccount();
     const account = user.Accounts[0];
     const igaccount = await newIGAccount(user);
+    await igaccount.good();
     const photo = await Photo.create({});
 
     const props = {
@@ -35,15 +63,10 @@ describe('objects/PostJob', () => {
 
 
     await Post.bulkCreate(times(9, constant(props)));
-
     await PostJob.initPostJobs();
-
-    // Run again to assure no dupes ;)
-
+    // Run again to assure no dupes 
     await PostJob.initPostJobs();
-
     const jobs = await PostJob.findAll();
-
     assert.equal(9, jobs.length);
   });
 

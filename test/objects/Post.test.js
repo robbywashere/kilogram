@@ -13,6 +13,7 @@ const sync = require('../../db/sync');
 const SEQ = require('../../db');
 const Promise = require('bluebird');
 const {
+createUserAccountIGAccountPhotoPost,
   initJob, ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob,
 } = require('../helpers');
 const { logger } = require('../../lib/logger');
@@ -22,6 +23,40 @@ const {
 
 describe('objects/Post', () => {
   beforeEach(async () => await sync(true));
+
+  it('should destroy PostJob<OPEN> when itself is destroyed', async () => {
+    const {
+      user, account, igAccount, photo, post,
+    } = await createUserAccountIGAccountPhotoPost();
+
+    let pj = await initJob(post);
+
+    await post.destroy();
+
+    assert(!(await PostJob.findById(1)))
+
+  });
+
+
+  it('should be destroyed when Account is destroyed', async () => {
+    const {
+      user, account, igAccount, photo, post,
+    } = await createUserAccountIGAccountPhotoPost();
+
+    assert((await Post.findById(post.id)));
+    await account.destroy();
+    assert(!(await Post.findById(post.id)));
+  });
+
+  it('should be destroyed when its IGAccount is destroyed', async () => {
+    const {
+      user, account, igAccount, photo, post,
+    } = await createUserAccountIGAccountPhotoPost();
+
+    assert((await Post.findById(post.id)));
+    await igAccount.destroy();
+    assert(!(await Post.findById(post.id)));
+  });
 
 
   it('should find due posts with .due', async () => {

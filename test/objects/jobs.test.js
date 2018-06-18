@@ -1,7 +1,6 @@
-process.env.NODE_ENV = 'test'; // TODO ?
 const { PostJobRun, VerifyIGJobRun, pullRemoteObject } = require('../../android/runner');
 const { Agent } = require('../../android/deviceAgent');
-const { JobMethods } = require('../../objects/_jobs');
+const { JobMethods } = require('../../objects/_JobsBase');
 const IGAccount = require('../../objects/IGAccount');
 
 const PythonShell = require('python-shell');
@@ -48,8 +47,6 @@ describe('jobs/', () => {
           attempts: 0,
         });
       }();
-
-
     });
 
     it('should verify a good IGAccount', async () => {

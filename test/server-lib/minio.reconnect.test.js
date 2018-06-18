@@ -20,24 +20,24 @@ const { get } = require('lodash');
 
 const MINIODATADIR = './.minio-test-data';
 
+
+//TODO: use sinon faketimers instead of actual timers to speed up test
+
 function runMinio(){
   let stderr = [];
   const minio = spawn('minio', ['server', './.minio-test-data']);
   minio.stdout.on('data', (data) => {
     minio.emit('data', data);
-    // logger.debug(`minio stdout: ${data}`);
   });
 
   minio.stderr.on('data', (data) => {
     stderr.push(data);
-    //console.error(`stderr: ${data}`);
   });
 
   minio.once('data', ()=> minio.emit('open',{}));
 
   minio.on('close', (code) => {
     logger.debug(`child process exited with code ${code}`);
-    //if (stderr.length>0) logger.error(stderr.join("\n"));
   });
   return minio; 
 }

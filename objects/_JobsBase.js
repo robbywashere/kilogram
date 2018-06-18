@@ -9,6 +9,7 @@ const {
 // Turns oustanding posts into Jobs
 // this exists since we are essentially #bulkCreate'ing from a subselect
 // not currently possibly or feasible or optimizied to do in sequelize ;)
+//
 const InitPostJobQuery = `
   INSERT INTO
     "PostJobs"
@@ -25,12 +26,18 @@ const InitPostJobQuery = `
         "PostJobs"
       ON 
         "PostJobs"."PostId" = "Posts"."id"
+      LEFT JOIN
+        "IGAccounts"
+      ON
+        "Posts"."IGAccountId" = "IGAccounts"."id"
       WHERE
         "Posts"."postDate" <= NOW()
       AND
         "PostJobs"."PostId" IS NULL 
       AND 
         "Posts"."status" = 'PUBLISH'
+      AND 
+        "IGAccounts"."status" = 'GOOD'
     )
 `;
 
@@ -73,6 +80,9 @@ const StatsQuery = tableName => `
 // sum(case when (status = 'SUCCESS' AND (taskresult != 'NEGATIVE')) then 1 else 0 end) as missions_accomplished,
 
 const JobMethods = {
+  isInProgress() {
+    return (this.status === 'SPINNING');
+  },
   denormalize() {
     return this.reload({ include: [{ all: true }] }); //
   },
@@ -82,7 +92,7 @@ const JobMethods = {
       body,
     });
   },
-  retryTimes({ body, max = 3}) {
+  retryTimes({ body, max = 3 }) {
     if (this.attempts >= max) {
       return this.fail(body);
     }
@@ -105,6 +115,9 @@ const JobMethods = {
       status: 'FAILED',
       body,
     });
+  },
+  setFree() {
+    return this.update({ status: 'OPEN' });
   },
   backout(err, sleep = false) {
     const error = (typeof err !== 'object') ? String(error) : err;

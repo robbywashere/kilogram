@@ -80,7 +80,7 @@ function newIGAccount(user) {
   return IGAccount.create({ username: 'username', password: 'password', AccountId: user.Accounts[0].id });
 }
 
-async function createUserAccountIGAccount() {
+async function createUserAccountIGAccountPhotoPost() {
   const user = await User.create({
     password: 'blah',
     email: 'test@test.com',
@@ -89,9 +89,23 @@ async function createUserAccountIGAccount() {
   const account = user.Accounts[0];
   const igAccount = await newIGAccount(user);
 
+  const photo = await Photo.create({
+    bucket: 'uploads',
+    objectName: minioObj.create('v4', { payload: true }),
+  });
+
+  const post = await Post.create({
+    postDate: new Date(),
+    UserId: user.id,
+    AccountId: account.id,
+    IGAccountId: igAccount.id,
+    text: '#description',
+    photoUUID: photo.uuid,
+    Photo: photo,
+  });
 
   return {
-    account, igAccount, user,
+    account, igAccount, user, post, photo
   };
 }
 
@@ -199,5 +213,17 @@ async function createUserPostJob() {
 }
 
 module.exports = {
-  initJob, runMinio, ezUser, ezUserAccount, fixtures, createAccountUserPostJob, newIGAccount, createUserPostJob, createAccountUserPostJob, createAccountUserPost, exprezz, appLogger,
+  createUserAccountIGAccountPhotoPost,
+  initJob,
+  runMinio,
+  ezUser,
+  ezUserAccount,
+  fixtures,
+  createAccountUserPostJob,
+  newIGAccount,
+  createUserPostJob,
+  createAccountUserPostJob,
+  createAccountUserPost,
+  exprezz,
+  appLogger,
 };

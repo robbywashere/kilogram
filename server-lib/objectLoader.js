@@ -169,12 +169,6 @@ function loadObject(object, registry) {
   model.prototype.serialize = serialize;
 
 
-  // Static Methods
-  Object.keys(object.StaticMethods || {}).forEach((k) => {
-    object.StaticMethods[k].bind(model);
-  });
-
-
   Object.assign(model, Object.assign({}, object.StaticMethods));
   registry.objects[object.Name] = model;
   return registry;
