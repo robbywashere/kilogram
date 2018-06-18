@@ -34,7 +34,7 @@ module.exports = {
   Methods: {
     ...JobMethods,
     denormalize() {
-      return this.reloadWithAll();
+      return this.reloadWithDeps();
     },
   },
   StaticMethods: {

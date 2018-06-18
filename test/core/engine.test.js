@@ -4,10 +4,12 @@ const {
 const {
   createAccountUserPostJob,
   createUserAccountIGAccountPhotoPost,
+  deviceFactory
 } = require('../helpers');
 const sinon = require('sinon');
 const assert = require('assert');
 const cmds = require('../../android/cmds');
+const minio = require('../../server-lib/minio');
 const {
   Account, IGAccount, Device, Post, PostJob, VerifyIGJob
 } = require('../../objects');
@@ -21,16 +23,9 @@ const Promise = require('bluebird');
 
 // TODO: Possible memory link, interferes with other tests, must be ran seperately
 //
-const DeviceFactory = n => Device.create({
-  adbId: `adbId${n}`,
-  idle: true,
-  online: true,
-  enabled: true,
-  nodeName: 'HOME1',
-});
 
 describe('engine tests', () => {
-  describe('main()', () => {
+  describe('main() loop', () => {
     let Device1,
       Device2,
       Device3,
@@ -41,6 +36,7 @@ describe('engine tests', () => {
       account,
       igAccount,
       sandbox,
+      start,
       PostJobRun_STUB,
       VerifyIGJobRun_STUB;
 
@@ -51,15 +47,19 @@ describe('engine tests', () => {
         user, account, photo, post, igAccount,
       } = await createUserAccountIGAccountPhotoPost());
       await igAccount.good();
-      
-      Device1 = await DeviceFactory(1);
-      Device2 = await DeviceFactory(2);
-      Device3 = await DeviceFactory(3);
+
+      Device1 = await deviceFactory(1,'HOME1');
+      Device2 = await deviceFactory(2,'HOME1');
+      Device3 = await deviceFactory(3,'HOME1');
       sandbox = sinon.sandbox.create();
       sandbox.stub(cmds, 'adbDevices').resolves([Device1, Device2, Device3].map(d => d.adbId));
       PostJobRun_STUB = sandbox.stub(Runner, 'PostJobRun').resolves(async () => {});
       VerifyIGJobRun_STUB = sandbox.stub(Runner, 'VerifyIGJobRun').resolves(async () => {});
-      timers = main({ nodeName: 'HOME1', interval: 500 });
+
+      //const mclientStubInstance = sinon.spy(() => sinon.createStubInstance(minio.MClient));
+      //agentStub = sandbox.stub(DeviceAgent, 'Agent').returns(mclientStubInstance());
+
+      start = ()=> timers = main({ nodeName: 'HOME1', interval: 500 });
     });
 
     afterEach(() => {
@@ -70,12 +70,42 @@ describe('engine tests', () => {
     // await createAccountUserPostJob()
 
     it('shoud run and return an array of timers<setInterval>', async () => {
+      start();
       assert(timers.length > 0);
     });
 
 
+    it('should runJobs \'PostJobRun\' and \'VerifyIGJobRun\'', async ()=> {
+      PostJobRun_STUB.restore();
+      VerifyIGJobRun_STUB.restore();
+      sandbox.spy(minio.MClient.prototype, 'constructor');
+      sandbox.stub(minio.MClient.prototype, 'pullPhoto').resolves('/tmp/somefile.jpg');
+      sandbox.stub(DeviceAgent.Agent.prototype, 'exec').resolves({ success: true, body: { login: true } });
+      start();
+
+      //logger.debug('Waiting for post to complete ...')
+      while (!(await PostJob.completed()).length) {
+        await Promise.delay(250);
+      }
+
+      const igvs = await IGAccount.verified();
+      assert.equal(igvs.length,1);
+
+      assert.equal(igvs[0].status, 'GOOD');
+
+      const vijcs = await VerifyIGJob.completed();
+      assert.equal(vijcs.length,1);
+      assert.equal(vijcs[0].status,'SUCCESS');
+
+      const pjcs = await PostJob.completed();
+      assert.equal(pjcs.length,1);
+      assert.equal(pjcs[0].status, 'SUCCESS');
+
+    });
+
     it('\t should put PostJob in progress with device', async () => {
 
+      start();
 
       while (!(await PostJob.inProgress()).length) {
         /* Wait for job  */
@@ -86,8 +116,6 @@ describe('engine tests', () => {
       assert(pj);
 
       assert(pj.isInProgress());
-
-      // while (!(await Device.inProgress()).length) {/* Wait for device */}
 
       let agent;
       while(true) {
@@ -103,6 +131,7 @@ describe('engine tests', () => {
 
 
     it('\t Should put VerifyIGJob in progress with device', async () => {
+      start();
       while (!(await VerifyIGJob.inProgress()).length) {
         /* */
       }
@@ -134,7 +163,6 @@ describe('engine tests', () => {
       const adbDevicesStub = sandbox.stub(cmds, 'adbDevices').resolves(['adbId1', 'adbId2']);
       const deviceIdSpy = sinon.spy();
       const agentStubInstance = sinon.spy(() => sinon.createStubInstance(DeviceAgent.Agent));
-
       agentStub = sandbox.stub(DeviceAgent, 'Agent').returns(agentStubInstance());
 
       jobRunStub = sandbox.stub(Runner, 'PostJobRun').resolves((async () => {

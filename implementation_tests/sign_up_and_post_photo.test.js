@@ -6,15 +6,20 @@ const ffport = require('find-free-port');
 const dbSync = require('../db/sync');
 const { exec, spawn } = require('child_process');
 const config = require('config');
+const sinon = require('sinon');
 const kill = require('tree-kill');
 const assert = require('assert');
 const rimraf = require('rimraf');
 const Promise = require('bluebird');
 const request = require('request-promise');
+const cmds = require('../android/cmds');
 const {
   PostJob, Device, Photo, IGAccount,
 } = require('../objects');
-const { runMinio } = require('../tests/helpers');
+
+const DeviceAgent = require('../android/deviceAgent');
+
+const { runMinio, deviceFactory } = require('../test/helpers');
 const { statSync, createReadStream, readdirSync } = require('fs');
 const md5File = require('md5-file');
 const path = require('path');
@@ -37,6 +42,7 @@ const spaceCat = {
 let APP;
 let TIMERS = [];
 let SERVER;
+const NODE_NAME = 'HOME1';
 
 const Req = function ({
   path = '/', method, body = {}, ...args
@@ -67,9 +73,15 @@ let PROCESS;
 
 describe('End To End Test 👍 ', () => {
   let minio;
+  let sandbox;
+  let agentSub;
 
   beforeEach(async () => {
     let retry = 0;
+
+    sandbox = sinon.sandbox.create();
+
+
     const fn = async () => {
       try {
         await dbSync(true);
@@ -82,12 +94,27 @@ describe('End To End Test 👍 ', () => {
       return true;
     };
 
+
     while (!await fn()) {
       logger.debug(`Retrying dbsync ${retry}...`);
     }
+
+    if (!RUN_ON_DEVICE) {
+      sandbox.stub(DeviceAgent.Agent.prototype, 'exec').resolves({ success: true, body: { login: true } });
+      let d1 = await deviceFactory(1, NODE_NAME);
+      let d2 = await deviceFactory(2, NODE_NAME);
+      let d3 = await deviceFactory(3, NODE_NAME);
+      sandbox.stub(cmds, 'adbDevices').resolves([d1, d2, d3].map(d => d.adbId));
+    }
+
   });
 
   afterEach((done) => {
+    try {
+      sandbox.restore();
+    } catch(e) {
+      //
+    }
     try {
       // TODO: REMOVE ME MAYBE - APP.minioEventListener.stop();
     } catch (e) {
@@ -178,7 +205,6 @@ describe('End To End Test 👍 ', () => {
 
     assert(readdirSync(BUCKETPATH).includes(objectName));
 
-    // await Promise.delay(1000);
 
     let retry = 0;
     while (!(await Photo.findAll()).length && retry++ <= 3) {
@@ -213,35 +239,54 @@ describe('End To End Test 👍 ', () => {
     }, { jar });
 
 
-    const post = res7.body;
 
+    const post = res7.body;
     assert(post.id);
 
-    await PostJob.initPostJobs();
+    /*
+    const iga = await IGAccount.findOne({ where: { id: IGAccountId } });
+    await iga.good()
 
-    const jobs = await PostJob.outstanding();
+    while (true) {
+      await IGAccount.findOne({ where: { id: IGAccountId, status: 'GOOD' } });
+    }
 
-    assert(jobs.length, 1);
+*/
 
-    if (!RUN_ON_DEVICE) {
+    //await PostJob.initPostJobs();
+    //const jobs = await PostJob.outstanding();
+    // assert(jobs.length, 1);
+
+
+
+
+
+    //   if (!RUN_ON_DEVICE) {
+    if (false) {
+
       const doJob = await (await PostJob.popJob()).denormalize();
       const fullJob = doJob.toJSON();
+
       assert.equal(fullJob.Post.id, post.id);
       assert.equal(fullJob.IGAccount.username, igaccount.username);
       assert.equal(fullJob.IGAccount.id, igaccount.id);
       assert.equal(fullJob.Post.Photo.objectName, objectName);
     } else {
+
+
       await new Promise(async (resolve, reject) => {
         try {
-          TIMERS = main();
+          TIMERS = main({ nodeName: NODE_NAME });
           while (!(await Device.findAll()).length) {
             logger.debug('Waiting for device .....');
             await Promise.delay(1000);
           }
-          const devices = await Device.findAll();
-          await devices[0].update({ enabled: true });
+          const devices = await Device.findAll(); //?? TODO: NEEDED?
+          await devices[0].update({ enabled: true }); //?? NEEDED?
+
+          logger.debug('Waiting for post to complete ...')
           while (!(await PostJob.completed()).length) {
-            await Promise.delay(5000);
+            await Promise.delay(1000);
           }
           TIMERS.forEach(t => clearInterval(t));
           resolve();

@@ -46,6 +46,7 @@ module.exports = {
       });
     },
   },
+  ScopeFunctions: true,
   Scopes: {
     verified: { where: { status: GOOD } },
   },

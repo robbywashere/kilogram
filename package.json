@@ -94,8 +94,14 @@
     "test:env": "mocha  --require ./test/setup.js ./test/nodeenv.test.js --watch",
     "test:verbose": "mocha  --require ./test/setup.js  --recursive \"./test/**/*.test.js\" --watch",
     "test:once": "nyc mocha --require ./test/setup.js   --recursive \"./test/**/*.test.js\"  ",
-    "test:e2e": "mocha ./e2e/e2e.test.js",
-    "test:e2e:device": "export RUN_E2E_ON_DEVICE=true && mocha ./e2e/e2e.test.js",
+
+    "test:imp:post": "mocha ./implementation_tests/sign_up_and_post_photo.test.js",
+    "test:imp:post:device": "export RUN_E2E_ON_DEVICE=true && mocha ./implementation_tests/sign_up_and_post_photo.test.js",
+
+    "test:imp:verifyig": "mocha ./implementation_tests/verify_ig.test.js",
+    "test:imp:verifyig:device": "export RUN_E2E_ON_DEVICE=true && mocha ./implementation_tests/verify_ig.test.js",
+
+
     "pg:session:up": "psql postgres < ./node_modules/connect-pg-simple/table.sql",
     "moo": "cowsay moo",
     "device-node": "node ./engine/run"

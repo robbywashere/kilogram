@@ -10,6 +10,7 @@ const minio = require('../server-lib/minio');
 
 const { get, chain, isUndefined } = require('lodash');
 const _ = require('lodash');
+const { logger } = require('../lib/logger');
 
 
 async function PostJobRun({
@@ -22,7 +23,10 @@ async function PostJobRun({
 
   const mc = (typeof minioClient !== "undefined") ? minioClient : (new minio.MClient());
 
-  if (isUndefined(get(Post,'Photo.objectName'))) throw new Error(`Post ${Post.id} does not have a .Photo.objectName`);
+  if (isUndefined(get(Post,'Photo.objectName'))) {
+    //logger.error(Post.toJSON());
+    throw new Error(`Post ${Post.id} does not have a .Photo.objectName`); 
+  }
 
   const localfile = await mc.pullPhoto({ name: Post.Photo.objectName });
 

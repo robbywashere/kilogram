@@ -1,7 +1,7 @@
 const { readdirSync, readFileSync } = require('fs');
 const { exec, spawn } = require('child_process');
 const {
-  User, PostJob, Photo, Account, IGAccount, Post,
+  User, PostJob, Photo, Account, IGAccount, Post, Device
 } = require('../../objects');
 const rimraf = require('rimraf');
 const minioObj = require('../../server-lib/minio/minioObject');
@@ -27,6 +27,13 @@ function appLogger(app) {
   });
 }
 
+const deviceFactory = (n,nodeName = 'HOME1') => Device.create({
+  adbId: `adbId${n}`,
+  idle: true,
+  online: true,
+  enabled: true,
+  nodeName,
+});
 
 function runMinio({ log = true, testDir = './.minio-test-data' } = {}) {
   const stderr = [];
@@ -226,4 +233,5 @@ module.exports = {
   createAccountUserPost,
   exprezz,
   appLogger,
+  deviceFactory 
 };
