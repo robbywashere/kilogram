@@ -10,6 +10,7 @@ const TriggerProcedureInsert =  ({
   trigProcName,
   jsonField = 'body',
 })=> {
+  //notifications:after_update:status
   const tpName = (trigProcName) ? trigProcName : `t__${watchTable}_${insertTable}`.toLowerCase();
   const dataJsonObj = recordKeys.map((key)=> `'${key}', NEW."${key}"`).join(',');
   const foreignKeyFields = foreignKeys.map(k=>`"${k}"`).join(',');
@@ -20,7 +21,7 @@ CREATE OR REPLACE FUNCTION ${tpName}() RETURNS TRIGGER AS $$
 DECLARE 
   data json;
   BEGIN
-    data = json_build_object(${dataJsonObj},'__t','${tpName}');
+    data = json_build_object(${dataJsonObj},'__t','${tpName}','__r','${watchTable}','__c','${watchColumn}');
     INSERT INTO "${insertTable}" ("createdAt","updatedAt",${foreignKeyFields}, "${jsonField}")
     VALUES (NOW(),NOW(),${foreignKeyValues},data);
   RETURN NEW;
