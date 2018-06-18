@@ -1,7 +1,7 @@
 const Minio = require('minio');
 const path = require('path');
 const s2p = require('stream-to-promise');
-const Watcher = require('../../db/trigger-notify/watch');
+const Watcher = require('../../db/postgres-triggers/watch');
 const Uuid = require('uuid');
 const { logger } = require('../../lib/logger');
 const config = require('config');

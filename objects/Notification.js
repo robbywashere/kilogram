@@ -2,7 +2,7 @@ const sequelize = require('sequelize');
 
 const { isUndefined } = require('lodash');
 
-const triggerProcedureInsert = require('../db/trigger-notify/trigger-procedure-insert.js');
+const triggerProcedureInsert = require('../db/postgres-triggers/trigger-procedure-insert.js');
 
 //const postjob_notification = require('./_PostJobNotification');
 

@@ -1,5 +1,5 @@
 
-const { Trigger } = require('../../db/trigger-notify/triggers');
+const { Trigger } = require('../../db/postgres-triggers/triggers');
 
 describe('trigger query builder',function(){
 
