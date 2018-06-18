@@ -140,6 +140,7 @@ describe('Socket Server pushes from postgres updates', () => {
 
   const sockResp = new Promise(rs => userSocket1.on('client:push', rs));
 
+  await new Promise(rs=>process.nextTick(rs));
 
   socketServer.to(userAccountRoom1).emit('client:push', { hello: 'world' });
 
@@ -151,6 +152,10 @@ describe('Socket Server pushes from postgres updates', () => {
 
   assert.equal((await sockJoin), userAccountRoom1);
 
+  const user1sockResp = new Promise(rs => userSocket1.on('client:push', rs));
+  const user2sockResp = new Promise(rs => userSocket2.on('client:push', rs));
+
+  await new Promise(rs=>process.nextTick(rs));
 
   const notif1 = await Notification.create({
     body: { msg: 'hello user 1' },
@@ -165,8 +170,6 @@ describe('Socket Server pushes from postgres updates', () => {
   logger.debug('Notification User2 created');
 
 
-  /*const user1sockResp = new Promise(rs => userSocket1.on('client:push', rs));
-  const user2sockResp = new Promise(rs => userSocket2.on('client:push', rs));
 
 
 
@@ -180,7 +183,6 @@ describe('Socket Server pushes from postgres updates', () => {
 
   assert.deepEqual(resUser2.body, { msg: 'hello user 2' });
 
-*/
-}).timeout(20*1000);
+})
 });
 
