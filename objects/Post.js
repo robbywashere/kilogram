@@ -39,6 +39,21 @@ module.exports = {
     this.belongsTo(IGAccount, { onDelete: 'cascade', foreignKey: { allowNull: false } });
     this.hasOne(PostJob);
     this.belongsTo(Photo);
+
+    this.addScope('published', {
+      include: [PostJob],
+      where: {
+        '$PostJob.status$': { [Op.eq]: 'SUCCESS' },
+      },
+    });
+
+    this.addScope('failed', {
+      include: [PostJob],
+      where: {
+        '$PostJob.status$': { [Op.eq]: 'FAILED' },
+      },
+    });
+
     this.addScope('withJob', { include: [PostJob] });
     this.addScope('due', {
       include: [PostJob],

@@ -80,11 +80,23 @@ const StatsQuery = tableName => `
 // sum(case when (status = 'SUCCESS' AND (taskresult != 'NEGATIVE')) then 1 else 0 end) as missions_accomplished,
 
 const JobMethods = {
+  denormalize() {
+    return this.reload({ include: [{ all: true }] }); //
+  },
   isInProgress() {
     return (this.status === 'SPINNING');
   },
-  denormalize() {
-    return this.reload({ include: [{ all: true }] }); //
+  isCompleted() {
+    return (this.status === 'SUCCESS');
+  },
+  isFailed() {
+    return (this.status === 'FAILED');
+  },
+  isOpen() {
+    return (this.status === 'OPEN');
+  },
+  isSleeping() {
+    return (this.status === 'SLEEPING');
   },
   complete(body) {
     return this.update({

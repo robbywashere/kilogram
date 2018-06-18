@@ -13,7 +13,7 @@ const sync = require('../../db/sync');
 const SEQ = require('../../db');
 const Promise = require('bluebird');
 const {
-createUserAccountIGAccountPhotoPost,
+  createUserAccountIGAccountPhotoPost,
   initJob, ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob,
 } = require('../helpers');
 const { logger } = require('../../lib/logger');
@@ -34,6 +34,45 @@ describe('objects/Post', () => {
     await post.destroy();
 
     assert(!(await PostJob.findById(1)))
+
+  });
+
+  it ('should scope SUCCESS/published posts where PostJob is SUCCESS', async ()=>{
+
+    const {
+      user, account, igAccount, photo, post,
+    } = await createUserAccountIGAccountPhotoPost();
+
+    const job = await initJob(post);
+
+    const posts1 = await Post.published();
+
+    assert.equal(posts1.length, 0)
+
+    await job.update({ status: 'SUCCESS' });
+
+    const posts2 = await Post.published();
+
+    assert.equal(posts2.length, 1)
+
+  });
+  it ('should scope FAILED/not published Posts where PostJob is FAILED', async ()=>{
+
+    const {
+      user, account, igAccount, photo, post,
+    } = await createUserAccountIGAccountPhotoPost();
+
+    const job = await initJob(post);
+
+    const posts1 = await Post.failed();
+
+    assert.equal(posts1.length, 0)
+
+    await job.update({ status: 'FAILED' });
+
+    const posts2 = await Post.failed();
+
+    assert.equal(posts2.length, 1)
 
   });
 

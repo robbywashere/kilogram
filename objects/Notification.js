@@ -21,7 +21,7 @@ module.exports = {
   },
   Init({ Account, NotificationRead }) {
     this.hasMany(NotificationRead);
-    this.belongsTo(Account, { foreignKey: { allowNull: false } });
+    this.belongsTo(Account, { onDelete: 'cascade', foreignKey: { allowNull: false } });
   },
   Methods: {
     markAsRead(UserId) {
@@ -44,7 +44,6 @@ module.exports = {
     unread({ UserId, AccountId }, opts) {
       const { NotificationRead, Account, User } = this.sequelize.models;
 
-      // TODO: Scoping needs to be narrowed down
       return (!isUndefined(AccountId) ?
         this.scope({ where: { AccountId } }) : this)
         .findAll({
@@ -53,7 +52,6 @@ module.exports = {
             [Op.or]: [
               { '$NotificationReads.UserId$': { [Op.ne]: UserId } },
               { '$NotificationReads.UserId$': null },
-              // { '$NotificationReads$': null  },
             ],
           },
           include: [{ model: Account, include: User }, {

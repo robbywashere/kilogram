@@ -169,12 +169,17 @@ class MClient {
 
   listenPersist({ bucket = this.bucket, client = this.client, events }) {
     const Listener = {
-      emitter: new EventEmitter(),
+      //? should emmit to?  -> emitter: new EventEmitter(),
     };
 
     function makeListener(retry = 0) {
       Listener.listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*', 's3:ObjectRemoved:*']);
+
       const listener = Listener.listener;
+      Listener.terminate = ()=> {
+        listener.removeAllListeners();
+        listener.stop();
+      }
       logger.status(`Listening for s3/minio events on ${bucket}....`);
 
       listener.on('notification', events);
@@ -188,6 +193,7 @@ class MClient {
       });
     }
     makeListener.bind(this)();
+
     return Listener;
   }
 
@@ -236,7 +242,7 @@ class MClient {
     await this.createBucket();
     // await this.createBucketNotifications();
     // await this.listen({ events: MClient.PhotoEvents() });
-    this.listenPersist({ events: MClient.PhotoEvents() });
+    return this.listenPersist({ events: MClient.PhotoEvents() });
   }
   static getSQSARNS(configPath) {
     return Object.entries(JSON.parse(fs.readFileSync(configPath, 'utf-8').toString()))

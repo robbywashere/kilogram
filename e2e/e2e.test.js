@@ -14,7 +14,7 @@ const Promise = require('bluebird');
 const request = require('request-promise');
 const cmds = require('../android/cmds');
 const {
-  PostJob, Device, Photo, IGAccount,
+  Post, PostJob, Device, Photo, IGAccount, VerifyIGJob
 } = require('../objects');
 
 const DeviceAgent = require('../android/deviceAgent');
@@ -101,22 +101,23 @@ describe('End To End Test 👍 ', () => {
 
     if (!RUN_ON_DEVICE) {
       sandbox.stub(DeviceAgent.Agent.prototype, 'exec').resolves({ success: true, body: { login: true } });
-      let d1 = await deviceFactory(1, NODE_NAME);
-      let d2 = await deviceFactory(2, NODE_NAME);
-      let d3 = await deviceFactory(3, NODE_NAME);
+      const d1 = await deviceFactory(1, NODE_NAME);
+      const d2 = await deviceFactory(2, NODE_NAME);
+      const d3 = await deviceFactory(3, NODE_NAME);
       sandbox.stub(cmds, 'adbDevices').resolves([d1, d2, d3].map(d => d.adbId));
     }
-
   });
 
-  afterEach((done) => {
+  afterEach(async function() {
+    this.timeout(10*1000);
+
     try {
       sandbox.restore();
-    } catch(e) {
+    } catch (e) {
       //
     }
     try {
-      // TODO: REMOVE ME MAYBE - APP.minioEventListener.stop();
+      APP.minioEventListener.terminate();
     } catch (e) {
       logger.debug(e);
     }
@@ -130,19 +131,20 @@ describe('End To End Test 👍 ', () => {
     } catch (e) {
     }
     try {
-      if (minio) {
-        // kill(minio.pid,'SIGTERM');
-        process.kill(minio.pid);
-        logger.debug('END, killing spawned proc', minio.pid);
-      }
-    } catch (e) {
-      logger.debug('Error killing spawned proc', e);
-    }
-    try {
-      rimraf(MINIODATADIR, done);
+      await new Promise(rs=>rimraf(MINIODATADIR, rs));
     } catch (e) {
       logger.debug('Error cleaning MINIODATADIR');
-      done();
+    }
+
+    try {
+      if (minio) {
+        logger.debug('ATTEMPTING, to kill spawned MINIO proc',minio.pid) 
+        process.kill(minio.pid);
+        await new Promise((rs)=>minio.on('close', rs))
+        logger.debug('END, killing spawned MINIO proc',minio.pid) 
+      }
+    } catch (e) {
+      logger.debug('Error killing spawned MINIO proc', e);
     }
   });
 
@@ -216,6 +218,7 @@ describe('End To End Test 👍 ', () => {
     const photoFile = path.join(BUCKETPATH, objectName);
 
     const originalFileMd5 = md5File.sync(photoFile);
+
     const uploadFileMd5 = md5File.sync(spaceCat.path);
 
     assert.equal(originalFileMd5, uploadFileMd5);
@@ -239,61 +242,32 @@ describe('End To End Test 👍 ', () => {
     }, { jar });
 
 
-
     const post = res7.body;
     assert(post.id);
 
-    /*
-    const iga = await IGAccount.findOne({ where: { id: IGAccountId } });
-    await iga.good()
+    TIMERS = main({ nodeName: NODE_NAME });
+    while (!(await Device.findAll()).length) {
+      logger.debug('Waiting for device .....');
+      await Promise.delay(250);
+    }
+     const devices = await Device.findAll(); // ?? TODO: NEEDED?
+     await devices[0].update({ enabled: true }); // ?? NEEDED?
 
-    while (true) {
-      await IGAccount.findOne({ where: { id: IGAccountId, status: 'GOOD' } });
+    logger.debug('Waiting for post to complete ...');
+    while (!(await PostJob.completed()).length) {
+      await Promise.delay(250);
     }
 
-*/
+    const pjs = await PostJob.findAll();
+    assert.equal(pjs.length, 1);
+    assert(pjs[0].isCompleted())
 
-    //await PostJob.initPostJobs();
-    //const jobs = await PostJob.outstanding();
-    // assert(jobs.length, 1);
-
-
-
-
-
-    //   if (!RUN_ON_DEVICE) {
-    if (false) {
-
-      const doJob = await (await PostJob.popJob()).denormalize();
-      const fullJob = doJob.toJSON();
-
-      assert.equal(fullJob.Post.id, post.id);
-      assert.equal(fullJob.IGAccount.username, igaccount.username);
-      assert.equal(fullJob.IGAccount.id, igaccount.id);
-      assert.equal(fullJob.Post.Photo.objectName, objectName);
-    } else {
+    const vij = await VerifyIGJob.findAll();
+    assert.equal(vij.length, 1);
+    assert(vij[0].isCompleted());
+    const pst = await Post.published();
+    assert.equal(pst.length,1)
 
 
-      await new Promise(async (resolve, reject) => {
-        try {
-          TIMERS = main({ nodeName: NODE_NAME });
-          while (!(await Device.findAll()).length) {
-            logger.debug('Waiting for device .....');
-            await Promise.delay(1000);
-          }
-          const devices = await Device.findAll(); //?? TODO: NEEDED?
-          await devices[0].update({ enabled: true }); //?? NEEDED?
-
-          logger.debug('Waiting for post to complete ...')
-          while (!(await PostJob.completed()).length) {
-            await Promise.delay(1000);
-          }
-          TIMERS.forEach(t => clearInterval(t));
-          resolve();
-        } catch (e) {
-          reject(e);
-        }
-      });
-    }
   });
 });

@@ -7,10 +7,6 @@ const {
 module.exports = {
   Name: 'NotificationRead',
   Properties: {
-    /*    read: {
-      type: BOOLEAN,
-      defaultValue: true
-    } */
   },
   ScopeFunctions: true,
   Scopes: {

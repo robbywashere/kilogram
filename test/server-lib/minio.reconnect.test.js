@@ -17,12 +17,14 @@ const { BucketEvents, Account, Photo } = require('../../objects');
 const { logger } = require('../../lib/logger');
 const minioObj = require('../../server-lib/minio/minioObject');
 const { get } = require('lodash');
+const { runMinio } = require('../helpers');
 
 const MINIODATADIR = './.minio-test-data';
 
 
 //TODO: use sinon faketimers instead of actual timers to speed up test
 
+/*
 function runMinio(){
   let stderr = [];
   const minio = spawn('minio', ['server', './.minio-test-data']);
@@ -41,7 +43,7 @@ function runMinio(){
   });
   return minio; 
 }
-
+  */
 describe('Minio Connect and Reconnect',function(){
 
 
@@ -60,7 +62,6 @@ describe('Minio Connect and Reconnect',function(){
     }
     try {
       if (minio) { 
-        //kill(minio.pid,'SIGTERM'); 
         process.kill(minio.pid);
         await new Promise((rs)=>minio.on('close', rs))
         logger.debug('END, killing spawned proc',minio.pid) 

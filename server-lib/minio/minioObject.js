@@ -40,15 +40,14 @@ class v5 {
   }
 
   static dec(str) {
-    return base64url.decode(str);
+    return new Buffer(base64url.decode(str),'base64');
   }
 
   static parse(objectname) {
     return msgpack.decode(v5.dec(objectname));
   }
   static create(obj) {
-    const sortedObj = _(obj).toPairs().sortBy(0).fromPairs()
-      .value();
+    const sortedObj = _(obj).toPairs().sortBy(0).fromPairs().value();
     return v5.enc(msgpack.encode(sortedObj).toString('base64'));
   }
 }

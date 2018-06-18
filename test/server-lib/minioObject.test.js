@@ -5,7 +5,7 @@ const { logger } = require('../../lib/logger');
 
 describe('minio object store format', () => {
   const uuid = uuidv4();
-  const userId = 111010100110101011;
+  const userId = 11101010010101011;
   const extension = 'jpg';
   const meta = { text: 'XX😳XXX:XYY:YYYYX:XXXXYYYY+?=221dsad21313:12313' };
 
@@ -15,7 +15,6 @@ describe('minio object store format', () => {
         uuid, meta, userId, extension,
       };
       const result = mo.create('v1', args);
-      logger('v1', { length: result.length, result });
       assert(result.length <= 256);
       assert.deepEqual(args, mo.parse(result));
       done();
@@ -28,7 +27,6 @@ describe('minio object store format', () => {
         uuid, meta, userId, extension,
       };
       const result = mo.create('v2', args);
-      logger('v2', { length: result.length, result });
       assert(result.length <= 256);
       assert.deepEqual(args, mo.parse(result));
       done();
@@ -42,7 +40,6 @@ describe('minio object store format', () => {
         uuid, meta, userId, extension,
       };
       const result = mo.create('v3', args);
-      logger('v3', { length: result.length, result });
       assert(result.length <= 256);
       assert.deepEqual(args, mo.parse(result));
       done();
@@ -55,7 +52,18 @@ describe('minio object store format', () => {
         uuid, meta, userId, extension,
       };
       const result = mo.create('v4', args);
-      logger('v4', { length: result.length, result });
+      assert(result.length <= 256);
+      assert.deepEqual(args, mo.parse(result));
+      done();
+    });
+  });
+
+  describe('v5', () => {
+    it('should encode and decode', (done) => {
+      const args = {
+        uuid, meta, userId, extension,
+      };
+      const result = mo.create('v5', args);
       assert(result.length <= 256);
       assert.deepEqual(args, mo.parse(result));
       done();
