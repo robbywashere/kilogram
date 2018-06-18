@@ -19,7 +19,7 @@ module.exports = {
   },
   Hooks: {
     afterUpdate(instance) {
-      // TODO: update post if completed
+      // TODO: update post if completed?
     },
   },
   Init({

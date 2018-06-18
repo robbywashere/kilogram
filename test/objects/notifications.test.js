@@ -28,7 +28,7 @@ describe('Notifications', () => {
     const user = await ezUserAccount();
 
     const notif = await Notification.create({
-      title: 'notif1',
+      body: { title: 'notif1' },
       AccountId: user.Accounts[0].id,
     });
 
@@ -52,17 +52,17 @@ describe('Notifications', () => {
     const accountid2 = user2.Accounts[0].id;
 
     const notif = await Notification.create({
-      title: 'notif1',
+      body: { title: 'notif1' },
       AccountId: accountid,
     });
 
     const notif2 = await Notification.create({
-      title: 'notif2',
+      body: { title: 'notif1' },
       AccountId: accountid,
     });
 
     const notif3 = await Notification.create({
-      title: 'notif3',
+      body: { title: 'notif1' },
       AccountId: accountid2,
     });
 
@@ -94,17 +94,17 @@ describe('Notifications', () => {
 
 
     const notif = await Notification.create({
-      title: 'notif1',
+      body: { title: 'notif1' },
       AccountId: accountid,
     });
 
     const notif2 = await Notification.create({
-      title: 'notif2',
+      body: { title: 'notif2' },
       AccountId: accountid,
     });
 
     const notif3 = await Notification.create({
-      title: 'notif3',
+      body: { title: 'notif3' },
       AccountId: accountid2,
     });
 
