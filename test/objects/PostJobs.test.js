@@ -99,8 +99,6 @@ describe('objects/PostJob', () => {
 
     assert.equal(notif.length, 1);
 
-    console.log(notif[0].toJSON());
-
     assert.equal(notif[0].body.data.PostId, posts2[0].id);
 
     assert.equal(notif[0].body.data.status, 'SUCCESS');

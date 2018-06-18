@@ -1,6 +1,6 @@
 
 const {
-  BucketEvents, Account, Photo, IGAccount,
+  BucketEvents, Account, Photo, IGAccount, Notification, PostJob, Post
 } = require('../../objects');
 const dbSync = require('../../db/sync');
 const { delay } = require('bluebird');
@@ -10,6 +10,7 @@ const { logger } = require('../../lib/logger');
 const minioObject = require('../../server-lib/minio/minioObject');
 const { MClient } = require('../../server-lib/minio');
 const Watcher = require('../../db/postgres-triggers/watch');
+const { initJob, createUserAccountIGAccountPhotoPost } = require('../helpers');
 const PGListen = require('../../server-lib/pg-listen');
 const { EventEmitter } = require('events');
 const uuidv4 = require('uuid').v4;
@@ -53,6 +54,51 @@ describe('trigger notify functionality', () => {
         reject(e);
       }
     });
+  });
+
+  it('should be able to listen for Notification triggers created by PostJob status change', async function(){
+
+
+    const {
+      user, account, igAccount, photo, post,
+    } = await createUserAccountIGAccountPhotoPost();
+
+    watcher = new Watcher({ debug: logger.debug });
+
+    await watcher.connect();
+
+
+    const Q = new Promise((rs, rx) => {
+      watcher.subscribe(Notification.TableTriggers.after_insert, (payload) => {
+
+        logger.debug(JSON.stringify(payload,null,4));
+        
+        const { data: { body: { status, PostId, AccountId } } } = payload;
+
+        try {
+          assert.equal(status, 'SUCCESS');
+          assert.equal(AccountId, igAccount.id);
+          assert.equal(PostId, post.id);
+          return rs();
+        } catch (e) {
+          rx(e);
+        }
+      });
+    });
+
+
+    const job = await initJob(post);
+
+    const posts1 = await Post.published();
+
+    assert.equal(posts1.length, 0)
+
+    await job.update({ status: 'SUCCESS' });
+
+    return Q;
+  
+  
+  
   });
 
   it('should should make a table triggerable', async function () {
