@@ -10,7 +10,7 @@ const Promise = require('bluebird');
 const { Model } = require('sequelize');
 const { logger } = require('../lib/logger');
 const { Trigger } = require('../db/trigger-notify/triggers');
-const TriggerSqlFn = require('../db/trigger-notify/sql-fn');
+const TriggerSqlFn = require('../db/trigger-notify/trigger-event-sql-fn');
 
 const sequelize = require('sequelize');
 const slurpDir = require('../lib/slurpDir');

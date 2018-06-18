@@ -1,6 +1,6 @@
 
 const {
-  get, snakeCase, isString, isUndefined, isPlainObject,
+  get, snakeCase, isString, isUndefined, isPlainObject, isArray
 } = require('lodash');
 
 function Trigger(Name, Params = {}) {
@@ -18,11 +18,15 @@ function Trigger(Name, Params = {}) {
         ? [[actionType, []]]
         : Object.entries(actionType);
 
+      columns = (isString(columns) ? [columns] : columns);
+
       action = action.toUpperCase();
 
       preposition = preposition.toUpperCase();
 
       //-----
+      //
+      
 
       self.Params.PrepositionAction = `${preposition} ${action}`;
 
@@ -30,7 +34,7 @@ function Trigger(Name, Params = {}) {
 
       self.Params.Summary = `${preposition} ${(action !== 'UPDATE') ? action : (`UPDATE${
         (columns.length) ? ' OF ' : ''
-      }${columns.map(c => (`"${c}"`)).join(', ')}`)}`;
+      }${ columns.map(c => (`"${c}"`)).join(', ')}`)}`;
 
       return self;
     },
@@ -58,7 +62,7 @@ function Trigger(Name, Params = {}) {
     },
 
     alias(a) {
-      self.Params.Alias = a;
+      self.Params.Name = a;
       return self;
     },
 
@@ -85,10 +89,19 @@ function Trigger(Name, Params = {}) {
       return self;
     },
 
+    args(a) {
+      if (!isArray(a)) {
+        throw new TypeError('Trigger().args expects type Array');
+      }
+      self.Params.Args = a.join('\',\'');
+      return self;
+    },
+
     exec(p) {
       self.Params.Procedure = p;
       return self;
     },
+
 
     get key() {
       return snakeCase(self.Params.PrepositionAction);
@@ -106,17 +119,26 @@ function Trigger(Name, Params = {}) {
         Table,
         Name,
         When,
+        Args,
       } = self.Params;
 
       if (isUndefined(Name)) {
         Name = self.computeName();
       }
 
+      if (isUndefined(Args)) {
+        Args = Name;
+      }
+
+      if (isUndefined(Procedure)) {
+        throw TypeError('Trigger() - Procedure undefined, use .exec(<Name>)')
+      }
+
       return `
       ${(Drop) ? `DROP TRIGGER IF EXISTS "${Name}" ON "${Table}";\n` : ''}\tCREATE TRIGGER "${Name}"
       ${Summary} ON "${Table}"
       ${(When) || ''} FOR EACH ROW
-      EXECUTE PROCEDURE ${Procedure}('${Name}');
+      EXECUTE PROCEDURE ${Procedure}('${Args}');
       `;
     },
   };

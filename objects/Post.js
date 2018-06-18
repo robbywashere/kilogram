@@ -20,7 +20,7 @@ module.exports = {
     text: {
       type: TEXT,
     },
-    photoUUID: { // TODO: wtf does this exist?
+    photoUUID: { 
       type: UUID,
     },
     postDate: {

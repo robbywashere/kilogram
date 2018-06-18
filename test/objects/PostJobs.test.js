@@ -1,5 +1,5 @@
 const {
-  IGAccount, Account, PostJob, Post, Photo, User,
+  Notification, IGAccount, Account, PostJob, Post, Photo, User,
 } = require('../../objects');
 const sinon = require('sinon');
 const assert = require('assert');
@@ -7,7 +7,9 @@ const sync = require('../../db/sync');
 const Promise = require('bluebird');
 const sequelize = require('sequelize');
 const {
+  initJob,
   ezUserAccount, newIGAccount, createAccountUserPostJob, createAccountUserPost, createUserPostJob,
+createUserAccountIGAccountPhotoPost
 } = require('../helpers');
 const { times, constant } = require('lodash');
 
@@ -68,6 +70,42 @@ describe('objects/PostJob', () => {
     await PostJob.initPostJobs();
     const jobs = await PostJob.findAll();
     assert.equal(9, jobs.length);
+  });
+
+
+
+  it ('should create a Notification when PostJob.status is updated', async ()=>{
+
+    const {
+      user, account, igAccount, photo, post,
+    } = await createUserAccountIGAccountPhotoPost();
+
+    const job = await initJob(post);
+
+    const posts1 = await Post.published();
+
+    assert.equal(posts1.length, 0)
+
+    await job.update({ status: 'SUCCESS' });
+
+    const posts2 = await Post.published();
+
+    assert.equal(posts2.length, 1)
+
+    let notif;
+    while ( !(notif = await Notification.findAll()).length ) {
+      await Promise.delay(0);
+    }
+
+    assert.equal(notif.length, 1);
+
+    console.log(notif[0].toJSON());
+
+    assert.equal(notif[0].body.data.PostId, posts2[0].id);
+
+    assert.equal(notif[0].body.data.status, 'SUCCESS');
+    
+
   });
 
 

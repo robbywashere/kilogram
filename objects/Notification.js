@@ -2,6 +2,10 @@ const sequelize = require('sequelize');
 
 const { isUndefined } = require('lodash');
 
+const triggerProcedureInsert = require('../db/trigger-notify/trigger-procedure-insert.js');
+
+//const postjob_notification = require('./_PostJobNotification');
+
 const {
   STRING, ARRAY, TEXT, JSON: JSONType, INTEGER, VIRTUAL, BOOLEAN, Op, Model,
 } = sequelize;
@@ -19,9 +23,28 @@ module.exports = {
   ScopeFunctions: true,
   Scopes: {
   },
+  Hooks: {
+    /* afterBulkSync(){
+      console.log(postjob_notification);
+      return this.sequelize.query(postjob_notification)
+    }*/
+  },
   Init({ Account, NotificationRead }) {
     this.hasMany(NotificationRead);
     this.belongsTo(Account, { onDelete: 'cascade', foreignKey: { allowNull: false } });
+
+    this.sequelize.addHook('afterBulkSync', async () => {
+      const trigProcSQL = triggerProcedureInsert({
+        watchTable: 'PostJobs',
+        watchColumn: 'status',
+        insertTable: 'Notifications',
+        recordKeys: ['AccountId','PostId','status'],
+        foreignKeys: ['AccountId'],
+        jsonField: 'body'
+      });
+      await this.sequelize.query(trigProcSQL)
+    })
+
   },
   Methods: {
     markAsRead(UserId) {
