@@ -1,5 +1,6 @@
 
 const demand = require('../../lib/demand');
+const { Trigger } = require('./triggers');
 
 const TriggerProcedureInsert =  ({ 
   watchTable = demand('watchTable'),  
@@ -8,6 +9,7 @@ const TriggerProcedureInsert =  ({
   foreignKeys = demand('foreignKeys'),
   recordKeys = demand('recordKeys'),
   trigProcName,
+  when = '',
   jsonField = 'body',
 })=> {
   //notifications:after_update:status
@@ -16,7 +18,21 @@ const TriggerProcedureInsert =  ({
   const foreignKeyFields = foreignKeys.map(k=>`"${k}"`).join(',');
   const foreignKeyValues = foreignKeys.map(k=>`NEW."${k}"`).join(',');
 
-return `
+
+  const triggerQuery = Trigger()
+    .drop(true)
+    .table(watchTable)
+    .alias(tpName)
+    .after({ update: watchColumn })
+    .when(when)
+    .args(null)
+    .exec(tpName).query;
+
+
+  console.log(triggerQuery);
+
+
+  return `
 CREATE OR REPLACE FUNCTION ${tpName}() RETURNS TRIGGER AS $$
 DECLARE 
   data json;
@@ -28,13 +44,12 @@ DECLARE
 END;
 $$ LANGUAGE plpgsql;
 
+${triggerQuery}
 
-DROP TRIGGER IF EXISTS "${tpName}" ON "${watchTable}";
-CREATE TRIGGER "${tpName}"
-AFTER UPDATE OF "${watchColumn}" ON "${watchTable}"
-FOR EACH ROW
-  EXECUTE PROCEDURE ${tpName}();`
+`
 }
+
+
 
 module.exports = TriggerProcedureInsert ; 
 

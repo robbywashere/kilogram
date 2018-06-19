@@ -6,6 +6,7 @@ const {
   JobStaticMethods,
   InitPostJobQuery,
 } = require('./_JobsBase');
+const triggerProcedureInsert = require('../db/postgres-triggers/trigger-procedure-insert');
 const db = require('../db'); //TODO: possible circular dep?
 
 module.exports = {
@@ -30,6 +31,20 @@ module.exports = {
     this.belongsTo(IGAccount, { foreignKey: { allowNull: false } });
     this.addScope('withPost', { include: [{ model: Post, include: [Photo] }] });
     this.addScope('withDeps', { include: [IGAccount, { model: Post, include: [Photo] }] });
+
+    this.sequelize.addHook('afterBulkSync', () => {
+      const trigProcSQL = triggerProcedureInsert({
+        watchTable: 'PostJobs',
+        watchColumn: 'status',
+        when: `(NEW.status='SUCCESS')`,
+        insertTable: 'Notifications',
+        jsonField: 'body',
+        recordKeys: ['AccountId','PostId','status'],
+        foreignKeys: ['AccountId'],
+      });
+      return this.sequelize.query(trigProcSQL)
+    })
+
   },
   Methods: {
     ...JobMethods,

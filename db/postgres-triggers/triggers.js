@@ -13,6 +13,10 @@ function Trigger(Name, Params = {}) {
 
     Params,
 
+    toString(){
+      return this.query;
+    },
+
     actionPrep(actionType, preposition) {
       let [[action, columns]] = (isString(actionType))
         ? [[actionType, []]]
@@ -67,7 +71,8 @@ function Trigger(Name, Params = {}) {
     },
 
     when(w) {
-      self.Params.When = w;
+      if (!w) { self.Params.When = false; return self }
+      self.Params.When = ((w.trim().toUpperCase().substr(0,4) !== "WHEN") ? `WHEN ${w}` : w);
       return self;
     },
 
@@ -90,6 +95,7 @@ function Trigger(Name, Params = {}) {
     },
 
     args(a) {
+      if (!a) { self.Params.Args = null; return self }
       if (!isArray(a)) {
         throw new TypeError('Trigger().args expects type Array');
       }
@@ -130,6 +136,9 @@ function Trigger(Name, Params = {}) {
         Args = Name;
       }
 
+
+      const ArgsParens = (Args) ? `('${Args}')` : '()';
+
       if (isUndefined(Procedure)) {
         throw TypeError('Trigger() - Procedure undefined, use .exec(<Name>)')
       }
@@ -137,8 +146,9 @@ function Trigger(Name, Params = {}) {
       return `
       ${(Drop) ? `DROP TRIGGER IF EXISTS "${Name}" ON "${Table}";\n` : ''}\tCREATE TRIGGER "${Name}"
       ${Summary} ON "${Table}"
-      ${(When) || ''} FOR EACH ROW
-      EXECUTE PROCEDURE ${Procedure}('${Args}');
+      FOR EACH ROW
+      ${(When) || ''} 
+      EXECUTE PROCEDURE ${Procedure}${ArgsParens};
       `;
     },
   };

@@ -24,26 +24,10 @@ module.exports = {
   Scopes: {
   },
   Hooks: {
-    /* afterBulkSync(){
-      console.log(postjob_notification);
-      return this.sequelize.query(postjob_notification)
-    }*/
   },
   Init({ Account, NotificationRead }) {
     this.hasMany(NotificationRead);
     this.belongsTo(Account, { onDelete: 'cascade', foreignKey: { allowNull: false } });
-
-    this.sequelize.addHook('afterBulkSync', async () => {
-      const trigProcSQL = triggerProcedureInsert({
-        watchTable: 'PostJobs',
-        watchColumn: 'status',
-        insertTable: 'Notifications',
-        recordKeys: ['AccountId','PostId','status'],
-        foreignKeys: ['AccountId'],
-        jsonField: 'body'
-      });
-      await this.sequelize.query(trigProcSQL)
-    })
 
   },
   Methods: {

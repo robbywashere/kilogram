@@ -4,7 +4,7 @@ const { Trigger } = require('../../db/postgres-triggers/triggers');
 describe('trigger query builder',function(){
 
 
-  it.skip('should build query',function(){
+  it('should build query',function(){
   
     
     let trigger = Trigger()
@@ -12,12 +12,9 @@ describe('trigger query builder',function(){
     .table('PostJobs')
     .alias('postjob_notification')
     .after({ update: 'status' })
-    //.args(['id','PostId','AccountId','IGAccountId'])
+    .args(false)
     .exec('postjob_notification')
 
-    console.log(trigger.query);
-  
-  
   })
 
 
