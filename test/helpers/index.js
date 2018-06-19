@@ -87,10 +87,11 @@ function newIGAccount(user) {
   return IGAccount.create({ username: 'username', password: 'password', AccountId: user.Accounts[0].id });
 }
 
-async function createUserAccountIGAccountPhotoPost() {
+async function createUserAccountIGAccountPhotoPost(userOpts) {
   const user = await User.create({
     password: 'blah',
     email: 'test@test.com',
+    ...userOpts,
     Accounts: {},
   }, { include: [Account] });
   const account = user.Accounts[0];

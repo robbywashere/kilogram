@@ -6,7 +6,11 @@ const ffport = require('find-free-port');
 const ioC = require('socket.io-client');
 const { logger } = require('../../lib/logger');
 const express = require('express');
-const { ezUserAccount } = require('../helpers');
+
+const helpers = require('../helpers');
+const userFactory = helpers.createUserAccountIGAccountPhotoPost;
+const { initJob } = helpers;
+
 const { Notification } = require('../../objects');
 const io = require('socket.io');
 const { CookieSessionClass, PGSessionClass } = require('../../server-lib/auth/session');
@@ -67,8 +71,12 @@ describe('Socket Server pushes from postgres updates', () => {
 
   assert.equal(res, 'OK', 'express app GET /');
 
-  const user = await ezUserAccount({ email: 'foo@bar.com', password: 'foobar' });
-  const user2 = await ezUserAccount({ email: 'foo2@bar.com', password: 'foobar2' });
+  const User1Context = await userFactory({ email: 'foo@bar.com', password: 'foobar' });
+  const User2Context = await userFactory({ email: 'foo2@bar.com', password: 'foobar2' });
+
+  const user = User1Context.user;
+  const user2 = User2Context.user;
+
 
   const jar = new request.jar();
   const jar2 = new request.jar();
@@ -162,15 +170,13 @@ describe('Socket Server pushes from postgres updates', () => {
     AccountId: user.Accounts[0].id,
   });
 
+
   logger.debug('Notification User1 created');
   await Notification.create({
     body: { msg: 'hello user 2' },
     AccountId: user2.Accounts[0].id,
   });
   logger.debug('Notification User2 created');
-
-
-
 
 
   logger.debug('Notification User1 response await...');
@@ -183,6 +189,17 @@ describe('Socket Server pushes from postgres updates', () => {
 
   assert.deepEqual(resUser2.body, { msg: 'hello user 2' });
 
-})
+  const user1sockpj = new Promise(rs => userSocket1.on('client:push', rs));
+
+  const job = await initJob(User1Context.post);
+
+  await job.update({ status: 'SUCCESS' });
+
+  const user1pj = (await user1sockpj);
+
+  assert.equal(user1pj.body.data.PostJob.status, 'SUCCESS');
+
+
+  })
 });
 
