@@ -38,7 +38,7 @@ module.exports = {
       const trigProcSQL = triggerProcedureInsert({
         watchTable: this.tableName,
         watchColumn: column, 
-        meta: { type: 'PostJob.Success', resource: this.name },
+        meta: { type: 'notify:post_job:success', resource: this.name },
         when: `(NEW.status='SUCCESS')`,
         insertTable: 'Notifications',
         jsonField: "body",
@@ -46,7 +46,6 @@ module.exports = {
         recordKeys: [].concat(assocs,column,'id'),
         foreignKeys: ['AccountId'],
       });
-    console.log(trigProcSQL);
       return this.sequelize.query(trigProcSQL)
     })
 

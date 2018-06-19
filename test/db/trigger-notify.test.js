@@ -73,8 +73,7 @@ describe('trigger notify functionality', () => {
 
         logger.debug(JSON.stringify(payload,null,4));
         
-        const { data: { body: { data: { status, PostId, AccountId } } } } = payload;
-
+        const { data: { body: { data: { PostJob: { status, PostId, AccountId } }  } } } = payload;
         try {
           assert.equal(status, 'SUCCESS');
           assert.equal(AccountId, igAccount.id);
