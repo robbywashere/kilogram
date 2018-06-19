@@ -98,7 +98,7 @@ function runJobs({
 const main = function ({ 
   nodeName = (config.get('DEVICE_NODE_NAME') || demand('{ nodeName: <String> }')),
   interval = 1000
-}) {
+} = {}) {
   return [
 
     // this will run on a master node
