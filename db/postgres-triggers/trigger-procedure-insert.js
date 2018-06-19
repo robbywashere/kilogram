@@ -6,10 +6,12 @@ const TriggerProcedureInsert =  ({
   watchTable = demand('watchTable'),  
   watchColumn = demand('watchColumn'),
   insertTable = demand('insertTable'),
+  meta = null,
   foreignKeys = demand('foreignKeys'),
   recordKeys = demand('recordKeys'),
   trigProcName,
   when = '',
+  prefix,
   jsonField = 'body',
 })=> {
   //notifications:after_update:status
@@ -28,18 +30,35 @@ const TriggerProcedureInsert =  ({
     .args(null)
     .exec(tpName).query;
 
-
-  console.log(triggerQuery);
-
+  prefix = (prefix) ? `'${prefix}'` : 'TG_TABLE_NAME';
 
   return `
 CREATE OR REPLACE FUNCTION ${tpName}() RETURNS TRIGGER AS $$
 DECLARE 
   data json;
+  prefix text;
   BEGIN
-    data = json_build_object(${dataJsonObj},'__t','${tpName}','__r','${watchTable}','__c','${watchColumn}');
-    INSERT INTO "${insertTable}" ("createdAt","updatedAt",${foreignKeyFields}, "${jsonField}")
-    VALUES (NOW(),NOW(),${foreignKeyValues},data);
+    prefix = ${prefix}::text;
+
+    data = json_build_object(
+    prefix,
+      json_build_object(${dataJsonObj}),
+    '__meta', '${JSON.stringify(meta)}'::json)
+    ;
+
+    INSERT INTO "${insertTable}" (
+    "createdAt",
+    "updatedAt",
+    ${foreignKeyFields}, 
+    ${jsonField})
+
+    VALUES (
+    NOW(),
+    NOW(),
+    ${foreignKeyValues},
+    data);
+
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

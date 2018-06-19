@@ -33,17 +33,23 @@ module.exports = {
     this.addScope('withDeps', { include: [IGAccount, { model: Post, include: [Photo] }] });
 
     this.sequelize.addHook('afterBulkSync', () => {
+      let assocs = Object.keys(this.associations).map(a=>`${a}Id`);
+      const column = 'status';
       const trigProcSQL = triggerProcedureInsert({
-        watchTable: 'PostJobs',
-        watchColumn: 'status',
+        watchTable: this.tableName,
+        watchColumn: column, 
+        meta: { type: 'PostJob.Success', resource: this.name },
         when: `(NEW.status='SUCCESS')`,
         insertTable: 'Notifications',
-        jsonField: 'body',
-        recordKeys: ['AccountId','PostId','status'],
+        jsonField: "body",
+        prefix: this.name,
+        recordKeys: [].concat(assocs,column,'id'),
         foreignKeys: ['AccountId'],
       });
+    console.log(trigProcSQL);
       return this.sequelize.query(trigProcSQL)
     })
+
 
   },
   Methods: {
