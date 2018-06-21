@@ -115,6 +115,26 @@ describe('objects/Post', () => {
   });
 
 
+  it('should scope a Post query to a user argument with .userScoped',async () =>{
+
+    const { user: user1, account: account1, post: post1 } = await createAccountUserPost({ email: 'a@a.com' });
+    const { user: user2, account: account2, post: post2 } = await createAccountUserPost({ email: 'b@b.com' });
+    const { user: user3, account: account3, post: post3 } = await createAccountUserPost({ email: 'c@c.com' });
+
+
+    const scopedPosts1 = await Post.userScoped(user1)
+    assert(scopedPosts1.length === 1);
+    assert(scopedPosts1[0].id === post1.id);
+
+    const scopedPosts2 = await Post.userScoped(user2)
+    assert(scopedPosts2[0].id === post2.id);
+    assert(scopedPosts2.length === 1);
+
+  })
+
+
+
+
   it.skip('should respond to withUserForId with .User object', async () => {
     const { post } = await createAccountUserPostJob();
 

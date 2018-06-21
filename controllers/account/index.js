@@ -1,6 +1,7 @@
 const { Account, UserAccount, User } = require('../../objects');
 const Resource = require('../lib/baseResource');
 const BasePolicy = require('../lib/basePolicy');
+const { NotFound } = require('http-errors');
 
 const { Router } = require('express');
 
@@ -29,12 +30,12 @@ class AccountPolicy extends BasePolicy {
   create() {
     return false;
   }
-  async addUser() {
-    return await this._adminOnly();
+  addUser() {
+    return this._adminOnly();
   }
-  async removeUser() {
+  removeUser() {
     if (this.params.userId === this.user.id) return false;
-    return await this._adminOnly();
+    return this._adminOnly();
   }
 }
 
@@ -75,6 +76,7 @@ class AccountResource extends Resource {
   }
 }
 
+//verb,path,action
 module.exports = function AccountController() {
   const router = new Router();
   const resource = new AccountResource({ model: Account, policy: AccountPolicy, scope: AccountPolicy.scope });

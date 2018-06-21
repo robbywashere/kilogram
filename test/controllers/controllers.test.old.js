@@ -260,7 +260,7 @@ describe.skip('controllers', () => {
 
     await user.reload();
 
-    assert(user.verifyPassword(newPass));
+    assert((await user.verifyPassword(newPass)));
   });
 
 

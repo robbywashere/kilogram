@@ -9,19 +9,19 @@ class UserPolicy extends AuthPolicy {
     return true;
   }
 
-  async edit() {
+   edit() {
     return this.instance.id === user.id;
   }
 
-  async destroy() {
+   destroy() {
     return false;
   }
 
-  async show() {
+   show() {
     return true;
   }
 
-  async create() {
+   create() {
     return false;
   }
 }

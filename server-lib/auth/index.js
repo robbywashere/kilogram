@@ -33,7 +33,7 @@ module.exports = function Auth(app, { sessionStrategy = demand('sessionStrategy'
     try {
       const user = await User.scope('withAccounts').findOne({ where: { email: username } });
       if (!user || !user.Accounts) { return cb(null, false); }
-      if (!user.verifyPassword(password)) { return cb(null, false); }
+      if (!(await user.verifyPassword(password))) { return cb(null, false); }
       return cb(null, user);
     } catch (e) {
       return cb(e);

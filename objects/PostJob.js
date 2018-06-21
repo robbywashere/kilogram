@@ -32,18 +32,18 @@ module.exports = {
     this.addScope('withPost', { include: [{ model: Post, include: [Photo] }] });
     this.addScope('withDeps', { include: [IGAccount, { model: Post, include: [Photo] }] });
 
+    //TODO: pull this out into something reusable by other objects
     this.sequelize.addHook('afterBulkSync', () => {
       let assocs = Object.keys(this.associations).map(a=>`${a}Id`);
-      const column = 'status';
+      const watchColumn = 'status';
       const trigProcSQL = triggerProcedureInsert({
         watchTable: this.tableName,
-        watchColumn: column, 
-        meta: { type: 'notify:post_job:success', resource: this.name },
-        when: `(NEW.status='SUCCESS')`,
+        watchColumn,
+        meta: { type: 'PostJob:status', resource: this.name },
         insertTable: 'Notifications',
         jsonField: "body",
         prefix: this.name,
-        recordKeys: [].concat(assocs,column,'id'),
+        recordKeys: [].concat(assocs,watchColumn,'id'),
         foreignKeys: ['AccountId'],
       });
       return this.sequelize.query(trigProcSQL)

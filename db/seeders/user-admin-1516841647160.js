@@ -12,6 +12,8 @@ module.exports = {
   },
 
   down: async ($, Sequelize) => {
+    await User.destroy( { where: {
+      email: 'robertapolana@gmail.com' } });
   },
 };
 

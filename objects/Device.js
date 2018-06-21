@@ -140,10 +140,6 @@ module.exports = {
       });
     },
 
-    async gimmeFreeOne() {
-      const free = await this.free();
-      return get(free, 0);
-    },
     async register(ids = []) {
       const exists = (await this.findAll({
         where: {

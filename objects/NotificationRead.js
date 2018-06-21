@@ -1,9 +1,3 @@
-const sequelize = require('sequelize');
-
-const {
-  STRING, TEXT, JSON: JSONType, INTEGER, VIRTUAL, BOOLEAN, Op,
-} = sequelize;
-
 module.exports = {
   Name: 'NotificationRead',
   Properties: {

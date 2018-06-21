@@ -159,8 +159,8 @@ function ezUserAccount(opts) {
   return ezUser({ ...opts, Accounts: {} }, { include: [Account] });
 }
 
-async function createAccountUserPost() {
-  const user = await ezUserAccount();
+async function createAccountUserPost(userOpts) {
+  const user = await ezUserAccount(userOpts);
   const photo = await Photo.create({
     bucket: 'uploads',
     objectName: minioObj.create('v2', { payload: true }),

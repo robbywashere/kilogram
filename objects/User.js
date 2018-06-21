@@ -1,5 +1,6 @@
 const sequelize = require('sequelize');
 const crypto = require('crypto');
+const { passwordHash, passwordVerify } = require('../lib/passwordHash');
 const { logger } = require('../lib/logger');
 const hashify = require('../server-lib/auth/hashify');
 
@@ -12,6 +13,8 @@ const {
 const Promise = require('bluebird');
 const cryptoRandomString = require('crypto-random-string');
 const { genPasswordKey, randomKey } = require('./_helpers');
+
+
 
 module.exports = {
   Name: 'User',
@@ -46,19 +49,6 @@ module.exports = {
     },
     password: {
       defaultValue: randomKey,
-      type: VIRTUAL,
-      omit: true,
-      set(password) {
-        const salt = randomKey();
-        this.setDataValue('passwordSalt', salt);
-        this.setDataValue('passwordHash', hashify({ salt, password }));
-      },
-    },
-    passwordHash: {
-      type: STRING,
-      omit: true,
-    },
-    passwordSalt: {
       type: STRING,
       omit: true,
     },
@@ -70,7 +60,14 @@ module.exports = {
 
   },
   Hooks: {
-    // beforeCreate: function(){}
+    async beforeCreate(user, options)  {
+      try {
+        user.password = await passwordHash(user.password);
+      } catch(e) {
+        throw e;
+      }
+    },
+
     async afterCreate(user, options) {
       const { Account } = this.sequelize.models;
       if (!isArray(user.Accounts)) {
@@ -92,7 +89,10 @@ module.exports = {
       if (!get(user, 'Accounts.length')) {
         throw new Error('User record must include Account');
       }
-      return { include: [{ model: Account, where: { id: { [Op.in]: user.Accounts.map(a => a.id) } } }] };
+      return { include: [{ 
+        model: Account, 
+        ///through: { attributes: [] }, //Exclude UserAccount join table
+        where: { id: { [Op.in]: user.Accounts.map(a => a.id) } } }] };
     },
   },
   Methods: {
@@ -112,7 +112,11 @@ module.exports = {
         return [];
       }
     },
-    verifyPassword(password) { return (this.passwordHash === hashify({ salt: this.passwordSalt, password })); },
+
+    verifyPassword(password){
+      return passwordVerify(password, this.password);
+    },
+
     async isAccountRole(accountId, role) {
       try {
         if (!get(this, 'Accounts.length') || isUndefined(this.Accounts[0].UserAccount)) {
@@ -126,8 +130,14 @@ module.exports = {
     },
   },
   StaticMethods: {
-    recover({ email, password, passwordKey }) {
-      return this.update({ passwordKey: genPasswordKey(), password }, { where: { passwordKey, email }, returning: true })
+    async recover({ email, password, passwordKey }) {
+      return this.update({ 
+        passwordKey: genPasswordKey(), 
+        password: await passwordHash(password) 
+      },{ 
+        where: { passwordKey, email }, 
+        returning: true 
+      })
         .then(([_, u]) => u[0]);
     },
     newRecovery(email) {
@@ -138,7 +148,6 @@ module.exports = {
   Init({
     Post, IGAccount, UserAccount, Account,
   }) {
-    this.hasMany(Post);
     this.belongsToMany(Account, { through: 'UserAccount' });
     this.addScope('withAccounts', { include: [{ model: Account, include: [IGAccount] }] });
     this.addScope('withAdminAccounts', { include: [{ model: Account, where: { '$Accounts.UserAccount.role$': 'admin' } }] });

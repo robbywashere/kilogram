@@ -18,7 +18,7 @@ module.exports = function JWT(app) {
 
     const user = await User.findOne({ where: { email: username }, include: [Account] });
 
-    if (!user || (user && !user.verifyPassword(password))) {
+    if (!user || (user && !(await user.verifyPassword(password)))) {
       throw new Unauthorized();
     }
 

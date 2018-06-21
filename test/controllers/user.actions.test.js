@@ -73,7 +73,7 @@ describe('User actions', () => {
 
     await user.reload();
 
-    assert(user.verifyPassword(newPass));
+    assert((await user.verifyPassword(newPass)));
   });
 
 
@@ -116,7 +116,7 @@ describe('User actions', () => {
 
     await user.reload();
 
-    assert(user.verifyPassword(password));
+    assert((await user.verifyPassword(password)));
   });
 
   it('should respond do PUT \'/\' user invite of specified key for existing user', async () => {

@@ -1,7 +1,7 @@
 const sequelize = require('sequelize');
 const { get } = require('lodash');
 const crypto = require('crypto');
-const hashify = require('../server-lib/auth/hashify');
+const Haikunator = new (require('haikunator'))();
 
 const {
   STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op,
@@ -9,11 +9,13 @@ const {
 const Promise = require('bluebird');
 const { isLoggedIn } = require('./_helpers');
 
+
 module.exports = {
   Name: 'Account',
   Properties: {
     name: {
       type: STRING,
+      defaultValue: Haikunator.haikunate.bind(Haikunator)
     },
     enabled: {
       type: BOOLEAN,
@@ -25,10 +27,11 @@ module.exports = {
   ScopeFunctions: true,
   Scopes: {
     userScoped(user) {
-      if (!get(user, 'Accounts.length')) {
-        throw new Error('User record must include Account');
-      }
-      return { where: { id: { [Op.in]: user.Accounts.map(a => a.id) } } };
+      const { User } = this.sequelize.models;
+      return ({
+        where: { '$Users.UserAccount.UserId$': user.id },
+        include: [ { model: User, through: { attributes: [] } }]
+      })
     },
   },
   Methods: {

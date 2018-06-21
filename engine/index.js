@@ -3,7 +3,7 @@ const { PostJob, VerifyIGJob, Device } = require('../objects');
 const config = require('config');
 const { logger } = require('../lib/logger');
 const demand = require('../lib/demand');
-const Runner = require('../android/runner');
+const Runner = require('../services');
 const DeviceAgent = require('../android/deviceAgent');
 
 const {

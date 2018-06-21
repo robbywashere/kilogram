@@ -12,6 +12,7 @@ const {
   ForbiddenError, BadRequestError, NotFoundError, FinaleError,
 } = require('finale-rest').Errors;
 const { BadRequest } = require('http-errors');
+const Promise = require('bluebird');
 
 
 module.exports = {
@@ -20,7 +21,7 @@ module.exports = {
     text: {
       type: TEXT,
     },
-    photoUUID: { 
+    photoUUID: {
       type: UUID,
     },
     postDate: {
@@ -29,7 +30,7 @@ module.exports = {
     },
     status: {
       type: ENUM('DRAFT', 'PUBLISH', 'PUBLISHED'),
-      defaultValue: 'PUBLISH', // TODO: NO
+      defaultValue: 'PUBLISH',
     },
   },
   Init({
@@ -62,18 +63,18 @@ module.exports = {
         $PostJob$: { [Op.eq]: null },
       },
     });
-    // Not used delete me? this.addScope('withIGAccount', { include: [ IGAccount ] } )
   },
   ScopeFunctions: true,
   Hooks: {
     // TODO: this can all be done with one raw query and is not needed :(
     async beforeBulkCreate(instances) {
-      for (const instance of instances) {
-        await this.mapToPhoto(instance);
-      }
+      await Promise.map(instances, (i)=>this.mapToPhoto(i), { concurrency:5 });
+      /* for (const instance of instances) {
+        await this.mmapToPhomapToPhototoapToPhoto(instance);
+      }*/
     },
     beforeDelete({ id }) {
-      return this.sequelize.models.PostJob.destroy({ where: { status: 'OPEN', PostId: id }})
+      return this.sequelize.models.PostJob.destroy({ where: { status: 'OPEN', PostId: id } });
     },
     beforeCreate(instance) {
       return this.mapToPhoto(instance);
@@ -82,19 +83,20 @@ module.exports = {
   Scopes: {
     withAll: { include: [{ all: true }] },
     userScoped(user) {
-      if (!get(user, 'Accounts.length')) {
-        throw new Error('Attempt to scope to Account without Account on user object');
-      }
-      const accountIds = user.Accounts.map(a => a.id);
-      return (isSuperAdmin(user)) ? {} : { where: { AccountId: { [Op.in]: accountIds } } };
+      const { Account, User } = this.sequelize.models;
+      return ({
+        where: { '$Account.Users.id$': user.id },
+        include: [{
+          model: Account,
+          attributes: [],
+          include: [{
+            model: User,
+            attributes: [],
+          }],
+        }],
+      });
     },
-    userAccountScoped(user) {
-      if (!get(user, 'Accounts.length')) {
-        throw new Error('Attempt to scope to Account without Account on user object');
-      }
-      const accountIds = user.Accounts.map(a => a.id);
-      return (isSuperAdmin(user)) ? {} : { where: { AccountId: { [Op.in]: accountIds } } };
-    },
+
   },
   Methods: {
   },

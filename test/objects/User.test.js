@@ -7,7 +7,6 @@ describe('User object', () => {
   beforeEach(() => DBSync(true));
 
   it('should create a new Account when there is no Account for User', async () => {
-    await User.removeHook('afterCreate');
     const user = await User.create({
       email: 'test@test.com',
       password: 'blah',
@@ -17,7 +16,6 @@ describe('User object', () => {
   });
 
   it('should create a new Account when included in object', async () => {
-    User.options.hooks = {};
     const user = await User.create({
       email: 'test@test.com',
       password: 'blah',
@@ -29,7 +27,6 @@ describe('User object', () => {
   });
 
   it('should scope other users to same account', async () => {
-    User.options.hooks = {};
     const user = await User.create({
       email: 'test@test.com',
       password: 'blah',

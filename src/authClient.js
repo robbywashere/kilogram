@@ -14,8 +14,13 @@ export const sessionClient = (type, params) => {
       return Promise.reject();
     }
   }
+  if (type === AUTH_CHECK) {
+    return axios.get('/auth');
+  }
   if (type === AUTH_LOGOUT) {
-    return axios.delete('/auth');
+    // MUST NOT RETURN axios.delete, a reject will fail the logout on the client-side code, 
+    // meaning to login redirect screen, meaning an endless loop 
+    return axios.delete('/auth').catch(()=>{});
   }
   return Promise.resolve();
 };

@@ -14,7 +14,7 @@ const {
   Account, IGAccount, Device, Post, PostJob, VerifyIGJob
 } = require('../../objects');
 const syncDb = require('../../db/sync');
-const Runner = require('../../android/runner');
+const Runner = require('../../services');
 const DeviceAgent = require('../../android/deviceAgent');
 
 const Promise = require('bluebird');

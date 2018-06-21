@@ -20,7 +20,7 @@ const basePolicy = require('./basePolicy');
 // app.get('/admin',function beforeAction(req,res,next){ ..... next() }, action);
 
 const EmptyCollection = () => ({ // TODO should probably make class wrappers for everything which is returned - save()'d serialize()'d
-  async save() { return undefined; },
+  save() { return undefined; },
   serialize() {
     return [];
   },
@@ -226,7 +226,6 @@ module.exports = class BaseResource {
     let result;
     sanitizedBody.save = async () => result = await this.model.bulkCreate(sanitizedBody, { returning: true });
     sanitizedBody.serialize = () =>
-      // return (get(result,1)) ?  result[1].map(i=>i.serialize()) : [];
       result.map(i => i.serialize());
 
     return sanitizedBody;
@@ -270,7 +269,7 @@ module.exports = class BaseResource {
   async destroy({ user, params }, { opts }) {
     const scope = opts.scope;
     const resource = await scope(user).findById(params.id, opts);
-    if (!instances.length) return EmptyCollection();
+    //?if (!instances.length) return EmptyCollection();
     resource.save = resource.destroy;
     return resource;
   }

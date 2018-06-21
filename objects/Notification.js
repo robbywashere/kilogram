@@ -51,8 +51,7 @@ module.exports = {
     unread({ UserId, AccountId }, opts) {
       const { NotificationRead, Account, User } = this.sequelize.models;
 
-      return (!isUndefined(AccountId) ?
-        this.scope({ where: { AccountId } }) : this)
+      return (!isUndefined(AccountId) ? this.scope({ where: { AccountId } }) : this)
         .findAll({
           where: {
             '$Account.Users.id$': { [Op.eq]: UserId },

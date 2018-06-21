@@ -24,7 +24,6 @@ async function PostJobRun({
   const mc = (typeof minioClient !== "undefined") ? minioClient : (new minio.MClient());
 
   if (isUndefined(get(Post,'Photo.objectName'))) {
-    //logger.error(Post.toJSON());
     throw new Error(`Post ${Post.id} does not have a .Photo.objectName`); 
   }
 
