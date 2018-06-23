@@ -43,9 +43,9 @@ function logDeviceSync(result) {
 
 // TODO: move me?
 async function syncDevices() {
-  const devs = await cmds.adbDevices();
-  await Device.freeDanglingByIds(devs); // TODO:???
-  await Device.syncAll(devs).then(logDeviceSync);
+  const adbOnlineDevices = await cmds.adbDevices();
+  await Device.freeDanglingByIds(adbOnlineDevices); // TODO:???
+  await Device.syncAll(adbOnlineDevices).then(logDeviceSync);
 }
 
 
@@ -102,7 +102,9 @@ const main = function ({
   return [
 
     // this will run on a master node
-    run(PostJob.initPostJobs.bind(PostJob), interval), // Turns posts into queued jobs
+  
+    run(PostJob.initPostJobs, interval), // Turns posts into queued jobs
+
     // These will run on a device node
     run(syncDevices, interval),
 

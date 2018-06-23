@@ -97,6 +97,7 @@ describe('Devices', () => {
 
   describe('freeDangling by ids', () => {
     it('should `free` devices where online:false, idle:false given a list of ids', async () => {
+
       await Device.create({
         online: false,
         idle: false,
@@ -104,9 +105,11 @@ describe('Devices', () => {
         enabled: true,
       });
       await Device.freeDanglingByIds(['did']);
-      const freed = await Device.findAll({ where: { online: true, idle: true } });
 
-      assert.equal(1, freed.length);
+      const freed = await Device.findOne({ 
+        where: { online: true, idle: true, adbId: 'did' } });
+
+      assert(freed);
     });
   });
 

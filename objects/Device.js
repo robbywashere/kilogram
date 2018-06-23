@@ -1,5 +1,6 @@
 const sequelize = require('sequelize');
 const cmds = require('../android/cmds');
+const demand = require('../lib/demand');
 const config = require('config');
 
 const {
@@ -98,6 +99,14 @@ module.exports = {
     disabled: { where: { enabled: false } },
     free: { where: { idle: true, online: true, enabled: true } },
     dangling: { where: { online: false, idle: false } },
+    danglingIds(ids = demand('adbIds')) {
+      return ({ where: { 
+        online: false, 
+        adbId: { [Op.in]: ids },
+        idle: false 
+      } 
+      }) 
+    }, 
     inProgress: { where: { online: true, enabled: true, idle: false } },
     zombies: {
       where: {
@@ -187,14 +196,9 @@ module.exports = {
     },
 
     // TODO: For when a device disconnects in the middle of working/not { idle: true }, then comes back online
-    async freeDanglingByIds(ids = []) {
-      await this.update({ online: true, idle: true }, {
-        where: {
-          adbId: { [Op.in]: ids },
-          idle: false,
-          online: false,
-        },
-      });
+    // Remove this? 6/15/2018
+    async freeDanglingByIds(ids = demand('adbId<Array>')) {
+      await this.danglingIdsFn(ids).update({ online: true, idle: true })
     },
   },
 };

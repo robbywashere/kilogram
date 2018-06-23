@@ -59,26 +59,8 @@ module.exports = {
   },
   StaticMethods: {
     ...JobStaticMethods,
-    /*async initPostJob2() {
-      return db.models.PostJob.create({
-        PostId: '$Post.id$',
-        IGAccountId: '$Post.IGAccountId$',
-        AccountId: '$Post.AccountId$',
-      }, {
-        include: [{
-          model: db.models.Post,
-          where: {
-            postDate: {
-              [Op.lte]: sequelize.fn('NOW()'),
-            },
-            '$PostJobs.PostId$': null,
-          },
-          include: [db.models.PostJob],
-        }],
-      });
-    },*/
     async initPostJobs() {
-      return this.sequelize.query(InitPostJobQuery, { type: sequelize.QueryTypes.INSERT, model: this.sequelize.models.PostJob });
+      return db.query(InitPostJobQuery, { type: sequelize.QueryTypes.INSERT, model: db.models.PostJob });
     },
   },
 };
