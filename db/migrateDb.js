@@ -30,10 +30,11 @@ async function runMigFiles(client, migfileArray) {
 }
 
 async function up() {
-  const client = new Client(pgConfig);
-  client.connect();
+  let client;
   let res;
   try {
+    client = new Client(pgConfig);
+    client.connect();
     res = await client.query(`CREATE DATABASE ${dbname}`);
     logger(`DB up ${dbname} success!`);
   } catch (err) {
@@ -42,29 +43,30 @@ async function up() {
     } else if (err) {
       logger.error(err, res);
     }
+  } finally {
+    client.end();
   }
-  client.end();
-  process.exit(0);
 }
 
 async function migDown() {
-  const migClient = new Client(migConfig);
-  migClient.connect();
-  await runMigFiles(migClient, slurpDownSql(f => [f, slurpFile(f)]));
-
-  await migClient.end();
+  const client = new Client(migConfig);
+  client.connect();
+  await runMigFiles(client, slurpDownSql(f => [f, slurpFile(f)]));
+  await client.end();
 }
 async function migUp() {
-  const migClient = new Client(migConfig);
-  migClient.connect();
-  await runMigFiles(migClient, slurpUpSql(f => [f, slurpFile(f)]));
-  await migClient.end();
+  const client = new Client(migConfig);
+  client.connect();
+  await runMigFiles(client, slurpUpSql(f => [f, slurpFile(f)]));
+  await client.end();
 }
 
 async function down() {
-  const client = new Client(pgConfig);
   let res;
+  let client;
   try {
+    client = new Client(pgConfig);
+    client.connect();
     res = await client.query(`DROP DATABASE ${dbname}`);
     logger(`DB down ${dbname} success!`);
   } catch (err) {
@@ -74,8 +76,9 @@ async function down() {
       logger.error(err, res);
     }
   }
-  client.end();
-  process.exit(0);
+  finally{
+    client.end();
+  }
 }
 
 module.exports = {
