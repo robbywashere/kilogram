@@ -2,6 +2,17 @@
 const demand = require('../../lib/demand');
 const { Trigger } = require('./triggers');
 
+
+function prefixer(p, stmt, meta){
+  if (!p || p.length === 0) return stmt + ';';
+  let prefix = p.pop();
+  if (meta && p.length === 0) {
+    return `json_build_object('${prefix}',${stmt}, 'meta','${JSON.stringify(meta)}'::json);`;
+  } else {
+    return prefixer(p, `json_build_object('${prefix}',${stmt})`, meta);
+  }
+}
+
 const TriggerProcedureInsert =  ({ 
   watchTable = demand('watchTable'),  
   watchColumn = demand('watchColumn'),
@@ -14,10 +25,21 @@ const TriggerProcedureInsert =  ({
   prefix,
   jsonField = 'body',
 })=> {
+
   const tpName = (trigProcName) ? trigProcName : `t__${watchTable}_${insertTable}`.toLowerCase();
+
   const rowDataMap = recordKeys.map((key)=> `'${key}', NEW."${key}"`).join(',');
-  const foreignKeyFields = foreignKeys.map(k=>`"${k}"`).join(',');
-  const foreignKeyValues = foreignKeys.map(k=>`NEW."${k}"`).join(',');
+
+  let PREFIX = (typeof prefix === "string") ? prefix.split('.') : prefix; 
+
+  let BODY = prefixer([].concat(PREFIX),`json_build_object(${rowDataMap})`,meta);
+
+  let foreignKeyFields;
+  let foreignKeyValues;
+  if (foreignKeys) {
+    foreignKeyFields =  foreignKeys.map(k=>`"${k}"`).join(',');
+    foreignKeyValues =  foreignKeys.map(k=>`NEW."${k}"`).join(',');
+  }
 
 
   const triggerQuery = Trigger()
@@ -29,44 +51,31 @@ const TriggerProcedureInsert =  ({
     .args(null)
     .exec(tpName).query;
 
+
+  const fields = ['"createdAt"','"updatedAt"',jsonField,foreignKeyFields]
+    .filter(x=>x).join(',');
+
+  const values = ['NOW()','NOW()',jsonField,foreignKeyValues]
+    .filter(x=>x).join(',');
+
+  const INSERT = `"${insertTable}" (${fields})`;
+
+  const VALUES = `(${values});`;
+
+
   return `
 CREATE OR REPLACE FUNCTION ${tpName}() RETURNS TRIGGER AS $$
 DECLARE 
   body json;
   row_data json;
   meta json;
-  prefix text;
   BEGIN
 
-    ${ (meta) ? `meta = '${JSON.stringify(meta)}'::json;` : '' }
+    body = ${BODY}
 
-    ${ (prefix) ? `prefix = '${prefix}'::text;` : '' }
+    INSERT INTO ${INSERT}
 
-    IF prefix IS NOT NULL THEN
-        row_data = json_build_object(prefix,json_build_object(${rowDataMap}));
-    ELSE
-        row_data = json_build_object(${rowDataMap});
-    END IF;
-
-    IF meta IS NOT NULL THEN
-      body = json_build_object('data',row_data, 'meta', meta);
-    ELSE
-      body = json_build_object('data',row_data);
-    END IF;
-
-
-    INSERT INTO "${insertTable}" (
-    "createdAt",
-    "updatedAt",
-    ${foreignKeyFields}, 
-    ${jsonField})
-
-    VALUES (
-    NOW(),
-    NOW(),
-    ${foreignKeyValues},
-    body);
-
+    VALUES ${VALUES}
 
   RETURN NEW;
 

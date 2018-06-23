@@ -42,7 +42,7 @@ module.exports = {
         meta: { type: 'PostJob:status', resource: this.name },
         insertTable: 'Notifications',
         jsonField: "body",
-        prefix: this.name,
+        prefix: ['data',this.name],
         recordKeys: [].concat(assocs,watchColumn,'id'),
         foreignKeys: ['AccountId'],
       });
