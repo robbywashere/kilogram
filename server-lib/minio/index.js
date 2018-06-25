@@ -231,10 +231,10 @@ class MClient {
     return objects;
   }
 
-  async newPhoto({ bucket = this.bucket, AccountId = demand('AccountId') }) {
+  async newPhoto({ bucket = this.bucket, ...rest }) {
     const uuid = Uuid.v4();
-    const name = minioObj.create('v4', { uuid, AccountId });
-    const url = await this.getSignedPutObject({ name }); // TODO:
+    const name = minioObj.create('v4', { uuid, ...rest });
+    const url = await this.getSignedPutObject({ name }); 
     return { url, uuid, objectName: name };
   }
 

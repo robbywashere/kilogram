@@ -67,6 +67,7 @@ async function down() {
   try {
     client = new Client(pgConfig);
     client.connect();
+    logger(`DROP DATABASE ${dbname}`);
     res = await client.query(`DROP DATABASE ${dbname}`);
     logger(`DB down ${dbname} success!`);
   } catch (err) {

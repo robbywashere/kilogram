@@ -66,7 +66,8 @@ module.exports = {
       return ({ GOOD, FAILED, UNVERIFIED });
     }
   },
-  Init() {
+  Init({ Photo }) {
+    this.belongsTo(Photo, { as: 'avatar', targetKey: 'uuid' });
   },
 };
 

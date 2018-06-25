@@ -1,26 +1,35 @@
-const { PostJobRun, VerifyIGJobRun, pullRemoteObject } = require('../../services');
+const { PostJobRun, VerifyIGJobRun, DownloadIGAvaJobRun, pullRemoteObject } = require('../../services');
 const { Agent } = require('../../android/deviceAgent');
 const { JobMethods } = require('../../objects/_JobsBase');
 const IGAccount = require('../../objects/IGAccount');
-
+const nock = require('nock');
 const PythonShell = require('python-shell');
 const { PythonBridge } = require('../../android/bridge');
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../../db/sync');
+const minioObj = require('../../server-lib/minio/minioObject');
+
 const {
   Post, Device, User, Photo,
 } = require('../../objects');
+
 const minio = require('../../server-lib/minio');
 
+const { createReadStream, readFileSync } = require('fs');
+
 const { MClient } = minio;
-const { createAccountUserPostJob } = require('../helpers');
+
+const { createAccountUserPostJob, createUserAccountIGAccount } = require('../helpers');
 
 
-describe('jobs/', () => {
-  let minioStub;
+
+describe('All Jobs', () => {
 
   beforeEach(() => sync(true));
+
+
+  let sandBox;
 
   describe('function VerifyIGJobRun', () => {
     let agent;
@@ -37,7 +46,8 @@ describe('jobs/', () => {
     let igAccount; 
 
     beforeEach(() => {
-      igAccount = IGAccountFactory({ status: 'UNVERIFIED' });
+      sandBox = sinon.sandbox.create();
+      igAccount = IGAccountFactory({ status: 'UNVERIFIED' }); //TODO: NO
       job = new function () {
         return ({
           ...JobMethods,
@@ -47,6 +57,51 @@ describe('jobs/', () => {
           attempts: 0,
         });
       }();
+    });
+
+    afterEach(()=>sandBox.restore());
+
+
+    it('should download IGAccount Avatar', async () => {
+
+      //const igAccount;
+
+      const { igaccount } = await createUserAccountIGAccount();
+
+      //     const mockObjName = minioObj.create('v4', { payload: true });
+
+      const IGAVAFixture = readFileSync(__dirname + '/../fixtures/kimkardashian-ig.html').toString();
+
+      sandBox.stub(MClient.prototype,'getSignedPutObject').returns('http://127.0.0.1/put_photo_here');
+
+      let minioClient = new MClient(); 
+
+      const reqAsync = { 
+        get: sinon.mock().resolves(IGAVAFixture)
+      };
+
+      const pipe = sinon.mock().returns({ on: (_,rs) => rs() });
+
+      const reqPipe = {
+        get: sinon.mock().returns({ pipe }),
+        put: sinon.spy()
+      }
+
+      await DownloadIGAvaJobRun({ 
+        minioClient,
+        job, 
+        reqAsync,
+        reqPipe,
+        IGAccount: igaccount,
+      });
+
+      //  console.log('>>>',igaccount.avatar);
+      // console.log(minioObj.parse(igaccount.avatar));
+
+      console.log(igaccount.toJSON());
+      //  assert.equal(igaccount.avatar,'x');
+
+
     });
 
     it('should verify a good IGAccount', async () => {

@@ -1,5 +1,5 @@
 const cmds = require('../android/cmds');
-const { PostJob, VerifyIGJob, Device } = require('../objects');
+const { PostJob, VerifyIGJob, Device, DownloadIGAvaJob } = require('../objects');
 const config = require('config');
 const { logger } = require('../lib/logger');
 const demand = require('../lib/demand');
@@ -71,7 +71,26 @@ function jobStats(job) {
     }, {}),
   };
 }
-function runJobs({
+
+function runJob({
+  JobModel = demand('JobModel'),
+  jobRunner = demand('jobRunner'),
+} = {}) {
+  return async function () {
+    let job;
+    if (job = await JobModel.popJob()) {
+      try {
+        await job.denormalize();
+        await jobRunner({ ...job, job });
+      } catch (err) {
+        await job.backout(err, true);
+        logger.error(`-- Unexpected error occurred running ${JobModel.name}: ${job.id} \n ${err}`);
+      }
+    } 
+  };
+}
+
+function runDeviceJob({
   nodeName = demand('nodeName'),
   JobModel = demand('JobModel'),
   jobRunner = demand('jobRunner'),
@@ -101,20 +120,27 @@ const main = function ({
 } = {}) {
   return [
 
-    // this will run on a master node
-  
+    // this will run on a  master node 
     run(PostJob.initPostJobs, interval), // Turns posts into queued jobs
 
+
+    //master node and or web node
+    run(runDeviceJob({
+      JobModel: DownloadIGAvaJob,
+      jobRunner: Runner.DownloadIGAvaJobRun,
+    }), interval),
+
     // These will run on a device node
+   
     run(syncDevices, interval),
 
-    run(runJobs({
+    run(runDeviceJob({
       nodeName,
       JobModel: PostJob,
       jobRunner: Runner.PostJobRun,
     }), interval),
 
-    run(runJobs({
+    run(runDeviceJob({
       nodeName, 
       JobModel: VerifyIGJob, 
       jobRunner: Runner.VerifyIGJobRun,
@@ -123,5 +149,5 @@ const main = function ({
 };
 
 module.exports = {
-  runJobs, run, main, syncDevices,
+  runDeviceJob, run, main, syncDevices,
 };

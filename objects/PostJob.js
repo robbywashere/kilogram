@@ -20,7 +20,7 @@ module.exports = {
   },
   Hooks: {
     afterUpdate(instance) {
-      // TODO: update post if completed?
+      // TODO: update post to updated if completed?
     },
   },
   Init({
@@ -59,6 +59,24 @@ module.exports = {
   },
   StaticMethods: {
     ...JobStaticMethods,
+    /*async initPostJob2() {
+      return db.models.PostJob.create({
+        PostId: '$Post.id$',
+        IGAccountId: '$Post.IGAccountId$',
+        AccountId: '$Post.AccountId$',
+      }, {
+        include: [{
+          model: db.models.Post,
+          where: {
+            postDate: {
+              [Op.lte]: sequelize.fn('NOW()'),
+            },
+            '$PostJobs.PostId$': null,
+          },
+          include: [db.models.PostJob],
+        }],
+      });
+    },*/
     async initPostJobs() {
       return db.query(InitPostJobQuery, { type: sequelize.QueryTypes.INSERT, model: db.models.PostJob });
     },

@@ -1,5 +1,5 @@
 const {
-  runJobs, run, main, syncDevices,
+  runDeviceJob, run, main, syncDevices,
 } = require('../../engine');
 const {
   createAccountUserPostJob,
@@ -75,7 +75,7 @@ describe('engine tests', () => {
     });
 
 
-    it('should runJobs \'PostJobRun\' and \'VerifyIGJobRun\'', async ()=> {
+    it('should runDeviceJob \'PostJobRun\' and \'VerifyIGJobRun\'', async ()=> {
       PostJobRun_STUB.restore();
       VerifyIGJobRun_STUB.restore();
       sandbox.spy(minio.MClient.prototype, 'constructor');
@@ -197,7 +197,7 @@ describe('engine tests', () => {
         return { success: true };
       })());
 
-      await runJobs({ nodeName: 'HOME1', jobRunner, JobModel: PostJob })();
+      await runDeviceJob({ nodeName: 'HOME1', jobRunner, JobModel: PostJob })();
 
       const { agent, job } = jobRunner.getCall(0).args[0];
 

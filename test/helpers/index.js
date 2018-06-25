@@ -1,5 +1,6 @@
 const { readdirSync, readFileSync } = require('fs');
 const { exec, spawn } = require('child_process');
+const { Readable } = require('stream');
 const {
   User, PostJob, Photo, Account, IGAccount, Post, Device
 } = require('../../objects');
@@ -25,6 +26,13 @@ function appLogger(app) {
       .send(err.msg || err.toString());
     throw err;
   });
+}
+
+function fakeReadStream(string = 'fakeReadStream()'){
+  let s = new Readable();
+  s._read = function noop() {}; 
+  s.push(string);
+  s.push(null)
 }
 
 const deviceFactory = (n,nodeName = 'HOME1') => Device.create({
@@ -220,11 +228,19 @@ async function createUserPostJob() {
   return post;
 }
 
+async function createUserAccountIGAccount(opts){
+  const user = await ezUserAccount(opts);
+  const account = user.Accounts[0];
+  const igaccount = await newIGAccount(user);
+  return { user, account, igaccount };
+}
+
 module.exports = {
   createUserAccountIGAccountPhotoPost,
   initJob,
   runMinio,
   ezUser,
+  createUserAccountIGAccount,
   ezUserAccount,
   fixtures,
   createAccountUserPostJob,
@@ -234,5 +250,6 @@ module.exports = {
   createAccountUserPost,
   exprezz,
   appLogger,
+  fakeReadStream,
   deviceFactory 
 };

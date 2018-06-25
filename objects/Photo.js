@@ -44,8 +44,7 @@ module.exports = {
     },
     bucket: {
       type: STRING,
-      defaultValue: config.MINIO_BUCKET,
-
+      defaultValue: config.get('MINIO_BUCKET')
     },
     uploaded: {
       type: BOOLEAN,
@@ -62,12 +61,15 @@ module.exports = {
         instance.set('objectName', minioObj.create('v4', { uuid }));
       }
     },
+    async beforeCreate(instance) {
+    }
   },
   Init({ Account }) {
     this.belongsTo(Account);
   },
   StaticMethods: {
     setDeleted(objectName) {
+      //TODO: ACTUALLY DELETE?
       return this.update({ deleted: true }, { where: { objectName } });
     },
   },
