@@ -7,8 +7,6 @@ const { Op } = require('sequelize');
 describe('Photo object', () => {
   beforeEach(() => DBSync(true));
 
-  it.skip('should parse objectName before create', async () => {
-    const photo = await Photo.create({ type: 'POST' });
-    console.log(photo.toJSON());
+  it.skip('should', async () => {
   });
 });

@@ -28,10 +28,7 @@ module.exports = {
       type: sequelize.JSON,
     },
     src: {
-      type: VIRTUAL,
-      get() {
-        return `${this.get('bucket')}/${this.get('objectName')}`;
-      },
+      type: STRING,
     },
     type: {
       type: ENUM('POST','IGAVATAR'),
@@ -51,6 +48,8 @@ module.exports = {
   },
   ScopeFunctions: true,
   Scopes: {
+    avatar: { where: { type: 'IGAVATAR' }},
+    postPhoto: { where: { type: 'POST' }},
     unknown: { where: { status: 'UNKNOWN' }},
     uploaded: { where: { status: 'UPLOADED' }},
     deleted: { where: { status: 'DELETED' }},
@@ -58,6 +57,8 @@ module.exports = {
   Hooks: {
     async beforeCreate(instance) {
       if (!instance.objectName) instance.objectName = minioObj.create('v4',{ uuid: instance.uuid });
+      if (!instance.src) instance.src = `${instance.bucket}/${instance.objectName}`;
+
     }
   },
   Init({ Account }) {

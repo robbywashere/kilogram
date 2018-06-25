@@ -72,10 +72,14 @@ async function VerifyIGJobRun({
 }
 
 
+//TODO: change the return types of these functions to match
+//consider using event emitter or async generator
+//must also consider how these jobs will be ran concurrently 
 async function DownloadIGAvaJobRun({
   job = demand('job'),
   IGAccount = demand('IGAccount'),
   minioClient,
+  retry = 3,
   reqAsync = requestAsync,
   reqPipe = request,
 }) {
@@ -97,9 +101,10 @@ async function DownloadIGAvaJobRun({
       const { url, objectName, uuid } = await mc.newPhoto({ 
         AccountId: IGAccount.AccountId, 
         IGAccountId: IGAccount.id,
-        type: 'IGAVTAR'
+        type: 'IGAVATAR'
       });
 
+      body.uuid = uuid;
       body.minioUrl = url;
 
       await new Promise((rs, rx) => reqPipe.get(body.avatar).pipe(reqPipe.put(url))
@@ -107,14 +112,15 @@ async function DownloadIGAvaJobRun({
         .on('error', rx));
     } catch(e) {
       body.error = e;
-      return { result: { success: false, body }}
+      return { success: false, body }
     }
-    return { result: { success: true, body }}
+    return { success: true, body }
   })();
 
 
   if (result.success) {
-    return Promise.all([IGAccount.update({ avatarURL: body.avatar }), job.complete()]);
+
+    return Promise.all([IGAccount.update({ avatarUUID: result.body.uuid }), job.complete()]);
   } 
 
   return job.retryTimes({ max: 3, body: result.body });

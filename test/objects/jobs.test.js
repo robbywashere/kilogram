@@ -1,7 +1,10 @@
-const { PostJobRun, VerifyIGJobRun, DownloadIGAvaJobRun, pullRemoteObject } = require('../../services');
+const {
+  PostJobRun, VerifyIGJobRun, DownloadIGAvaJobRun, pullRemoteObject,
+} = require('../../services');
 const { Agent } = require('../../android/deviceAgent');
 const { JobMethods } = require('../../objects/_JobsBase');
-const IGAccount = require('../../objects/IGAccount');
+// const IGAccount = require('../../objects/IGAccount');
+const { DownloadIGAvaJob, IGAccount } = require('../../objects');
 const nock = require('nock');
 const PythonShell = require('python-shell');
 const { PythonBridge } = require('../../android/bridge');
@@ -23,14 +26,12 @@ const { MClient } = minio;
 const { createAccountUserPostJob, createUserAccountIGAccount } = require('../helpers');
 
 
-
 describe('all jobs', () => {
-
   beforeEach(() => sync(true));
 
 
   let sandBox;
-  let igAccount; 
+  let igAccount;
 
   describe('function VerifyIGJobRun', () => {
     let agent;
@@ -54,76 +55,68 @@ describe('all jobs', () => {
       }();
     });
 
-    afterEach(()=>sandBox.restore());
+    afterEach(() => sandBox.restore());
 
 
-    it('should download IGAccount Avatar', async () => {
+    it('should download IGAccount Avatar - DownloadIGAvaJob', async () => {
+      // const igAccount;
 
-      //const igAccount;
-
-      //const { igAccount } = await createUserAccountIGAccount();
+      // const { igAccount } = await createUserAccountIGAccount();
       //     const mockObjName = minioObj.create('v4', { payload: true });
 
-      const IGAVAFixture = readFileSync(__dirname + '/../fixtures/kimkardashian-ig.html').toString();
+      const IGAVAFixture = readFileSync(`${__dirname}/../fixtures/kimkardashian-ig.html`).toString();
 
-      sandBox.stub(MClient.prototype,'getSignedPutObject').returns('http://127.0.0.1/put_photo_here');
+      sandBox.stub(MClient.prototype, 'getSignedPutObject').returns('http://127.0.0.1/put_photo_here');
 
-      let minioClient = new MClient(); 
+      const minioClient = new MClient();
 
-      const reqAsync = { 
-        get: sinon.mock().resolves(IGAVAFixture)
+      const reqAsync = {
+        get: sinon.mock().resolves(IGAVAFixture),
       };
 
-      const pipe = sinon.mock().returns({ on: (_,rs) => rs() });
+      const pipe = sinon.mock().returns({ on: (_, rs) => rs() });
 
       const reqPipe = {
         get: sinon.mock().returns({ pipe }),
-        put: sinon.spy()
-      }
+        put: sinon.spy(),
+      };
 
-      await DownloadIGAvaJobRun({ 
+      const DIGAva = await DownloadIGAvaJobRun({
         minioClient,
-        job, 
+        job,
         reqAsync,
         reqPipe,
         IGAccount: igAccount,
       });
 
-      //  console.log('>>>',igAccount.avatar);
-      // console.log(minioObj.parse(igAccount.avatar));
-
-      // console.log(igAccount.toJSON());
-      //  assert.equal(igAccount.avatar,'x');
-
-
+      assert(await Photo.scope('avatar').findOne());
     });
 
     it('should verify a good IGAccount', async () => {
       agent = {
-        exec:() => ({
+        exec: () => ({
           success: true,
           body: { login: true },
         }),
       };
 
       await VerifyIGJobRun({ job, IGAccount: igAccount, agent });
-      assert.equal(igAccount.status, 'GOOD')
-
+      assert.equal(igAccount.status, 'GOOD');
     });
     it('should fail a bad IGAccount', async () => {
       agent = {
-        exec:() => ({
+        exec: () => ({
           success: true,
           body: { login: false, type: 'creds_error' },
         }),
       };
       await VerifyIGJobRun({ job, IGAccount: igAccount, agent });
-      assert.equal(igAccount.status, 'FAILED')
+      assert.equal(igAccount.status, 'FAILED');
     });
 
     it('should retry 3 times an unknown error logging in IGAccount', async () => {
       agent = {
-        exec:() => ({
+        exec: () => ({
           success: true,
           body: { login: false, type: 'unknown' },
         }),
@@ -144,15 +137,13 @@ describe('all jobs', () => {
 
       await VerifyIGJobRun({ job, IGAccount: igAccount, agent });
       assert.equal(job.status, 'FAILED');
-
     });
-
   });
 
   describe('function PostJobRun', () => {
     describe('PostJob / IGDevice.full_dance 💃', () => {
       let minioClient;
-      let IGAccount;
+      let IGAccountMock;
       let Post;
       let agent;
       let job;
@@ -164,7 +155,7 @@ describe('all jobs', () => {
           pullPhoto: sinon.spy(() => Promise.resolve('/tmpfile')),
         };
 
-        IGAccount = {
+        IGAccountMock = {
           username: 'username',
           password: 'password',
           fail: sinon.spy(() => Promise.resolve({})),
@@ -195,14 +186,14 @@ describe('all jobs', () => {
 
       it('should download Post.Photo from minio store', async () => {
         await PostJobRun({
-          job, agent, Post, IGAccount, minioClient,
+          job, agent, Post, IGAccount: IGAccountMock, minioClient,
         });
         assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0], { name: 'objectName' });
       });
 
       it('should send \'full_dance\' cmd to python bridge with correct args', async () => {
         await PostJobRun({
-          job, agent, Post, IGAccount, minioClient,
+          job, agent, Post, IGAccount: IGAccountMock, minioClient,
         });
         assert.deepEqual(
           agent.exec.getCall(0).args[0],
@@ -220,7 +211,7 @@ describe('all jobs', () => {
 
       it('should mark job as completed', async () => {
         await PostJobRun({
-          job, agent, Post, IGAccount, minioClient,
+          job, agent, Post, IGAccount: IGAccountMock, minioClient,
         });
         assert(job.complete.calledOnce);
       });
@@ -234,10 +225,10 @@ describe('all jobs', () => {
           exec: async () => ({ success: false, body }),
         };
         await PostJobRun({
-          job, agent, Post, IGAccount, minioClient,
+          job, agent, Post, IGAccount: IGAccountMock, minioClient,
         });
         assert(job.fail.calledOnce);
-        assert(IGAccount.fail.calledOnce);
+        assert(IGAccountMock.fail.calledOnce);
       });
 
       it('should job.retryTimes(n), when credentials results are unknown, failing on the 3rd try', async () => {
@@ -256,22 +247,22 @@ describe('all jobs', () => {
         };
 
         await PostJobRun({
-          job, agent, Post, IGAccount, minioClient,
+          job, agent, Post, IGAccount: IGAccountMock, minioClient,
         });
         assert.equal(job.attempts, 1);
         assert.equal(job.status, 'OPEN');
         await PostJobRun({
-          job, agent, Post, IGAccount, minioClient,
+          job, agent, Post, IGAccount: IGAccountMock, minioClient,
         });
         assert.equal(job.attempts, 2);
         assert.equal(job.status, 'OPEN');
         await PostJobRun({
-          job, agent, Post, IGAccount, minioClient,
+          job, agent, Post, IGAccount: IGAccountMock, minioClient,
         });
         assert.equal(job.attempts, 3);
         assert.equal(job.status, 'OPEN');
         await PostJobRun({
-          job, agent, Post, IGAccount, minioClient,
+          job, agent, Post, IGAccount: IGAccountMock, minioClient,
         });
         assert.equal(job.attempts, 3);
         assert.equal(job.status, 'FAILED');

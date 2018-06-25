@@ -32,9 +32,6 @@ module.exports = {
       defaultValue: UNVERIFIED,
       triggerable: true,
     },
-    avatarURL: {
-      type: STRING,
-    },
   },
   Hooks: {
     async beforeUpdate(igAccount) {
@@ -70,7 +67,7 @@ module.exports = {
     }
   },
   Init({ Photo }) {
-    //this.belongsTo(Photo, { as: 'avatar', targetKey: 'uuid' });
+    this.belongsTo(Photo,{ foreignKey: 'avatarUUID', targetKey: 'uuid' });
   },
 };
 
