@@ -24,7 +24,7 @@ const { createAccountUserPostJob, createUserAccountIGAccount } = require('../hel
 
 
 
-describe('All Jobs', () => {
+describe('all jobs', () => {
 
   beforeEach(() => sync(true));
 

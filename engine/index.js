@@ -125,7 +125,7 @@ const main = function ({
 
 
     //master node and or web node
-    run(runDeviceJob({
+    run(runJob({
       JobModel: DownloadIGAvaJob,
       jobRunner: Runner.DownloadIGAvaJobRun,
     }), interval),
