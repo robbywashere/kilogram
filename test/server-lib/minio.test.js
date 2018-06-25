@@ -289,17 +289,19 @@ describe('MClient class', () => {
       });
     });
 
-    it('should update/create Photo db object on put and delete', async () => {
+    it('should update Photo db object on put and delete', async () => {
       await DBSync(true);
 
       const bucket = 'testBucket';
 
-      const account = await Account.create({});
+      const photo = await Photo.createPostPhoto();
 
-      const uuid = uuidv4();
-      const meta = { uuid, AccountId: account.id };
-      const key = minioObj.create('v4', meta);
+      const uuid = photo.uuid; 
+
+      const key = photo.objectName;
+
       const putRecord = {};
+
       set(putRecord, 's3.object.key', key);
       set(putRecord, 's3.bucket.name', bucket);
       set(putRecord, 'eventName', 's3:ObjectCreated:Put');
@@ -311,22 +313,16 @@ describe('MClient class', () => {
       const eventHandler = MClient.PhotoEvents();
 
       await eventHandler(putRecord);
-      const ps = await Photo.findAll();
-      const pMeta = ps[0].get('meta');
-      assert.deepEqual(meta, pMeta);
+      assert((await Photo.scope('uploaded').findOne()));
       await eventHandler(delRecord);
-      assert((await Photo.findAll())[0].get('deleted'));
+      assert((await Photo.scope('deleted').findOne()));
     });
   });
 
   describe('signedURL', () => {
     const sandbox = sinon.sandbox.create();
 
-    const UUID = uuidv4();
-    beforeEach(async () => {
-      await dbsync(true);
-      sandbox.stub(uuid, 'v4').callsFake(() => UUID);
-    });
+    beforeEach(() => dbsync(true));
     afterEach(() => {
       sandbox.restore();
     });
@@ -346,15 +342,19 @@ describe('MClient class', () => {
 
       const res = await request(app)
         .post('/url')
-        .send({ name: 'filename.jpg', AccountId: user.Accounts[0].id })
+        .send({ AccountId: user.Accounts[0].id })
         .expect(200);
 
 
+      const newPhoto = await Photo.findOne();
+
       assert.deepEqual(res.body, {
-        objectName: minioObj.create('v4', { uuid: UUID, AccountId: user.Accounts[0].id }),
+        objectName: newPhoto.objectName,
         url: 'http://fakeurl/photo',
-        uuid: UUID,
+        uuid: newPhoto.uuid,
       });
+
+
     });
 
 

@@ -100,41 +100,15 @@ describe('trigger notify functionality', () => {
   
   });
 
-  it('should should make a table triggerable', async function () {
-    this.timeout(5000);
 
-    watcher = new Watcher({ debug: logger.debug });
-
-    await watcher.connect();
-
-    const photoUUID = uuidv4();
-
-    const Q = new Promise((rs, rx) => {
-      watcher.subscribe(Photo.TableTriggers.after_insert, (payload) => {
-        try {
-          const { objectName } = payload.data;
-          const { uuid } = minioObject.parse(objectName);
-          assert.equal(uuid, photoUUID);
-          return rs();
-        } catch (e) {
-          rx(e);
-        }
-      });
-    });
-
-    process.nextTick(async () => await Photo.create({ uuid: photoUUID }));
-
-    return Q;
-  });
-
-
-  it('should create a Photo object on upload minio event', async function () {
+  it('should update a Photo object on upload minio event', async function () {
     this.timeout(5000);
 
     const account = await Account.create({});
     const uuid = uuidv4();
 
-    const objectName = minioObject.create('v4', { AccountId: account.id, uuid });
+    const photo = await Photo.createPostPhoto({ uuid });
+    //const objectName = minioObject.create('v4', { uuid });
 
     watcher = new Watcher({ debug: logger.debug });
     await watcher.connect();
@@ -155,15 +129,16 @@ describe('trigger notify functionality', () => {
         }
       });
     });
-    process.nextTick(async () => await BucketEvents.create({
-      key: objectName,
+    process.nextTick(() =>BucketEvents.create({
+      key: photo.objectName,
       value: minioEventFixture,
     }));
     await Q;
 
-    const photo = await Photo.findOne({ where: { uuid } });
 
-    assert(photo);
+    assert.equal((await Photo.uploaded()).length, 1); 
+  
+  
   });
 
 
@@ -184,7 +159,7 @@ describe('trigger notify functionality', () => {
         }
       });
     });
-    process.nextTick(async () => await Photo.create({ uuid: photoUUID }));
+    process.nextTick(() => Photo.createPostPhoto({ uuid: photoUUID }));
     return Q;
   });
 
@@ -220,7 +195,7 @@ describe('trigger notify functionality', () => {
       });
     });
 
-    process.nextTick(async () => await ig.update({ status: 'GOOD' }));
+    process.nextTick(() => ig.update({ status: 'GOOD' }));
 
     return Q;
   });

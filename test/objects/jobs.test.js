@@ -30,24 +30,19 @@ describe('all jobs', () => {
 
 
   let sandBox;
+  let igAccount; 
 
   describe('function VerifyIGJobRun', () => {
     let agent;
     let job;
-    let IGAccountFactory = (opts = {}) => ({
-      ...IGAccount.Methods,
-      username: 'username',
-      password: 'password',
-      async update(props) {
-        Object.assign(this, props);
-      },
-      ...opts,
-    });
-    let igAccount; 
 
-    beforeEach(() => {
+    beforeEach(async () => {
       sandBox = sinon.sandbox.create();
-      igAccount = IGAccountFactory({ status: 'UNVERIFIED' }); //TODO: NO
+      // igAccount = IGAccountFactory({ status: 'UNVERIFIED' }); //TODO: NO
+
+      ({ igAccount } = await createUserAccountIGAccount());
+      await igAccount.update({ status: 'UNVERIFIED' });
+
       job = new function () {
         return ({
           ...JobMethods,
@@ -66,8 +61,7 @@ describe('all jobs', () => {
 
       //const igAccount;
 
-      const { igaccount } = await createUserAccountIGAccount();
-
+      //const { igAccount } = await createUserAccountIGAccount();
       //     const mockObjName = minioObj.create('v4', { payload: true });
 
       const IGAVAFixture = readFileSync(__dirname + '/../fixtures/kimkardashian-ig.html').toString();
@@ -92,14 +86,14 @@ describe('all jobs', () => {
         job, 
         reqAsync,
         reqPipe,
-        IGAccount: igaccount,
+        IGAccount: igAccount,
       });
 
-      //  console.log('>>>',igaccount.avatar);
-      // console.log(minioObj.parse(igaccount.avatar));
+      //  console.log('>>>',igAccount.avatar);
+      // console.log(minioObj.parse(igAccount.avatar));
 
-      console.log(igaccount.toJSON());
-      //  assert.equal(igaccount.avatar,'x');
+      // console.log(igAccount.toJSON());
+      //  assert.equal(igAccount.avatar,'x');
 
 
     });
@@ -177,7 +171,8 @@ describe('all jobs', () => {
         };
         Post = {
           text: '#description',
-          Photo: { objectName: 'objectName' },
+          Photo: { objectName: 'objectName', uuid: 'uuid', bucket: 'uploads' },
+
         };
         agent = {
           exec: sinon.spy(async () => ({ success: true })),

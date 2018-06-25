@@ -84,7 +84,8 @@ function runJob({
         await jobRunner({ ...job, job });
       } catch (err) {
         await job.backout(err, true);
-        logger.error(`-- Unexpected error occurred running ${JobModel.name}: ${job.id} \n ${err}`);
+        logger.error(`-- Unexpected error occurred running ${JobModel.name}: ${job.id}`);
+        logger.error(err);
       }
     } 
   };
@@ -106,7 +107,8 @@ function runDeviceJob({
         await jobRunner({ ...job, agent, job });
       } catch (err) {
         await job.backout(err, true); // jobRunner should handle this?
-        logger.error(`-- Unexpected error occurred running ${JobModel.name}: ${job.id} \n ${err}`);
+        logger.error(`-- Unexpected error occurred running ${JobModel.name}: ${job.id}`);
+        logger.error(err);
       }
     } 
     if (device) await device.setFree();

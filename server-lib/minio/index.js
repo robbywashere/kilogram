@@ -30,6 +30,7 @@ Note that, you can add as many PostgreSQL server endpoint configurations as need
 const ClientConfig = () => ({ // TODO leverage / move to config/default.js
   endPoint: config.get('MINIO_ENDPOINT'),
   bucket: config.get('MINIO_BUCKET'),
+  publicBucket: config.get('MINIO_BUCKET'),
   port: parseInt(config.get('MINIO_PORT')),
   secure: config.get('MINIO_SECURE') === 'true',
   sqsArn: config.get('MINIO_SQS_ARN'),
@@ -75,6 +76,8 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
 
 // TODO: remove default us-east-1 region
 // Rename MClient to MStore - since the implimentation details are not abstracted and nearly hard-coded to fit the needs of this application
+//
+
 
 class MClient {
   constructor({
@@ -169,17 +172,17 @@ class MClient {
 
   listenPersist({ bucket = this.bucket, client = this.client, events }) {
     const Listener = {
-      //? should emmit to?  -> emitter: new EventEmitter(),
+      // ? should emmit to?  -> emitter: new EventEmitter(),
     };
 
     function makeListener(retry = 0) {
       Listener.listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*', 's3:ObjectRemoved:*']);
 
       const listener = Listener.listener;
-      Listener.terminate = ()=> {
+      Listener.terminate = () => {
         listener.removeAllListeners();
         listener.stop();
-      }
+      };
       logger.status(`Listening for s3/minio events on ${bucket}....`);
 
       listener.on('notification', events);
@@ -197,8 +200,8 @@ class MClient {
     return Listener;
   }
 
-  getSignedPutObject({ name, exp = 60 }) {
-    return this.client.presignedPutObject(this.bucket, name, exp);
+  getSignedPutObject({ bucket = this.bucket, name, exp = 60 }) {
+    return this.client.presignedPutObject(bucket, name, exp);
   }
 
   async pullPhoto({ bucket = this.bucket, name, tmpDir = this.config.tmpDir }) {
@@ -232,9 +235,9 @@ class MClient {
   }
 
   async newPhoto({ bucket = this.bucket, ...rest }) {
-    const uuid = Uuid.v4();
-    const name = minioObj.create('v4', { uuid, ...rest });
-    const url = await this.getSignedPutObject({ name }); 
+    const { uuid } = await Photo.create(rest);
+    const name = minioObj.create('v4', { uuid });
+    const url = await this.getSignedPutObject({ bucket, name });
     return { url, uuid, objectName: name };
   }
 
@@ -296,13 +299,8 @@ class MClient {
   }
 
   static PutPhotoFn({ bucket, key }) {
-    const { uuid, AccountId = demand('AccountId') } = minioObj.parse(key);
-    return Photo.create({
-      bucket,
-      objectName: key,
-      uuid,
-      AccountId,
-    });
+    const { uuid } = minioObj.parse(key);
+    return Photo.setUploaded({ bucket, uuid });
   }
   static DelPhotoFn({ key }) {
     return Photo.setDeleted(key);
@@ -336,6 +334,13 @@ class MClient {
 }
 
 
+class MClientPublic extends MClient {
+  constructor(...args){
+    super(...args);
+    this.bucket = ClientConfig().publicBucket
+  }
+}
+
 async function retryConnRefused({
   fn,
   retryCount = 1,
@@ -351,7 +356,7 @@ async function retryConnRefused({
       logger.debug('MINIO CLIENT ERROR :', err);
       logger.debug(`Minio connect Error: Connection refused ~ retrying ${retryCount}/${max} - ${debug || get(fn, 'name')}`);
       await Promise.delay(retryDelayFn(retryCount));
-      return await retryConnRefused({
+      return retryConnRefused({
         fn,
         retryCount: retryCount + 1,
         max,
@@ -365,6 +370,6 @@ async function retryConnRefused({
 
 
 module.exports = {
-  WrapMinioClient, signedURL, removeObject, retryConnRefused, MClient, ClientConfig, listObjects,
+  WrapMinioClient, signedURL, removeObject, retryConnRefused, MClient, MClientPublic, ClientConfig, listObjects,
 };
 

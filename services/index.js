@@ -5,9 +5,9 @@
 // Being that 'Jobs' are essentially ephmemeral the best case executing immediently in the case of passing this off to Python, perhaps the data should be denormalized and stored as JSON inside the table
 //
 const demand = require('../lib/demand');
+const demandKeys = require('../lib/demandKeys');
 const minio = require('../server-lib/minio');
 const { get, chain, isUndefined } = require('lodash');
-const _ = require('lodash');
 const { logger } = require('../lib/logger');
 const requestAsync = require('request-promise');
 const request = require('request');
@@ -22,9 +22,7 @@ async function PostJobRun({
 }) {
   const mc = (typeof minioClient !== 'undefined') ? minioClient : (new minio.MClient());
 
-  if (isUndefined(get(Post, 'Photo.objectName'))) {
-    throw new Error(`Post ${Post.id} does not have a .Photo.objectName`);
-  }
+  demandKeys(Post.Photo,['uuid','objectName','bucket'],' Post.Photo')
 
   const localfile = await mc.pullPhoto({ name: Post.Photo.objectName });
 
@@ -83,35 +81,43 @@ async function DownloadIGAvaJobRun({
 }) {
   const body = {};
 
-  try {
-    body.html = await reqAsync.get(`https://www.instagram.com/${IGAccount.username}`);
+  const result = await (async ()=>  {
+    try {
+      const html = await reqAsync.get(`https://www.instagram.com/${IGAccount.username}`);
 
-    // console.log(body.html);
+      body.avatar = html.match(/"og:image".+?content="(.+)"/)[1];
 
-    body.avatar = body.html.match(/"og:image".+?content="(.+)"/)[1];
+      if (!body.avatar) {
+        body.html = html;
+        throw new Error('could not locate IG Avatar in body html');
+      }
 
-    if (!body.avatar) throw new Error('could not locate IG Avatar in body html');
+      const mc = (typeof minioClient !== 'undefined') ? minioClient : (new minio.MClientPublic());
 
-    const mc = (typeof minioClient !== 'undefined') ? minioClient : (new minio.MClient());
+      const { url, objectName, uuid } = await mc.newPhoto({ 
+        AccountId: IGAccount.AccountId, 
+        IGAccountId: IGAccount.id,
+        type: 'IGAVTAR'
+      });
 
-    const { url, objectName, uuid } = await mc.newPhoto({ 
-      AccountId: IGAccount.AccountId, 
-      IGAccountId: IGAccount.id,
-      type: 'avatar'
-    });
+      body.minioUrl = url;
 
-    body.minioUrl = url;
+      await new Promise((rs, rx) => reqPipe.get(body.avatar).pipe(reqPipe.put(url))
+        .on('finish', rs)
+        .on('error', rx));
+    } catch(e) {
+      body.error = e;
+      return { result: { success: false, body }}
+    }
+    return { result: { success: true, body }}
+  })();
 
-    await new Promise((rs, rx) => reqPipe.get(body.avatar).pipe(reqPipe.put(url))
-      .on('finish', rs)
-      .on('error', rx));
 
-    //  return Promise.all([IGAccount.update({ avatarId: uuid }), job.complete()]);
-    job.complete();
-  } catch(e) {
-    logger.error(e);
-  }
-  return job.retryTimes({ max: 3, body });
+  if (result.success) {
+    return Promise.all([IGAccount.update({ avatarURL: body.avatar }), job.complete()]);
+  } 
+
+  return job.retryTimes({ max: 3, body: result.body });
 }
 
 module.exports = { PostJobRun, DownloadIGAvaJobRun, VerifyIGJobRun };

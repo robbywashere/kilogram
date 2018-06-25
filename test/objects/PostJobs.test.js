@@ -22,7 +22,7 @@ describe('objects/PostJob', () => {
     const account = user.Accounts[0];
     const igaccount = await newIGAccount(user);
     await igaccount.fail();
-    const photo = await Photo.create({});
+    const photo = await Photo.createPostPhoto({});
 
     const props = {
       postDate: sequelize.fn('NOW'),
@@ -53,7 +53,7 @@ describe('objects/PostJob', () => {
     const account = user.Accounts[0];
     const igaccount = await newIGAccount(user);
     await igaccount.good();
-    const photo = await Photo.create({});
+    const photo = await Photo.createPostPhoto({});
 
     const props = {
       postDate: sequelize.fn('NOW'),

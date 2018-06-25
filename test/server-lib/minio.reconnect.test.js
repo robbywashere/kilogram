@@ -77,47 +77,6 @@ describe('Minio Connect and Reconnect',function(){
 
   })
 
-  it('Persistent Listener adapter experiment using listenPGWatcherAdapter',async function(){
-
-    this.timeout(15*1000);
-
-    const account = await Account.create({});
-
-    const uuid = uuidv4();
-
-    const objectName = minioObject.create('v4',{ AccountId: account.id, uuid });
-
-    minio = runMinio();
-
-    await new Promise((rs) => minio.on('open', rs) )
-      .then(()=>logger.status('Minio Startup ...'))
-
-    const minioClient = new MClient({ 
-      // bucket: 'uploads',
-      //     sqsArn: 'arn:minio:sqs::test:postgresql'
-    });
-
-    await minioClient.createBucket().then(()=>logger.status('Init Minio'))
-
-    const adapter = await minioClient.listenPGWatcherAdapter();
-
-    Persistener.Listener.stop = adapter.end;
-
-    adapter.eventEmitter.on('notification', MClient.PhotoEvents());
-
-    await minioClient.client.putObject('uploads', objectName, 'xxxx');
-
-    let photo;
-    while (!(photo = await Photo.findOne({ where: { objectName } }))) {
-      await Promise.delay(1000);
-    }
-
-    assert.equal(photo.objectName, objectName);
-
-
-
-  });
-
   it('Persistent Listener adapter experiment using listenMinioAdapter',async function(){
 
     this.timeout(35*1000);
@@ -140,15 +99,15 @@ describe('Minio Connect and Reconnect',function(){
 
     adapter.eventEmitter.on('notification',MClient.PhotoEvents());
 
-    const objectName = minioObj.create('v4',{ AccountId: account.id });
 
-    await minioClient.client.putObject('uploads', objectName,'X');
+    const photo = await Photo.createPostPhoto();
+
+    await minioClient.client.putObject('uploads', photo.objectName,'X');
 
     await Promise.delay(3000);
 
-    const photo = await Photo.findOne({ where: { objectName } });
+    assert( (await Photo.scope('uploaded').findOne({ where: { uuid: photo.uuid } })) );
 
-    assert.equal(photo.objectName, objectName);
 
   });
 
@@ -186,17 +145,17 @@ describe('Minio Connect and Reconnect',function(){
 
     await minioClient.createBucket().then(()=>logger.status('Init Minio'))
 
-    const objectName = minioObj.create('v4',{ AccountId: account.id });
+    const photo = await Photo.createPostPhoto();
+
+    const objectName = minioObj.create('v4',{ uuid: photo.uuid });
 
     await minioClient.client.putObject('uploads', objectName,'X');
 
     await Promise.delay(5000)
 
-    const photo = await Photo.findOne({ where: { objectName } });
+    const didPhoto = await Photo.scope('uploaded').findOne();
 
-    assert.equal(photo.objectName, objectName);
-
-    delete minioClient;
+    assert.equal(didPhoto.objectName, objectName);
 
     Persistener.listener.stop();
 

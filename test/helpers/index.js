@@ -1,8 +1,9 @@
 const { readdirSync, readFileSync } = require('fs');
 const { exec, spawn } = require('child_process');
 const { Readable } = require('stream');
+const { logger } = require('../../lib/logger');
 const {
-  User, PostJob, Photo, Account, IGAccount, Post, Device
+  User, PostJob, Photo, Account, IGAccount, Post, Device,
 } = require('../../objects');
 const rimraf = require('rimraf');
 const minioObj = require('../../server-lib/minio/minioObject');
@@ -28,14 +29,14 @@ function appLogger(app) {
   });
 }
 
-function fakeReadStream(string = 'fakeReadStream()'){
-  let s = new Readable();
-  s._read = function noop() {}; 
+function fakeReadStream(string = 'fakeReadStream()') {
+  const s = new Readable();
+  s._read = function noop() {};
   s.push(string);
-  s.push(null)
+  s.push(null);
 }
 
-const deviceFactory = (n,nodeName = 'HOME1') => Device.create({
+const deviceFactory = (n, nodeName = 'HOME1') => Device.create({
   adbId: `adbId${n}`,
   idle: true,
   online: true,
@@ -105,23 +106,15 @@ async function createUserAccountIGAccountPhotoPost(userOpts) {
   const account = user.Accounts[0];
   const igAccount = await newIGAccount(user);
 
-  const photo = await Photo.create({
-    bucket: 'uploads',
-    objectName: minioObj.create('v4', { payload: true }),
+  const photo = await Photo.createPostPhoto();
+
+  const post = await createPhotoPost({
+    user, account, igAccount, postOpts: { description: '#description' },
   });
 
-  const post = await Post.create({
-    postDate: new Date(),
-    UserId: user.id,
-    AccountId: account.id,
-    IGAccountId: igAccount.id,
-    text: '#description',
-    photoUUID: photo.uuid,
-    Photo: photo,
-  });
 
   return {
-    account, igAccount, user, post, photo
+    account, igAccount, user, post, photo,
   };
 }
 
@@ -133,10 +126,7 @@ async function createAccountUserPostJob() {
     Accounts: {},
   }, { include: [Account] });
   const account = user.Accounts[0];
-  const photo = await Photo.create({
-    bucket: 'uploads',
-    objectName: minioObj.create('v2', { payload: true }),
-  });
+  const photo = await Photo.createPostPhoto({});
   const igAccount = await newIGAccount(user);
   const post = await Post.create({
     postDate: new Date(),
@@ -169,10 +159,7 @@ function ezUserAccount(opts) {
 
 async function createAccountUserPost(userOpts) {
   const user = await ezUserAccount(userOpts);
-  const photo = await Photo.create({
-    bucket: 'uploads',
-    objectName: minioObj.create('v2', { payload: true }),
-  });
+  const photo = await Photo.createPostPhoto({});
   const account = user.Accounts[0];
   const igAccount = await newIGAccount(user);
   const post = await Post.create({
@@ -187,23 +174,30 @@ async function createAccountUserPost(userOpts) {
     account, igAccount, user, post,
   };
 }
-
-async function createAccountUserPostJob2() {
-  const user = await ezUserAccount();
-  const account = user.Accounts[0];
-  const igaccount = await newIGAccount(user);
-  const post = await Post.create({
+function createPhotoPost({
+  account, igAccount, user, postOpts = {}, photoOpts = {},
+}) {
+  return Post.create({
     postDate: new Date(),
     AccountId: account.id,
-    IGAccountId: igaccount.id,
+    IGAccountId: igAccount.id,
     UserId: user.id,
+    ...postOpts,
     Photo: {
       bucket: 'uploads',
-      objectName: minioObj.create('v2', { payload: true }),
+      type: 'POST',
+      ...photoOpts,
     },
   }, {
     include: [Photo],
   });
+}
+
+async function createAccountUserPostJob2() {
+  const user = await ezUserAccount();
+  const account = user.Accounts[0];
+  const igAccount = await newIGAccount(user);
+  const post = await createPhotoPost({ account, igAccount, user });
   await initJob(post);
   await post.reloadWithJob();
 
@@ -212,27 +206,18 @@ async function createAccountUserPostJob2() {
 
 async function createUserPostJob() {
   const user = await ezUserAccount();
-  const post = await Post.create({
-    postDate: new Date(),
-    UserId: user.id,
-    Photo: {
-      bucket: 'uploads',
-      objectName: minioObj.create('v2', { payload: true }),
-    },
-  }, {
-    include: [Photo],
-  });
+  const post = await createPhotoPost({ user });
   await initJob(post);
   await post.reloadWithJob();
 
   return post;
 }
 
-async function createUserAccountIGAccount(opts){
+async function createUserAccountIGAccount(opts) {
   const user = await ezUserAccount(opts);
   const account = user.Accounts[0];
-  const igaccount = await newIGAccount(user);
-  return { user, account, igaccount };
+  const igAccount = await newIGAccount(user);
+  return { user, account, igAccount };
 }
 
 module.exports = {
@@ -251,5 +236,5 @@ module.exports = {
   exprezz,
   appLogger,
   fakeReadStream,
-  deviceFactory 
+  deviceFactory,
 };

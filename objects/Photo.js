@@ -2,7 +2,7 @@ const sequelize = require('sequelize');
 const SEQ = require('../db');
 
 const {
-  STRING, TEXT, DATE, INTEGER, VIRTUAL, BOOLEAN, UUIDV4, UUID, Op,
+  STRING, TEXT, DATE, INTEGER, VIRTUAL, BOOLEAN, UUIDV4, UUID, Op, ENUM
 } = sequelize;
 const { get, isUndefined } = require('lodash');
 const uuidv4 = require('uuid/v4');
@@ -18,11 +18,6 @@ module.exports = {
   Properties: {
     objectName: {
       type: TEXT,
-      allowNull: false,
-      set(val) {
-        this.dataValues.meta = minioObj.parse(val);
-        return this.dataValues.objectName = val;
-      },
     },
     uuid: {
       type: UUID,
@@ -38,39 +33,55 @@ module.exports = {
         return `${this.get('bucket')}/${this.get('objectName')}`;
       },
     },
-    deleted: {
-      type: BOOLEAN,
-      defaultValue: false,
+    type: {
+      type: ENUM('POST','IGAVATAR'),
+      allowNull: false,
     },
     bucket: {
       type: STRING,
       defaultValue: config.get('MINIO_BUCKET')
     },
-    uploaded: {
-      type: BOOLEAN,
-      defaultValue: true,
+    status: {
+      type: ENUM('UNKNOWN','UPLOADED','DELETED'),
+      defaultValue: 'UNKNOWN',
     },
     url: {
       type: TEXT,
     },
   },
+  ScopeFunctions: true,
+  Scopes: {
+    unknown: { where: { status: 'UNKNOWN' }},
+    uploaded: { where: { status: 'UPLOADED' }},
+    deleted: { where: { status: 'DELETED' }},
+  },  
   Hooks: {
-    async beforeValidate(instance) { // TODO: --- beforeCreate??::dszddsadd
-      const { uuid } = instance;
-      if (isUndefined(instance.objectName)) {
-        instance.set('objectName', minioObj.create('v4', { uuid }));
-      }
-    },
     async beforeCreate(instance) {
+      if (!instance.objectName) instance.objectName = minioObj.create('v4',{ uuid: instance.uuid });
     }
   },
   Init({ Account }) {
     this.belongsTo(Account);
   },
+  Methods: {
+  },
   StaticMethods: {
+    setUploaded({ uuid, bucket }){
+      return this.update({
+        bucket,
+        status: 'UPLOADED'
+      }, { where: { uuid } })
+    },
+    createPostPhoto({ ...args } = {},  ...rest ){
+      return this.create({ ...args, type: 'POST' }, ...rest);
+    },
+    createAvaPhoto({ ...args } = {},  ...rest ){
+      return this.create({ ...args, type: 'IGAVATAR' }, ...rest);
+    },
     setDeleted(objectName) {
       //TODO: ACTUALLY DELETE?
-      return this.update({ deleted: true }, { where: { objectName } });
+      const { uuid } = minioObj.parse(objectName);
+      return this.update({ status: 'DELETED' }, { where: { uuid } });
     },
   },
 };

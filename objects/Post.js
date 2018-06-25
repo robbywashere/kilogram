@@ -21,9 +21,6 @@ module.exports = {
     text: {
       type: TEXT,
     },
-    photoUUID: {
-      type: UUID,
-    },
     postDate: {
       type: DATE,
       allowNull: false,
@@ -38,8 +35,8 @@ module.exports = {
   }) {
     this.belongsTo(Account, { onDelete: 'cascade', foreignKey: { allowNull: false } });
     this.belongsTo(IGAccount, { onDelete: 'cascade', foreignKey: { allowNull: false } });
-    this.hasOne(PostJob);
-    this.belongsTo(Photo);
+    this.hasOne(PostJob, { onDelete: 'cascade' });
+    this.belongsTo(Photo, { foreignKey: 'photoUUID', targetKey: 'uuid' } );
 
     this.addScope('published', {
       include: [PostJob],
@@ -66,19 +63,6 @@ module.exports = {
   },
   ScopeFunctions: true,
   Hooks: {
-    // TODO: this can all be done with one raw query and is not needed :(
-    async beforeBulkCreate(instances) {
-      await Promise.map(instances, (i)=>this.mapToPhoto(i), { concurrency:5 });
-      /* for (const instance of instances) {
-        await this.mmapToPhomapToPhototoapToPhoto(instance);
-      }*/
-    },
-    beforeDelete({ id }) {
-      return this.sequelize.models.PostJob.destroy({ where: { status: 'OPEN', PostId: id } });
-    },
-    beforeCreate(instance) {
-      return this.mapToPhoto(instance);
-    },
   },
   Scopes: {
     withAll: { include: [{ all: true }] },
@@ -101,21 +85,6 @@ module.exports = {
   Methods: {
   },
   StaticMethods: {
-    async mapToPhoto(instance) {
-      const { Photo } = this.sequelize.models;
-      const { photoUUID } = instance;
-      if (isUndefined(photoUUID) || isNull(photoUUID)) {
-        throw new ValidationError(`photoUUID cannot be ${(isUndefined(photoUUID)) ? 'undefined' : 'null'}`);
-      }
-      if (isUndefined(instance.PhotoId)) {
-        const photo = await Photo.findOne({ where: { uuid: photoUUID } });
-        if (photo) {
-          instance.dataValues.PhotoId = photo.id;
-        } else {
-          throw new ValidationError(`Photo with UUID: ${photoUUID} not found`);
-        }
-      }
-    },
     async createWithPhoto(opts) {
       return this.create({
         ...opts,

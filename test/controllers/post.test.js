@@ -41,7 +41,7 @@ describe('Post Controller', () => {
 
     const igAccount = await newIGAccount(user);
 
-    const photo = await Photo.create();
+    const photo = await Photo.createPostPhoto();
 
     const app = exprezz(badUser);
 
@@ -65,7 +65,7 @@ describe('Post Controller', () => {
 
     const igAccount = await newIGAccount(user);
 
-    const photo = await Photo.create();
+    const photo = await Photo.createPostPhoto();
 
     const app = exprezz(user);
 
@@ -81,4 +81,6 @@ describe('Post Controller', () => {
       })
       .expect(200);
   });
+
+
 });
