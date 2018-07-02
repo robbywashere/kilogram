@@ -15,7 +15,7 @@ const TriggerSqlFn = require('../db/postgres-triggers/trigger-event-sql-fn');
 const sequelize = require('sequelize');
 const slurpDir = require('../lib/slurpDir');
 
-const TRIGGER_FN = 'trigger_notify_event'; // TODO ??? PUT THIS SOMEWHERE?
+const TRIGGER_FN = 'public.trigger_notify_event'; // TODO ??? PUT THIS SOMEWHERE?
 
 function newRegistry() {
   return {

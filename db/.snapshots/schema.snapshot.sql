@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.5.3
+-- Dumped from database version 10.4
 -- Dumped by pg_dump version 10.4
 
 SET statement_timeout = 0;
@@ -212,6 +212,7 @@ ALTER TABLE public."Accounts" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."Accounts_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -251,6 +252,7 @@ ALTER TABLE public."Devices" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."Devices_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -289,6 +291,7 @@ ALTER TABLE public."DownloadIGAvaJobs" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."DownloadIGAvaJobs_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -328,6 +331,7 @@ ALTER TABLE public."IGAccounts" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."IGAccounts_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -364,6 +368,7 @@ ALTER TABLE public."NotificationReads" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."NotificationReads_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -400,6 +405,7 @@ ALTER TABLE public."Notifications" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."Notifications_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -443,6 +449,7 @@ ALTER TABLE public."Photos" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."Photos_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -483,6 +490,7 @@ ALTER TABLE public."PostJobs" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."PostJobs_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -523,6 +531,7 @@ ALTER TABLE public."Posts" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."Posts_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -576,6 +585,7 @@ ALTER TABLE public."UserInvites" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."UserInvites_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -612,6 +622,7 @@ ALTER TABLE public."UserSignups" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."UserSignups_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -653,6 +664,7 @@ ALTER TABLE public."Users" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."Users_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -691,6 +703,7 @@ ALTER TABLE public."VerifyIGJobs" OWNER TO postgres;
 --
 
 CREATE SEQUENCE public."VerifyIGJobs_id_seq"
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -727,6 +740,7 @@ ALTER TABLE public.bucketevents OWNER TO postgres;
 --
 
 CREATE SEQUENCE public.bucketevents_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1202,16 +1216,6 @@ ALTER TABLE ONLY public."UserSignups"
 
 ALTER TABLE ONLY public."VerifyIGJobs"
     ADD CONSTRAINT "VerifyIGJobs_IGAccountId_fkey" FOREIGN KEY ("IGAccountId") REFERENCES public."IGAccounts"(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
---
-
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM postgres;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
