@@ -1,5 +1,5 @@
 const {
-  Post, Account, VerifyIGJob, IGAccount, User, UserAccount,
+  Post, Account, VerifyIGJob, IGAccount, User, UserAccount, DownloadIGAvaJob 
 } = require('../../objects');
 const { ezUser} = require('../helpers');
 const DBSync = require('../../db/sync');
@@ -58,7 +58,7 @@ describe('IGAccount object', () => {
   });
 
 
-  it('should create a \'VerifyIGJob\' job afterCreate', async () => {
+  it('should create a \'VerifyIGJob\' and \'DownloadIGAvaJob\' job afterCreate', async () => {
     const account = await Account.create({});
     const igAccount = await IGAccount.create({
       username: 'username',
@@ -68,7 +68,9 @@ describe('IGAccount object', () => {
 
 
     const vig = await VerifyIGJob.findOne();
+    const dig = await DownloadIGAvaJob.findOne();
 
     assert.equal(vig.IGAccountId, 1);
+    assert.equal(dig.IGAccountId, 1);
   });
 });

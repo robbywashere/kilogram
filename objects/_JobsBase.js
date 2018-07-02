@@ -81,7 +81,7 @@ const StatsQuery = tableName => `
 
 const JobMethods = {
   denormalize() {
-    return this.reload({ include: [{ all: true }] }); //
+    return this.reloadWithAll(); //
   },
   isInProgress() {
     return (this.status === 'SPINNING');
@@ -169,7 +169,7 @@ const JobProperties = {
 
 
 const JobScopes = {
-  withAll: { include: [{ all: true }] },
+  withAll: { include: [{ all: true, nested: true }] },
   outstanding: { where: { status: 'OPEN' } },
   sleeping: { where: { status: 'SLEEPING' } },
   completed: { where: { status: 'SUCCESS' } },

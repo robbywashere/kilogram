@@ -21,9 +21,6 @@ module.exports = {
   },
   Methods: {
     ...JobMethods,
-    denormalize() {
-      return this.reloadWithAll();
-    },
   },
   StaticMethods: {
     ...JobStaticMethods,

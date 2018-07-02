@@ -46,11 +46,11 @@ module.exports = function Auth(app, { sessionStrategy = demand('sessionStrategy'
   router.get('/auth', (req, res, next) => {
     const user = req.user;
     if (!user) { return next(new Forbidden()); }
-    res.send({ user });
+    res.send({ user: user.serialize() });
   });
   router.post('/auth', passport.authenticate('local'), (req, res) => {
     const user = req.user;
-    res.send({ user });
+    res.send({ user: user.serialize() });
   });
   router.delete('/auth', (req, res) => {
     if (!req.user) return res.sendStatus(404);

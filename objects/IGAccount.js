@@ -40,10 +40,12 @@ module.exports = {
       }
     }, 
     async afterCreate({ id }) {
-      const { VerifyIGJob } = this.sequelize.models;
-      return VerifyIGJob.create({
-        IGAccountId: id,
-      });
+      const { VerifyIGJob, DownloadIGAvaJob } = this.sequelize.models;
+      const igaccount = { IGAccountId: id };
+      return Promise.all([
+        VerifyIGJob.create(igaccount), 
+        DownloadIGAvaJob.create(igaccount)
+      ]);
     },
   },
   ScopeFunctions: true,

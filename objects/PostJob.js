@@ -30,7 +30,6 @@ module.exports = {
     this.belongsTo(Account, { onDelete: 'cascade', foreignKey: { allowNull: false } });
     this.belongsTo(IGAccount, { foreignKey: { allowNull: false } });
     this.addScope('withPost', { include: [{ model: Post, include: [Photo] }] });
-    this.addScope('withDeps', { include: [IGAccount, { model: Post, include: [Photo] }] });
 
     //TODO: pull this out into something reusable by other objects
     this.sequelize.addHook('afterBulkSync', () => {
@@ -53,12 +52,15 @@ module.exports = {
   },
   Methods: {
     ...JobMethods,
-    denormalize() {
-      return this.reloadWithDeps();
-    },
   },
   StaticMethods: {
     ...JobStaticMethods,
+    async initPostJobs() {
+      return db.query(InitPostJobQuery, { type: sequelize.QueryTypes.INSERT, model: db.models.PostJob });
+    },
+  },
+};
+
     /*async initPostJob2() {
       return db.models.PostJob.create({
         PostId: '$Post.id$',
@@ -77,9 +79,3 @@ module.exports = {
         }],
       });
     },*/
-    async initPostJobs() {
-      return db.query(InitPostJobQuery, { type: sequelize.QueryTypes.INSERT, model: db.models.PostJob });
-    },
-  },
-};
-
