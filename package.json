@@ -88,6 +88,7 @@
     "db:sync": "node ./db/_sync.js",
     "db:sync:force": "node ./db/_syncForce.js",
     "db:up": "node ./db/_up.js",
+    "db:schema:dump": "node ./db/schema/_dump",
     "db:down": "node ./db/_down.js",
     "db:mig:down": "node ./db/_migdown.js",
     "db:mig:up": "node ./db/_migup.js",
