@@ -11,6 +11,7 @@ const { get, chain, isUndefined } = require('lodash');
 const { logger } = require('../lib/logger');
 const requestAsync = require('request-promise');
 const request = require('request');
+const Emailer = require('../server-lib/emailer');
 
 
 async function PostJobRun({
@@ -60,7 +61,8 @@ async function SendEmailJobRun({
 
   const result = await (async () => {
     try {
-      await SendEmail({ to, from, message, subject });
+      const emailer = new Emailer({  });
+      await emailer.send({ to, from, msg: message, subject });
     } catch (e) {
       body.error = e;
       return { success: false, body };
