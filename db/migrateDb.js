@@ -5,15 +5,21 @@ const { Client } = require('pg');
 const config = require('config');
 
 const { logger } = require('../lib/logger');
+
 const { slurpDir2, slurpFile, forExt } = require('../lib/slurpDir2');
 
 const pgConfig = dbConfig[config.NODE_ENV];
+
 const migConfig = JSON.parse(JSON.stringify(pgConfig));
+
 const dbname = pgConfig.database.toString();
+
+const path = require('path');
+
 delete pgConfig.database;
 
+const MDIR = path.join(__dirname,'migrations');
 
-const MDIR = `${__dirname}/migrations`;
 const slurpUpSql = slurpDir2(MDIR, forExt('.up.sql'));
 const slurpDownSql = slurpDir2(MDIR, forExt('.down.sql'));
 
@@ -43,6 +49,22 @@ async function up() {
     } else if (err) {
       logger.error(err, res);
     }
+  } finally {
+    client.end();
+  }
+}
+
+async function schemaUp(){
+  const schemaSql = slurpFile(path.join(__dirname,'schema','schema.snapshot.sql'));
+  let client;
+  let res;
+  try {
+    client = new Client(pgConfig);
+    client.connect();
+    res = await client.query(schemaSql);
+    logger(`Schema up success!`);
+  } catch (err) {
+    logger.error(err.message);
   } finally {
     client.end();
   }
@@ -83,5 +105,5 @@ async function down() {
 }
 
 module.exports = {
-  up, down, migUp, migDown,
+  up, down, migUp, migDown, schemaUp
 };

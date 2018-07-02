@@ -93,6 +93,7 @@
     "db:schema:dump:compare": "node ./db/schema/_dump_compare",
     "db:down": "node ./db/_down.js",
     "db:mig:down": "node ./db/_migdown.js",
+    "db:schema:up": "node ./db/_schemaup.js",
     "db:mig:up": "node ./db/_migup.js",
     "test:clr": "mocha  --require ./test/setup.js  --recursive \"./test/**/*.test.js\" --reporter mocha-clearscreen-reporter --watch",
     "test:clr:verbose": "mocha --require ./test/setup.js  --recursive \"./test/**/*.test.js\"  --reporter mocha-clearscreen-reporter --watch",
