@@ -4,6 +4,9 @@ const { Client } = require('pg');
 
 const config = require('config');
 
+const { writeFileSync } = require('fs');
+
+
 const { logger } = require('../lib/logger');
 
 const { slurpDir2, slurpFile, forExt } = require('../lib/slurpDir2');
@@ -19,6 +22,8 @@ const path = require('path');
 delete pgConfig.database;
 
 const MDIR = path.join(__dirname,'migrations');
+
+const { getSchemaPath } = require('./schema/pgDumpSchema');
 
 const slurpUpSql = slurpDir2(MDIR, forExt('.up.sql'));
 const slurpDownSql = slurpDir2(MDIR, forExt('.down.sql'));
@@ -54,8 +59,29 @@ async function up() {
   }
 }
 
+async function dumpFunctions({ namespace = 'public' } = {}){
+
+  const fnquery = `SELECT f.proname, pg_get_functiondef(f.oid)
+FROM pg_catalog.pg_proc f
+INNER JOIN pg_catalog.pg_namespace n ON (f.pronamespace = n.oid)
+WHERE n.nspname = '${namespace}';`
+
+  const client = new Client(migConfig);
+
+  client.connect();
+
+  const response = await client.query(fnquery);
+
+  for (let row of response.rows) {
+    const name = row.proname;
+    let src = row.pg_get_functiondef;
+    writeFileSync(path.join(__dirname,'.snapshots', `${name}.function.sql`),src);
+  }
+
+}
+
 async function schemaUp(){
-  const schemaSql = slurpFile(path.join(__dirname,'schema','schema.snapshot.sql'));
+  const schemaSql = slurpFile(getSchemaPath());
   let client;
   let res;
   try {
@@ -105,5 +131,5 @@ async function down() {
 }
 
 module.exports = {
-  up, down, migUp, migDown, schemaUp
+  up, down, migUp, migDown, schemaUp, dumpFunctions
 };

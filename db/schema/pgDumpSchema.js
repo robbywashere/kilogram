@@ -1,9 +1,14 @@
 const { execFileSync } = require('child_process');
+const { join } = require('path');
 const { writeFileSync, readFileSync } = require('fs');
 const crypto = require('crypto');
 
 function pgSchemaDump({ username, database, name = 'public' }) {
   return execFileSync('pg_dump', [`--schema=${name}`,'-s','-U',username,'-d',database]);
+}
+
+function getSchemaPath() {
+  return join(__dirname,'..','.snapshots',`schema.snapshot.sql`);
 }
 
 
@@ -24,4 +29,4 @@ function pgSchemaDumpCompare({ username, database, path, name = 'public' }) {
   return (upstream === downstream);
 }
 
-module.exports = { pgSchemaDump, pgSchemaDumpCompare, pgSchemaDumpFile };
+module.exports = { pgSchemaDump, pgSchemaDumpCompare, pgSchemaDumpFile, getSchemaPath };

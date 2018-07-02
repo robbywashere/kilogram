@@ -1,4 +1,4 @@
-const { pgSchemaDumpFile } = require('./pgDumpSchema');
+const { pgSchemaDumpFile, getSchemaPath } = require('./pgDumpSchema');
 const dbConfig = require('../config');
 const dbSync = require('../sync');
 const { logger } = require('../../lib/logger');
@@ -8,7 +8,7 @@ const path = require('path');
 (async function dump() {
   try {
     await dbSync(true);
-    const schemaPath = path.join(__dirname,`schema.snapshot.sql`);
+    const schemaPath = getSchemaPath();
     const { username, database } = dbConfig['development'];
     pgSchemaDumpFile({ path: schemaPath, username, database });
     process.exit(0);

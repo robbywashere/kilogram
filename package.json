@@ -85,6 +85,7 @@
     "seeds:up": "node ./db/seeders/_up.js",
     "seeds:create": "node ./db/seeders/_create.js",
     "seeds:down": "node ./db/seeders/_down.js",
+    "db:func:dump": "node ./db/_funcdump.js",
     "db:triggers": "node ./db/trigger-notify/_getTriggers.js",
     "db:sync": "node ./db/_sync.js",
     "db:sync:force": "node ./db/_syncForce.js",
@@ -107,6 +108,7 @@
     "test:e2e:device": "export RUN_E2E_ON_DEVICE=true && mocha ./e2e/e2e.test.js",
     "pg:session:up": "psql postgres < ./node_modules/connect-pg-simple/table.sql",
     "moo": "cowsay moo",
+    "pwd":"pwd",
     "device-node": "node ./engine/run"
   },
   "husky": {
