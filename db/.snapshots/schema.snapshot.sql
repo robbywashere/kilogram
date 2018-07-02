@@ -97,6 +97,21 @@ CREATE TYPE public."enum_Posts_status" AS ENUM (
 ALTER TYPE public."enum_Posts_status" OWNER TO postgres;
 
 --
+-- Name: enum_SendEmailJobs_status; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public."enum_SendEmailJobs_status" AS ENUM (
+    'OPEN',
+    'SPINNING',
+    'SUCCESS',
+    'SLEEPING',
+    'FAILED'
+);
+
+
+ALTER TYPE public."enum_SendEmailJobs_status" OWNER TO postgres;
+
+--
 -- Name: enum_UserAccounts_role; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -276,6 +291,7 @@ ALTER SEQUENCE public."Devices_id_seq" OWNED BY public."Devices".id;
 CREATE TABLE public."DownloadIGAvaJobs" (
     id integer NOT NULL,
     body json,
+    data json,
     attempts integer DEFAULT 0,
     status public."enum_DownloadIGAvaJobs_status" DEFAULT 'OPEN'::public."enum_DownloadIGAvaJobs_status",
     "createdAt" timestamp with time zone NOT NULL,
@@ -473,6 +489,7 @@ ALTER SEQUENCE public."Photos_id_seq" OWNED BY public."Photos".id;
 CREATE TABLE public."PostJobs" (
     id integer NOT NULL,
     body json,
+    data json,
     attempts integer DEFAULT 0,
     status public."enum_PostJobs_status" DEFAULT 'OPEN'::public."enum_PostJobs_status",
     "createdAt" timestamp with time zone NOT NULL,
@@ -546,6 +563,45 @@ ALTER TABLE public."Posts_id_seq" OWNER TO postgres;
 --
 
 ALTER SEQUENCE public."Posts_id_seq" OWNED BY public."Posts".id;
+
+
+--
+-- Name: SendEmailJobs; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."SendEmailJobs" (
+    id integer NOT NULL,
+    body json,
+    data json,
+    attempts integer DEFAULT 0,
+    status public."enum_SendEmailJobs_status" DEFAULT 'OPEN'::public."enum_SendEmailJobs_status",
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public."SendEmailJobs" OWNER TO postgres;
+
+--
+-- Name: SendEmailJobs_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public."SendEmailJobs_id_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public."SendEmailJobs_id_seq" OWNER TO postgres;
+
+--
+-- Name: SendEmailJobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public."SendEmailJobs_id_seq" OWNED BY public."SendEmailJobs".id;
 
 
 --
@@ -688,6 +744,7 @@ ALTER SEQUENCE public."Users_id_seq" OWNED BY public."Users".id;
 CREATE TABLE public."VerifyIGJobs" (
     id integer NOT NULL,
     body json,
+    data json,
     attempts integer DEFAULT 0,
     status public."enum_VerifyIGJobs_status" DEFAULT 'OPEN'::public."enum_VerifyIGJobs_status",
     "createdAt" timestamp with time zone NOT NULL,
@@ -834,6 +891,13 @@ ALTER TABLE ONLY public."Posts" ALTER COLUMN id SET DEFAULT nextval('public."Pos
 
 
 --
+-- Name: SendEmailJobs id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."SendEmailJobs" ALTER COLUMN id SET DEFAULT nextval('public."SendEmailJobs_id_seq"'::regclass);
+
+
+--
 -- Name: UserInvites id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -970,6 +1034,14 @@ ALTER TABLE ONLY public."PostJobs"
 
 ALTER TABLE ONLY public."Posts"
     ADD CONSTRAINT "Posts_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: SendEmailJobs SendEmailJobs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."SendEmailJobs"
+    ADD CONSTRAINT "SendEmailJobs_pkey" PRIMARY KEY (id);
 
 
 --

@@ -1,5 +1,5 @@
 const cmds = require('../android/cmds');
-const { PostJob, VerifyIGJob, Device, DownloadIGAvaJob } = require('../objects');
+const { PostJob, VerifyIGJob, Device, SendEmailJob, DownloadIGAvaJob } = require('../objects');
 const config = require('config');
 const { logger } = require('../lib/logger');
 const demand = require('../lib/demand');
@@ -122,14 +122,18 @@ const main = function ({
 } = {}) {
   return [
 
-    // this will run on a  master node 
+    // this will run on a master node 
     run(PostJob.initPostJobs, interval), // Turns posts into queued jobs
-
 
     //master node and or web node
     run(runJob({
       JobModel: DownloadIGAvaJob,
       jobRunner: Runner.DownloadIGAvaJobRun,
+    }), interval),
+
+    run(runJob({
+      JobModel: SendEmailJob,
+      jobRunner: Runner.SendEmailJobRun,
     }), interval),
 
     // These will run on a device node

@@ -22,7 +22,7 @@ async function PostJobRun({
 }) {
   const mc = (typeof minioClient !== 'undefined') ? minioClient : (new minio.MClient());
 
-  demandKeys(Post.Photo,['uuid','objectName','bucket'],' Post.Photo')
+  demandKeys(Post.Photo, ['uuid', 'objectName', 'bucket'], ' Post.Photo');
 
   const localfile = await mc.pullPhoto({ name: Post.Photo.objectName });
 
@@ -42,6 +42,33 @@ async function PostJobRun({
 
   if (get(result, 'body.type') === 'creds_error') {
     return Promise.all([job.fail(), IGAccount.fail()]);
+  }
+  return job.retryTimes({ max: 3, body: result.body });
+}
+
+
+async function SendEmailJobRun({
+  job = demand('job'),
+  data: {
+    to, from, message, subject,
+  },
+  retry = 3,
+  reqAsync = requestAsync,
+  reqPipe = request,
+}) {
+  const body = {};
+
+  const result = await (async () => {
+    try {
+      await SendEmail({ to, from, message, subject });
+    } catch (e) {
+      body.error = e;
+      return { success: false, body };
+    }
+    return { success: true, body };
+  })();
+  if (result.success) {
+    return job.complete();
   }
   return job.retryTimes({ max: 3, body: result.body });
 }
@@ -72,9 +99,9 @@ async function VerifyIGJobRun({
 }
 
 
-//TODO: change the return types of these functions to match
-//consider using event emitter or async generator
-//must also consider how these jobs will be ran concurrently 
+// TODO: change the return types of these functions to match
+// consider using event emitter or async generator
+// must also consider how these jobs will be ran concurrently
 async function DownloadIGAvaJobRun({
   job = demand('job'),
   IGAccount = demand('IGAccount'),
@@ -85,7 +112,7 @@ async function DownloadIGAvaJobRun({
 }) {
   const body = {};
 
-  const result = await (async ()=>  {
+  const result = await (async () => {
     try {
       const html = await reqAsync.get(`https://www.instagram.com/${IGAccount.username}`);
 
@@ -98,31 +125,25 @@ async function DownloadIGAvaJobRun({
 
       const mc = (typeof minioClient !== 'undefined') ? minioClient : (new minio.MClientPublic());
 
-      const { url, objectName, uuid } = await mc.newPhoto({ 
-        AccountId: IGAccount.AccountId, 
+      const { url, objectName, uuid } = await mc.newPhoto({
+        AccountId: IGAccount.AccountId,
         IGAccountId: IGAccount.id,
-        type: 'IGAVATAR'
+        type: 'IGAVATAR',
       });
-
       body.uuid = uuid;
       body.minioUrl = url;
-
       await new Promise((rs, rx) => reqPipe.get(body.avatar).pipe(reqPipe.put(url))
         .on('finish', rs)
         .on('error', rx));
-    } catch(e) {
+    } catch (e) {
       body.error = e;
-      return { success: false, body }
+      return { success: false, body };
     }
-    return { success: true, body }
+    return { success: true, body };
   })();
-
-
   if (result.success) {
-
     return Promise.all([IGAccount.update({ avatarUUID: result.body.uuid }), job.complete()]);
-  } 
-
+  }
   return job.retryTimes({ max: 3, body: result.body });
 }
 

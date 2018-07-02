@@ -157,6 +157,9 @@ const JobProperties = {
   body: {
     type: sequelize.JSON,
   },
+  data: {
+    type: sequelize.JSON,
+  },
   attempts: {
     type: INTEGER,
     defaultValue: 0,
@@ -178,7 +181,16 @@ const JobScopes = {
 };
 
 
+const GenJobObj = {
+  Properties: JobProperties,
+  ScopeFunctions: true,
+  Scopes: JobScopes,
+  Methods: JobMethods,
+  StaticMethods: JobStaticMethods,
+}
+
 module.exports = {
+  GenJobObj,
   JobScopes,
   JobMethods,
   JobStaticMethods,
