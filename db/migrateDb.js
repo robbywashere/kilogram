@@ -23,6 +23,10 @@ const FunctionDir = path.join(__dirname,'.snapshots');
 
 const { getSchemaPath } = require('./schema/pgDumpSchema');
 
+const { TSParser } = require('tsparser');
+  
+  //parse(query: string, dbType: string, delimiter: string)
+
 const slurpFunctions = slurpDir2(FunctionDir, forExt('.function.sql')); 
 
 const slurpUpSql = slurpDir2(MigrationDir, forExt('.up.sql'));
@@ -91,7 +95,14 @@ async function schemaUp(){
   try {
     client = new Client(pgConfig);
     client.connect();
-    res = await client.query(schemaSql);
+
+    for (let sqlStmt of TSParser.parse(schemaSql,'pg',';')) {
+      try {
+        await client.query(sqlStmt);
+      } catch(E){
+        logger.error(E.message);
+      }
+    }
     logger(`Schema up success!`);
   } catch (err) {
     logger.error(err.message);

@@ -61,6 +61,7 @@
     "stream-to-promise": "^2.2.0",
     "supertest": "^3.0.0",
     "tree-kill": "^1.2.0",
+    "tsparser": "^1.0.2",
     "url-join": "^3.0.0",
     "uuid": "^3.1.0"
   },
@@ -85,6 +86,9 @@
     "seeds:up": "node ./db/seeders/_up.js",
     "seeds:create": "node ./db/seeders/_create.js",
     "seeds:down": "node ./db/seeders/_down.js",
+    "e:dev":"export NODE_ENV='development' && ./.npmenv",
+    "e:test":"export NODE_ENV='test' && ./.npmenv",
+    "e:prod":"export NODE_ENV='production' && /.npmenv",
     "db:func:dump": "node ./db/_funcdump.js",
     "db:func:up": "node ./db/_funcup.js",
     "db:triggers": "node ./db/trigger-notify/_getTriggers.js",
@@ -109,12 +113,13 @@
     "test:e2e:device": "export RUN_E2E_ON_DEVICE=true && mocha ./e2e/e2e.test.js",
     "pg:session:up": "psql postgres < ./node_modules/connect-pg-simple/table.sql",
     "moo": "cowsay moo",
-    "pwd":"pwd",
-    "device-node": "node ./engine/run"
+    "pwd": "pwd",
+    "device-node": "node ./engine/run",
+    "env":"echo $NODE_ENV"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run db:schema:dump:compare"
+      "pre-commit": "npm run e:dev db:schema:dump:compare"
     }
   },
   "proxy": "http://127.0.0.1:3000/",

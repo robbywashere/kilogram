@@ -4,6 +4,7 @@ const { writeFileSync, readFileSync } = require('fs');
 const { dumpFunctionsReadOnly } = require('../migrateDb');
 const crypto = require('crypto');
 
+
 async function pgSchemaDump({ username, database, name = 'public' }) {
   let output = execFileSync('pg_dump', [`--schema=${name}`,'-s','-U',username,'-d',database]);
   for (let row of (await dumpFunctionsReadOnly({ namespace: name })) ) {

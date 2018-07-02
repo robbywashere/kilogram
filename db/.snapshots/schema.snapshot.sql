@@ -758,6 +758,19 @@ ALTER SEQUENCE public.bucketevents_id_seq OWNED BY public.bucketevents.id;
 
 
 --
+-- Name: session; Type: TABLE; Schema: public; Owner: robby
+--
+
+CREATE TABLE public.session (
+    sid character varying NOT NULL,
+    sess json NOT NULL,
+    expire timestamp(6) without time zone NOT NULL
+);
+
+
+ALTER TABLE public.session OWNER TO robby;
+
+--
 -- Name: Accounts id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1032,6 +1045,14 @@ ALTER TABLE ONLY public.bucketevents
 
 
 --
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: robby
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_pkey PRIMARY KEY (sid);
+
+
+--
 -- Name: bucketevents bucketevents:after_insert; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -1227,39 +1248,6 @@ CREATE OR REPLACE FUNCTION public.trigger_notify_event()
  RETURNS trigger
  LANGUAGE plpgsql
 AS $function$
-    DECLARE 
-        data json;
-        notification json;
-        event_name TEXT;
-    BEGIN
-        event_name = TG_ARGV[0];
-        -- Convert the old or new row to JSON, based on the kind of action.
-        -- Action = DELETE?             -> OLD row
-        -- Action = INSERT or UPDATE?   -> NEW row
-        IF (TG_OP = 'DELETE') THEN
-            data = row_to_json(OLD);
-        ELSE
-            data = row_to_json(NEW);
-        END IF;
-        
-        -- Contruct the notification as a JSON string.
-        notification = json_build_object(
-                          'event_name', event_name,
-                          'table', TG_TABLE_NAME,
-                          'action', TG_OP,
-                          'data', data);
-        -- Execute pg_notify(channel, notification)
-        PERFORM pg_notify(event_name, notification::text);
-        -- Result is ignored since this is an AFTER trigger
-        RETURN NULL; 
-    END;
-$function$
-;
-CREATE OR REPLACE FUNCTION public.pg_trigger_notify_event()
- RETURNS trigger
- LANGUAGE plpgsql
-AS $function$
-
     DECLARE 
         data json;
         notification json;
