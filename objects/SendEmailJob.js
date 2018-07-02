@@ -1,9 +1,13 @@
-const { GenJobObj, JobStaticMethods } = require('./_JobsBase');
+const { GenJobObj } = require('./_JobsBase');
 
 module.exports = {
   ...GenJobObj,
+  Methods: {
+    ...GenJobObj.Methods,
+    async denormalize(){ } //do nothing :)
+  },
   StaticMethods: {
-    ...JobStaticMethods,
+    ...GenJobObj.StaticMethods,
     new({ to, from, body, subject }) {
       return this.sequelize.models.SendEmailJob.create({
         data: { to, from, message: body, subject }

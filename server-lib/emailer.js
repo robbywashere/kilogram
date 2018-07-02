@@ -5,7 +5,7 @@ module.exports = class Emailer {
 
   }
 
-  async send({ to, msg }) {
+  async send({ to, msg, subject, from }) {
     logger(`Sending email TO: ${to}, \n MSG: ${msg}`);
     return true;
   }

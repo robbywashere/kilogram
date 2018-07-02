@@ -49,6 +49,9 @@ async function syncDevices() {
 }
 
 
+//TODO: replace with for loop... -> await delay(milliseconds)  ->fn()
+//also add fan out, so 1,2,5,10 jobs can run at the same time, fillings slots as others die off etc
+//
 const run = function (fn, milliseconds) { // Job 'Harness' - Errors should never reach this point?
   return setInterval(() => {
     fn().catch(e => logger.critical(`Unhandled exception in engine 'run' harness : ${fn.name}`, e));
