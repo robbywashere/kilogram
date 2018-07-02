@@ -27,10 +27,6 @@ module.exports = {
         isEmail: true,
       },
     },
-    favoriteFood: {
-      type: STRING,
-      defaultValue: 'pizza'
-    },
     verifyKey: {
       type: STRING,
       defaultValue: randomKey,
