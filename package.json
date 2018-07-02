@@ -86,6 +86,7 @@
     "seeds:create": "node ./db/seeders/_create.js",
     "seeds:down": "node ./db/seeders/_down.js",
     "db:func:dump": "node ./db/_funcdump.js",
+    "db:func:up": "node ./db/_funcup.js",
     "db:triggers": "node ./db/trigger-notify/_getTriggers.js",
     "db:sync": "node ./db/_sync.js",
     "db:sync:force": "node ./db/_syncForce.js",

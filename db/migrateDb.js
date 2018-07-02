@@ -21,12 +21,17 @@ const path = require('path');
 
 delete pgConfig.database;
 
-const MDIR = path.join(__dirname,'migrations');
+const MigrationDir = path.join(__dirname,'migrations');
+
+const FunctionDir = path.join(__dirname,'.snapshots');
 
 const { getSchemaPath } = require('./schema/pgDumpSchema');
 
-const slurpUpSql = slurpDir2(MDIR, forExt('.up.sql'));
-const slurpDownSql = slurpDir2(MDIR, forExt('.down.sql'));
+const slurpFunctions = slurpDir2(FunctionDir, forExt('.function.sql')); 
+
+const slurpUpSql = slurpDir2(MigrationDir, forExt('.up.sql'));
+
+const slurpDownSql = slurpDir2(MigrationDir, forExt('.down.sql'));
 
 async function runMigFiles(client, migfileArray) {
   for (const [file, msql] of migfileArray) {
@@ -96,6 +101,13 @@ async function schemaUp(){
   }
 }
 
+async function funcUp() {
+  const client = new Client(migConfig);
+  client.connect();
+  await runMigFiles(client, slurpFunctions(f => [f, slurpFile(f)]));
+  await client.end();
+}
+
 async function migDown() {
   const client = new Client(migConfig);
   client.connect();
@@ -131,5 +143,5 @@ async function down() {
 }
 
 module.exports = {
-  up, down, migUp, migDown, schemaUp, dumpFunctions
+  up, down, migUp, migDown, schemaUp, dumpFunctions, funcUp
 };
