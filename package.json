@@ -33,6 +33,7 @@
     "haikunator": "^2.0.0",
     "helmet": "^3.9.0",
     "http-errors": "^1.6.2",
+    "husky": "^1.0.0-rc.10",
     "jsonwebtoken": "^8.1.1",
     "lodash": "^4.17.4",
     "minio": "^3.2.3",
@@ -89,6 +90,7 @@
     "db:sync:force": "node ./db/_syncForce.js",
     "db:up": "node ./db/_up.js",
     "db:schema:dump": "node ./db/schema/_dump",
+    "db:schema:dump:compare": "node ./db/schema/_dump_compare",
     "db:down": "node ./db/_down.js",
     "db:mig:down": "node ./db/_migdown.js",
     "db:mig:up": "node ./db/_migup.js",
@@ -105,6 +107,11 @@
     "pg:session:up": "psql postgres < ./node_modules/connect-pg-simple/table.sql",
     "moo": "cowsay moo",
     "device-node": "node ./engine/run"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run db:schema:dump:compare"
+    }
   },
   "proxy": "http://127.0.0.1:3000/",
   "devDependencies": {

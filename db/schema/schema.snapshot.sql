@@ -635,6 +635,7 @@ ALTER SEQUENCE public."UserSignups_id_seq" OWNED BY public."UserSignups".id;
 CREATE TABLE public."Users" (
     id integer NOT NULL,
     email character varying(255) NOT NULL,
+    "favoriteFood" character varying(255) DEFAULT 'pizza'::character varying,
     "verifyKey" character varying(255),
     "passwordKey" character varying(255),
     "refreshToken" character varying(255),
