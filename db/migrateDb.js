@@ -13,13 +13,9 @@ const { slurpDir2, slurpFile, forExt } = require('../lib/slurpDir2');
 
 const pgConfig = dbConfig[config.NODE_ENV];
 
-const migConfig = JSON.parse(JSON.stringify(pgConfig));
-
 const dbname = pgConfig.database.toString();
 
 const path = require('path');
-
-delete pgConfig.database;
 
 const MigrationDir = path.join(__dirname,'migrations');
 
@@ -49,7 +45,7 @@ async function up() {
   let client;
   let res;
   try {
-    client = new Client(pgConfig);
+    client = new Client({ ...pgConfig, database: undefined });
     client.connect();
     res = await client.query(`CREATE DATABASE ${dbname}`);
     logger(`DB up ${dbname} success!`);
@@ -64,25 +60,28 @@ async function up() {
   }
 }
 
-async function dumpFunctions({ namespace = 'public' } = {}){
+async function dumpFunctionsReadOnly({ namespace = 'public' } = {}){
 
   const fnquery = `SELECT f.proname, pg_get_functiondef(f.oid)
 FROM pg_catalog.pg_proc f
 INNER JOIN pg_catalog.pg_namespace n ON (f.pronamespace = n.oid)
 WHERE n.nspname = '${namespace}';`
 
-  const client = new Client(migConfig);
+  const client = new Client(pgConfig);
 
   client.connect();
 
   const response = await client.query(fnquery);
 
-  for (let row of response.rows) {
+  return response.rows;
+
+}
+async function dumpFunctions({ namespace = 'public' } = {}){
+  for (let row of (await dumpFunctionsReadOnly({ namespace }))) {
     const name = row.proname;
     let src = row.pg_get_functiondef;
     writeFileSync(path.join(__dirname,'.snapshots', `${name}.function.sql`),src);
   }
-
 }
 
 async function schemaUp(){
@@ -102,20 +101,20 @@ async function schemaUp(){
 }
 
 async function funcUp() {
-  const client = new Client(migConfig);
+  const client = new Client(pgConfig);
   client.connect();
   await runMigFiles(client, slurpFunctions(f => [f, slurpFile(f)]));
   await client.end();
 }
 
 async function migDown() {
-  const client = new Client(migConfig);
+  const client = new Client(pgConfig);
   client.connect();
   await runMigFiles(client, slurpDownSql(f => [f, slurpFile(f)]));
   await client.end();
 }
 async function migUp() {
-  const client = new Client(migConfig);
+  const client = new Client(pgConfig);
   client.connect();
   await runMigFiles(client, slurpUpSql(f => [f, slurpFile(f)]));
   await client.end();
@@ -125,7 +124,7 @@ async function down() {
   let res;
   let client;
   try {
-    client = new Client(pgConfig);
+    client = new Client({ ...pgConfig, database: undefined });
     client.connect();
     logger(`DROP DATABASE ${dbname}`);
     res = await client.query(`DROP DATABASE ${dbname}`);
@@ -143,5 +142,5 @@ async function down() {
 }
 
 module.exports = {
-  up, down, migUp, migDown, schemaUp, dumpFunctions, funcUp
+  up, down, migUp, migDown, schemaUp, dumpFunctions, funcUp, dumpFunctionsReadOnly
 };

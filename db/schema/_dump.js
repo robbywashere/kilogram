@@ -10,7 +10,7 @@ const path = require('path');
     await dbSync(true);
     const schemaPath = getSchemaPath();
     const { username, database } = dbConfig['development'];
-    pgSchemaDumpFile({ path: schemaPath, username, database });
+    await pgSchemaDumpFile({ path: schemaPath, username, database });
     process.exit(0);
   } catch(e) {
     logger.error(e);

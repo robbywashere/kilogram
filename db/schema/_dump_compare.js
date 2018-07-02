@@ -10,7 +10,7 @@ const path = require('path');
     await dbSync(true);
     const schemaPath = getSchemaPath();
     const { username, database } = dbConfig['development'];
-    if (!pgSchemaDumpCompare({ path: schemaPath, username, database })) {
+    if (!await pgSchemaDumpCompare({ path: schemaPath, username, database })) {
       logger.error(`${schemaPath} is out-of-sync\n\nrun: $> npm run db:schema:dump`);
       process.exit(1);
     }

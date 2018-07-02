@@ -1218,3 +1218,57 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
+
+CREATE OR REPLACE FUNCTION public.trigger_notify_event()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+    DECLARE 
+        data json;
+        notification json;
+        event_name TEXT;
+    BEGIN
+        event_name = TG_ARGV[0];
+        -- Convert the old or new row to JSON, based on the kind of action.
+        -- Action = DELETE?             -> OLD row
+        -- Action = INSERT or UPDATE?   -> NEW row
+        IF (TG_OP = 'DELETE') THEN
+            data = row_to_json(OLD);
+        ELSE
+            data = row_to_json(NEW);
+        END IF;
+        
+        -- Contruct the notification as a JSON string.
+        notification = json_build_object(
+                          'event_name', event_name,
+                          'table', TG_TABLE_NAME,
+                          'action', TG_OP,
+                          'data', data);
+        -- Execute pg_notify(channel, notification)
+        PERFORM pg_notify(event_name, notification::text);
+        -- Result is ignored since this is an AFTER trigger
+        RETURN NULL; 
+    END;
+$function$
+;
+CREATE OR REPLACE FUNCTION public.t__postjobs_notifications()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+DECLARE 
+  body json;
+  row_data json;
+  meta json;
+  BEGIN
+
+    body = json_build_object('data',json_build_object('PostJob',json_build_object('PostId', NEW."PostId",'AccountId', NEW."AccountId",'IGAccountId', NEW."IGAccountId",'status', NEW."status",'id', NEW."id")), 'meta','{"type":"PostJob:status","resource":"PostJob"}'::json);
+
+    INSERT INTO "Notifications" ("createdAt","updatedAt",body,"AccountId")
+
+    VALUES (NOW(),NOW(),body,NEW."AccountId");
+
+  RETURN NEW;
+
+END;
+$function$
+;
