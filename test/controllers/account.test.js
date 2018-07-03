@@ -61,7 +61,7 @@ describe('Account Controller', () => {
     assert(!user.Accounts.filter(a => a.id === account.id).length);
   });
 
-  it('should add existing user to account as role', async () => {
+  it('should add existing user to account as role member', async () => {
     const account = await Account.create();
 
     const user = await ezUser();
@@ -79,6 +79,42 @@ describe('Account Controller', () => {
 
     app.use(AccountController());
 
+    const res = await request(app)
+      .post(`/${account.id}/user/${userToAdd.id}/member`)
+      .expect(200);
+
+    await userToAdd.reloadWithAccounts();
+
+    const addedAccount = userToAdd.Accounts.find(a=>a.id === account.id);
+
+    assert(addedAccount);
+
+    assert(addedAccount.id, account.id);
+
+    assert.equal(addedAccount.UserAccount.role, 'member');
+
+    assert.equal(addedAccount.UserAccount.UserId, userToAdd.id);
+
+
+  });
+
+  it('should add existing user to account as role admin', async () => {
+    const account = await Account.create();
+
+    const user = await ezUser();
+
+    await account.addUserAs(user, 'admin');
+
+    user.reloadWithAccounts();
+
+    const userToAdd = await ezUser({
+      email: 'userToAdd@example.com',
+      Accounts: { },
+    }, { include: [Account] });
+
+    const app = exprezz(user);
+
+    app.use(AccountController());
 
     const res = await request(app)
       .post(`/${account.id}/user/${userToAdd.id}/admin`)
@@ -86,12 +122,17 @@ describe('Account Controller', () => {
 
     await userToAdd.reloadWithAccounts();
 
-    assert(userToAdd.Accounts[1]);
+    const addedAccount = userToAdd.Accounts.find(a=>a.id === account.id);
 
-    assert(userToAdd.Accounts[1].id, account.id);
+    assert(addedAccount);
 
-    assert.equal(userToAdd.Accounts[1].UserAccount.role, 'member');
+    assert(addedAccount.id, account.id);
 
-    assert.equal(userToAdd.Accounts[1].UserAccount.UserId, userToAdd.id);
+    assert.equal(addedAccount.UserAccount.role, 'admin');
+
+    assert.equal(addedAccount.UserAccount.UserId, userToAdd.id);
+
+
   });
+
 });

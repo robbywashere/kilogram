@@ -97,12 +97,7 @@ function newIGAccount(user) {
 }
 
 async function createUserAccountIGAccountPhotoPost(userOpts) {
-  const user = await User.create({
-    password: 'blah',
-    email: 'test@test.com',
-    ...userOpts,
-    Accounts: {},
-  }, { include: [Account] });
+  const user = await userCreate();
   const account = user.Accounts[0];
   const igAccount = await newIGAccount(user);
 
@@ -118,13 +113,19 @@ async function createUserAccountIGAccountPhotoPost(userOpts) {
   };
 }
 
+async function userCreate(opts,moreOpts) {
 
-async function createAccountUserPostJob() {
   const user = await User.create({
     password: 'blah',
     email: 'test@test.com',
-    Accounts: {},
-  }, { include: [Account] });
+    ...opts
+  },moreOpts);
+  return user.reloadWithAccounts();
+
+}
+
+async function createAccountUserPostJob() {
+  const user = await userCreate();
   const account = user.Accounts[0];
   const photo = await Photo.createPostPhoto({});
   const igAccount = await newIGAccount(user);
