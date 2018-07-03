@@ -1,9 +1,11 @@
 const { execFileSync } = require('child_process');
 const { join } = require('path');
-const { writeFileSync, readFileSync } = require('fs');
+const { writeFileSync, truncateSync, readFileSync } = require('fs');
+const colors = require('colors/safe');
 const { dumpFunctionsReadOnly } = require('../migrateDb');
 const crypto = require('crypto');
-
+const jsdiff = require('diff');
+const assert = require('assert');
 
 async function pgSchemaDump({ username, database, name = 'public' }) {
   let output = execFileSync('pg_dump', [`--schema=${name}`,'-s','-U',username,'-d',database]);
@@ -26,14 +28,38 @@ async function pgSchemaDumpFile({ username, database, path, name = 'public' }) {
 
 
 async function pgSchemaDumpCompare({ username, database, path, name = 'public' }) {
-  const upstream = crypto
+
+  const upstream = (await pgSchemaDump({ username, database, name })).toString();
+  const downstream = readFileSync(path).toString();
+  const upstreamHash = crypto
     .createHash('md5')
-    .update((await pgSchemaDump({ username, database, name })))
+    .update(upstream)
     .digest("hex");
-  const downstream = crypto
+  const downstreamHash = crypto
     .createHash('md5').
-    update(readFileSync(path)).digest("hex"); 
-  return (upstream === downstream);
+    update(downstream)
+    .digest("hex"); 
+
+  const diff = jsdiff.diffLines(downstream, upstream);
+
+  if (diff.some(p=> (p.added || p.removed) )) {
+    process.stderr.write('\n>> diff\n\n')
+    diff.forEach(function(part){
+      if (part.added) {
+        process.stderr.write(colors['green']('+'+part.value))
+      } 
+      if (part.removed) {
+        process.stderr.write(colors['red']('+'+part.value))
+      }
+    });
+    process.stderr.write('\n<< end\n')
+
+    return false
+  } else {
+    return true
+  }
+
+
 }
 
 module.exports = { pgSchemaDump, pgSchemaDumpCompare, pgSchemaDumpFile, getSchemaPath };

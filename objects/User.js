@@ -19,6 +19,7 @@ const { genPasswordKey, randomKey } = require('./_helpers');
 module.exports = {
   Name: 'User',
   Properties: {
+    
     email: {
       type: STRING,
       allowNull: false,
