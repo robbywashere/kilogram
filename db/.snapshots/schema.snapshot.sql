@@ -815,7 +815,7 @@ ALTER SEQUENCE public.bucketevents_id_seq OWNED BY public.bucketevents.id;
 
 
 --
--- Name: session; Type: TABLE; Schema: public; Owner: robby
+-- Name: session; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.session (
@@ -825,7 +825,7 @@ CREATE TABLE public.session (
 );
 
 
-ALTER TABLE public.session OWNER TO robby;
+ALTER TABLE public.session OWNER TO postgres;
 
 --
 -- Name: Accounts id; Type: DEFAULT; Schema: public; Owner: postgres
@@ -1117,7 +1117,7 @@ ALTER TABLE ONLY public.bucketevents
 
 
 --
--- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: robby
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.session
