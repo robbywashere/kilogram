@@ -271,7 +271,7 @@ class MClient {
       bucketNotify.add(queue);
       await this.client.setBucketNotification(bucket, bucketNotify);
     } catch (err) {
-      err.message = `Could not create bucket: ${`${bucket}`} for notifications for events: ${`${JSON.stringify(events)}`}\n${err}`;
+      err.message = `Could not create bucket: ${`${bucket}`} for notifications for events: ${`${JSON.stringify(events)}`},${err.message}`;
       throw err;
     }
     logger.status(`Created notifications on ${sqsArn} for events: ${`${JSON.stringify(events)}`} for bucket: ${`${bucket}`}`);

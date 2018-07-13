@@ -1,6 +1,6 @@
 #!/usr/local/bin/bash
 
-export NODE_ENV=$NODE_ENV && npm run $@
+export NODE_ENV=$NODE_ENV && yarn run $@
 
 
 
