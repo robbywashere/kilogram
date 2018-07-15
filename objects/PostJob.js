@@ -7,12 +7,21 @@ const {
   InitPostJobQuery,
 } = require('./_JobsBase');
 const triggerProcedureInsert = require('../db/postgres-triggers/trigger-procedure-insert');
-const db = require('../db'); //TODO: possible circular dep?
+const db = require('../db'); // TODO: possible circular dep?
 
 module.exports = {
   Name: 'PostJob',
   Properties: {
     ...JobProperties,
+    Photo: {
+      type: sequelize.VIRTUAL,
+      get() {
+        return this.Post.get('Photo');
+      },
+      set(val) {
+        return this.Post.set('Photo', val);
+      },
+    },
   },
   ScopeFunctions: true,
   Scopes: {
@@ -20,7 +29,7 @@ module.exports = {
   },
   Hooks: {
     afterUpdate(instance) {
-      // TODO: update post to updated if completed?
+      if (instance.isCompleted() && (instance.previous('status') !== instance.get('status'))) return instance.Post.setPublished();
     },
   },
   Init({
@@ -31,24 +40,22 @@ module.exports = {
     this.belongsTo(IGAccount, { foreignKey: { allowNull: false } });
     this.addScope('withPost', { include: [{ model: Post, include: [Photo] }] });
 
-    //TODO: pull this out into something reusable by other objects
+    // TODO: pull this out into something reusable by other objects
     this.sequelize.addHook('afterBulkSync', () => {
-      let assocs = Object.keys(this.associations).map(a=>`${a}Id`);
+      const assocs = Object.keys(this.associations).map(a => `${a}Id`);
       const watchColumn = 'status';
       const trigProcSQL = triggerProcedureInsert({
         watchTable: this.tableName,
         watchColumn,
         meta: { type: 'PostJob:status', resource: this.name },
         insertTable: 'Notifications',
-        jsonField: "body",
-        prefix: ['data',this.name],
-        recordKeys: [].concat(assocs,watchColumn,'id'),
+        jsonField: 'body',
+        prefix: ['data', this.name],
+        recordKeys: [].concat(assocs, watchColumn, 'id'),
         foreignKeys: ['AccountId'],
       });
-      return this.sequelize.query(trigProcSQL)
-    })
-
-
+      return this.sequelize.query(trigProcSQL);
+    });
   },
   Methods: {
     ...JobMethods,
@@ -61,7 +68,7 @@ module.exports = {
   },
 };
 
-    /*async initPostJob2() {
+/* async initPostJob2() {
       return db.models.PostJob.create({
         PostId: '$Post.id$',
         IGAccountId: '$Post.IGAccountId$',
@@ -78,4 +85,4 @@ module.exports = {
           include: [db.models.PostJob],
         }],
       });
-    },*/
+    }, */

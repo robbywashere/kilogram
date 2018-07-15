@@ -110,12 +110,12 @@ const JobMethods = {
     }
     return this.retry();
   },
-  retryThrice(body) {
+  /*retryThrice(body) {
     if (this.attempts < 3) {
       return this.fail(body);
     }
     return this.retry();
-  },
+  },*/
   retry() {
     return this.update({
       status: 'OPEN',
@@ -149,7 +149,11 @@ const JobStaticMethods = {
       return result;
     });
   },
-  async popJob() { return get((await this.$.query(GetJobQuery(this.tableName), { type: sequelize.QueryTypes.SELECT, model: this })), 0); },
+  async popJob() { 
+    const qry = GetJobQuery(this.tableName);
+    const [ job ] = await this.sequelize.query(qry, { type: sequelize.QueryTypes.SELECT, model: this });
+    if (job) return job.reloadWithAll();
+  },
 };
 
 

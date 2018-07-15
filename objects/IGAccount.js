@@ -69,7 +69,7 @@ module.exports = {
     }
   },
   Init({ Photo }) {
-    this.belongsTo(Photo,{ foreignKey: 'avatarUUID', targetKey: 'uuid' });
+     this.belongsTo(Photo,{ foreignKey: 'avatarUUID', targetKey: 'uuid' });
   },
 };
 

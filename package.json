@@ -117,7 +117,8 @@
     "moo": "cowsay moo",
     "pwd": "pwd",
     "device-node": "node ./engine/run",
-    "env": "echo $NODE_ENV"
+    "env": "echo $NODE_ENV",
+    "bootstrap": "yarn db:up && yarn db:schema:up && pip install -r ./android/requirements.txt"
   },
   "husky": {
     "hooks": {

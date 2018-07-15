@@ -232,7 +232,6 @@ module.exports = {
   createAccountUserPostJob,
   newIGAccount,
   createUserPostJob,
-  createAccountUserPostJob,
   createAccountUserPost,
   exprezz,
   appLogger,

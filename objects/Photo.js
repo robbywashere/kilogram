@@ -61,7 +61,7 @@ module.exports = {
 
     }
   },
-  Init({ Account }) {
+  Init({ Account, Post, PostJob }) {
     this.belongsTo(Account);
   },
   Methods: {

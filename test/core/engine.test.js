@@ -22,14 +22,13 @@ const Promise = require('bluebird');
 // TODO: ADD useFakeTimers
 
 // TODO: Possible memory link, interferes with other tests, must be ran seperately
-//
 
-describe.skip('engine tests', () => {
+describe('engine tests', () => {
   describe('main() loop', () => {
     let Device1,
       Device2,
       Device3,
-      timers = [],
+      breakers = [],
       photo,
       post,
       user,
@@ -59,23 +58,23 @@ describe.skip('engine tests', () => {
       //const mclientStubInstance = sinon.spy(() => sinon.createStubInstance(minio.MClient));
       //agentStub = sandbox.stub(DeviceAgent, 'Agent').returns(mclientStubInstance());
 
-      start = ()=> timers = main({ nodeName: 'HOME1', interval: 500 });
+      start = ()=> breakers = main({ nodeName: 'HOME1', interval: 500 });
     });
 
     afterEach(() => {
-      timers.forEach(clearInterval);
-      timers = [];
+      breakers.forEach(brk => brk());
+      breakers = [];
       try { sandbox.restore(); } catch (e) { /* */ }
     });
     // await createAccountUserPostJob()
 
-    it('shoud run and return an array of timers<setInterval>', async () => {
+    it('shoud run and return an array of "breakers" which stop execution of function within Run harness', async () => {
       start();
-      assert(timers.length > 0);
+      assert(breakers.length > 0);
     });
 
 
-    it('should runDeviceJob \'PostJobRun\' and \'VerifyIGJobRun\'', async ()=> {
+    it.only('should \'runDeviceJob\' \'PostJobRun\' and \'VerifyIGJobRun\'', async ()=> {
       PostJobRun_STUB.restore();
       VerifyIGJobRun_STUB.restore();
       sandbox.spy(minio.MClient.prototype, 'constructor');

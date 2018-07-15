@@ -83,6 +83,9 @@ module.exports = {
 
   },
   Methods: {
+    setPublished() {
+      return this.update({ status: 'PUBLISHED' });
+    },
   },
   StaticMethods: {
     async createWithPhoto(opts) {
