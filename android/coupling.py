@@ -10,18 +10,16 @@ for line in sys.stdin:
 try:
     stdinput 
 except NameError:
-    print(json.dumps({ "success": False, "error": "no input", "code": 400 }));
+    print(json.dumps({ "success": False, "error": "no input" }));
 
 else:
     error = None
-    code = 200
     if stdinput['method'] == "echo":
         print(json.dumps(stdinput))
     else:
         try:
             myDevice = IGDevice(stdinput['deviceId'])
             if stdinput['method'] == "raise_except":
-                code = 500
                 raise Exception('exception!')
             myDevice.setup()
             myDevice.get(stdinput['method'])(**stdinput['args'])
@@ -31,13 +29,11 @@ else:
 
         myDevice.teardown()
 
-        if not myDevice.completed: code = 500
 
         resultPayload = { 
             "body": myDevice.body,
             "success": myDevice.completed, 
             "error": error, 
-            "code": code 
         }
         print(json.dumps(resultPayload))
 

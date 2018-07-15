@@ -21,7 +21,7 @@ class IGDevice:
         self.body = None
 
 
-    def waitForLogin(self, timeout=10):
+    def wait_for_login(self, timeout=10):
         count = 0
         while True:
             try: 
@@ -148,7 +148,7 @@ class IGDevice:
         self.clean_slate()
         self.open_ig()
         self.login(username, password)
-        login_result = self.waitForLogin()
+        login_result = self.wait_for_login()
         self.body = login_result
         self.completed = True
 
@@ -163,7 +163,7 @@ class IGDevice:
         self.push_photo(localfile)
         self.refresh_media()
         self.login(username, password)
-        login_result = self.waitForLogin()
+        login_result = self.wait_for_login()
         if login_result['login']:
             self.photo_dance(desc)
             self.completed = True

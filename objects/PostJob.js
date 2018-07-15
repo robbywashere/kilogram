@@ -28,9 +28,6 @@ module.exports = {
     ...JobScopes,
   },
   Hooks: {
-    afterUpdate(instance) {
-      if (instance.isCompleted() && (instance.previous('status') !== instance.get('status'))) return instance.Post.setPublished();
-    },
   },
   Init({
     Post, Photo, IGAccount, Account,

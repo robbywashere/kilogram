@@ -1,162 +1,173 @@
-const cmds = require('../android/cmds');
-const { PostJob, VerifyIGJob, Device, SendEmailJob, DownloadIGAvaJob } = require('../objects');
+const objects = require('../objects');
+const {
+  IGAccount, PostJob, VerifyIGJob, Device, SendEmailJob, DownloadIGAvaJob,
+} = objects; 
+
 const config = require('config');
 const { logger } = require('../lib/logger');
 const demand = require('../lib/demand');
-const Runner = require('../services');
+const Tasks = require('../tasks');
+const MClient = require('../server-lib/minio');
+const Spinner = require('./spinner');
+
 const DeviceAgent = require('../android/deviceAgent');
-
-const {
-  get, isUndefined, zipObject, startCase, fromPairs, clone, isEqual,
-} = require('lodash');
-
-// TODO: create CriticalError type which crashes everything?
-// TODO: safe logger?
-// TODO: error handling is bonkers
-// TODO: assure jobs run in priority order, by ids since incremental
-// TODO: !!!Jobs are essentially state machines, and maybe should be implimented more clearly as such to assist in better logging and error handling
-
-function logDiff(logFn = console.log) {
-  let oldStatus = {};
-  return (newStatus) => {
-    if (!isEqual(oldStatus, newStatus)) {
-      logFn(newStatus);
-    }
-    oldStatus = clone(newStatus);
-  };
-}
+const { EventEmitter } = require('events');
 
 
-function logDeviceSync(result) {
-  try {
-    if (Object.entries(result).map(([k, v]) => v).some(v => v && v.length)) {
-      logger.status(fromPairs(Object.entries(result).map(([k, v]) => [startCase(k), (v && v.length) ? v.join(',') : '*'])));
-    }
-  } catch (e) {
-    try {
-      logger.status(JSON.stringify(result, null, 4));
-    } catch (e2) {
-      logger.error('hoplessly unable to log device sync result');
-    }
+async function RunWithDevice({
+  task = demand('task'),
+  events = demand('events'),
+  model = demand('model'),
+  nodeName = demand('nodeName'),
+  minioClient = demand('minioClient'),
+}) {
+  let device;
+  let job;
+  if ((device = await Device.popNodeDevice(nodeName)) && (job = await model.popJob())) {
+    const agent = new DeviceAgent.Agent({ deviceId: device.adbId });
+    return JobRun({
+      events, job, minioClient, agent, task, model,
+    });
+  } else if (device) {
+    if (device) return device.setFree();
   }
 }
 
-// TODO: move me?
-async function syncDevices() {
-  const adbOnlineDevices = await cmds.adbDevices();
-  await Device.freeDanglingByIds(adbOnlineDevices); // TODO:???
-  await Device.syncAll(adbOnlineDevices).then(logDeviceSync);
+async function Run({
+  events = demand('events'),
+  task = demand('task'),
+  model = demand('model'),
+  minioClient = demand('minioClient'),
+}) {
+  let job;
+  if (!(job = await model.popJob())) return;
+  return JobRun({
+    events, task, job, minioClient, model,
+  });
 }
 
 
-//TODO: replace with for loop... -> await delay(milliseconds)  ->fn()
-//also add fan out, so 1,2,5,10 jobs can run at the same time, fillings slots as others die off etc
-//
-const run = function (fn, milliseconds) { // Job 'Harness' - Errors should never reach this point?
-  return setInterval(() => {
-    fn().catch(e => logger.critical(`Unhandled exception in engine 'run' harness : ${fn.name}`, e));
-  }, milliseconds);
-};
-
-
-function allJobsStats(stats = {}, freeDevices = []) {
-  return {
-    ...zipObject(Object.keys(stats).map(startCase), Object.values(stats)),
-    'Free Devices': (freeDevices).length,
-  };
+function JobRun({
+  events = demand('events'),
+  job = demand('job'),
+  task = demand('task'),
+  model = demand('model'),
+  minioClient = demand('minioClient'),
+  agent,
+}) {
+  return task({
+    ...job,
+    jobName: model.name,
+    jobId: job.Id,
+    events,
+    agent,
+    minioClient,
+  });
 }
 
-function jobStats(job) {
-  const associations = Object.keys(job.constructor.associations);
-  return {
-    ...associations.reduce((p, key) => {
-      p[`${startCase(key)} Id`] = get(job, `${key}Id`); return p;
-    }, {}),
-  };
-}
-
+/*
 function runJob({
   JobModel = demand('JobModel'),
-  jobRunner = demand('jobRunner'),
+  jobTasks = demand('jobTasks'),
 } = {}) {
   return async function () {
     let job;
     if (job = await JobModel.popJob()) {
       try {
         await job.denormalize();
-        await jobRunner({ ...job, job });
+        await jobTasks({ ...job, job });
       } catch (err) {
         await job.backout(err, true);
         logger.error(`-- Unexpected error occurred running ${JobModel.name}: ${job.id}`);
         logger.error(err);
       }
-    } 
+    }
   };
-}
+} */
 
-function runDeviceJob({
-  nodeName = demand('nodeName'),
-  JobModel = demand('JobModel'),
-  jobRunner = demand('jobRunner'),
+
+const main = function ({
+  nodeName = config.get('DEVICE_NODE_NAME'),
+  minioClient = (new MClient()),
+  interval = 1000,
 } = {}) {
-  return async function () {
-    let device;
-    let job;
-    if ((device = await Device.popNodeDevice(nodeName)) && (job = await JobModel.popJob())) {
-      try {
-        const deviceId = device.get('adbId');
-        const agent = new DeviceAgent.Agent({ deviceId });
-        await job.denormalize();
-        await jobRunner({ ...job, agent, job });
-      } catch (err) {
-        await job.backout(err, true); // jobRunner should handle this?
-        logger.error(`-- Unexpected error occurred running ${JobModel.name}: ${job.id}`);
-        logger.error(err);
-      }
-    } 
-    if (device) await device.setFree();
-  };
-}
+  const events = new EventEmitter();
 
 
-const main = function ({ 
-  nodeName = (config.get('DEVICE_NODE_NAME') || demand('{ nodeName: <String> }')),
-  interval = 1000
-} = {}) {
-  return [
+  events.on('ig_avatar:downloaded', async ({ id })=>{
+    try {
+   await IGAccount.update({ avatarUUID: result.body.uuid });
+    } catch(e){
+    
+    }
+  });
 
-    // this will run on a master node 
-    run(PostJob.initPostJobs, interval), // Turns posts into queued jobs
+  events.on('ig_acccount:failed', async ({ id })=>{
+    try {
+      await IGAccount.failedById(id); //needs define
+    } catch(e) {
+    }
+  });
 
-    //master node and or web node
-    run(runJob({
-      JobModel: DownloadIGAvaJob,
-      jobRunner: Runner.DownloadIGAvaJobRun,
-    }), interval),
+  events.on('ig_account:verified', async ({ id })=>{
+    try {
+      await IGAccount.goodById(id); //needs define
+    } catch(e) {
+    }
+  });
 
-    run(runJob({
-      JobModel: SendEmailJob,
-      jobRunner: Runner.SendEmailJobRun,
-    }), interval),
+  events.on('job:complete', async ({ jobId, jobName }) => {
+    try {
+      await objects[jobName].setCompletedById(jobId);
+    } catch(e) {
+      ///???? CRITICAL FUCKING ERROR
+    }
+  });
 
-    // These will run on a device node
-   
-    run(syncDevices, interval),
 
-    run(runDeviceJob({
-      nodeName,
-      JobModel: PostJob,
-      jobRunner: Runner.PostJobRun,
-    }), interval),
+  events.on('job:error', ({ error, body, jobId, jobName })=>{
+    try {
+      await objects[jobName].setFailedById(jobId); //needs define
+    } catch(e) {
+    }
+  });
 
-    run(runDeviceJob({
-      nodeName, 
-      JobModel: VerifyIGJob, 
-      jobRunner: Runner.VerifyIGJobRun,
-    }), interval),
-  ];
+
+
+
+  const verifyIg = () => RunWithDevice({
+    model: VerifyIGJob,
+    task: Tasks.verifyIG,
+    nodeName,
+    minioClient,
+    events,
+  });
+
+  const post = () => RunWithDevice({
+    model: PostJob,
+    task: Tasks.post,
+    nodeName,
+    minioClient,
+    events,
+  });
+
+  const sendEmail = () => Run({
+    model: SendEmailJob,
+    task: Tasks.sendEmail,
+    minioClient: {},
+    events,
+  });
+
+  const downloadAva = () => Run({
+    model: DownloadIGAvaJob,
+    task: Tasks.downloadIGAva,
+    minioClient,
+    events,
+  });
+
+  const deviceSync = Device.syncDevices.bind(Device);
 };
 
 module.exports = {
-  runDeviceJob, run, main, syncDevices,
+  runDeviceJob, run, main,
 };

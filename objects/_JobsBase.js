@@ -149,6 +149,9 @@ const JobStaticMethods = {
       return result;
     });
   },
+  setCompletedById(id = demand('id')){
+    return this.update({ status: 'SUCCESS' },{ where: { id }})
+  }
   async popJob() { 
     const qry = GetJobQuery(this.tableName);
     const [ job ] = await this.sequelize.query(qry, { type: sequelize.QueryTypes.SELECT, model: this });

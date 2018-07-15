@@ -4,7 +4,7 @@ const { EventEmitter } = require('events');
 /* eslint-disable no-await-in-loop */
 
 
-class Runner extends EventEmitter {
+class Spinner extends EventEmitter {
   constructor({ fn = demand('fn'), debounce = 1000 }) {
     super();
     this.fn = fn;

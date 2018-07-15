@@ -1,6 +1,6 @@
 const {
   PostJobRun, VerifyIGJobRun, DownloadIGAvaJobRun, pullRemoteObject,
-} = require('../../services');
+} = require('../../tasks');
 const { Agent } = require('../../android/deviceAgent');
 const { JobMethods } = require('../../objects/_JobsBase');
 // const IGAccount = require('../../objects/IGAccount');

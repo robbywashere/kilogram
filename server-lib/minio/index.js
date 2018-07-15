@@ -94,6 +94,9 @@ class MClient {
     this.client = (client) || WrapMinioClient(new Minio.Client(config));
   }
 
+  static ClientFactory(config){
+    return WrapMinioClient(new Minio.Client(config))
+  }
 
   listen({ bucket = this.bucket, client = this.client, events }) {
     const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*', 's3:ObjectRemoved:*']);
