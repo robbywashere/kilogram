@@ -91,48 +91,32 @@ const main = function ({
   minioClient = (new MClient()),
   interval = 1000,
 } = {}) {
+
   const events = new EventEmitter();
 
+  const event(name, func) {
 
-  events.on('ig_avatar:downloaded', async ({ id })=>{
-    try {
-   await IGAccount.update({ avatarUUID: result.body.uuid });
-    } catch(e){
-    
-    }
-  });
+    events.on(name, async (body) => { 
+      try {
+        await func(body);
+      } catch(e) {
+        logger.critical(`Event ${name} emitted from job: ${body.jobName}, id ${body.jobId} failed`)
+        //TODO: retry func X times, then shutdown server? - db is offline etc?
+      }
+    });
+  }
 
-  events.on('ig_acccount:failed', async ({ id })=>{
-    try {
-      await IGAccount.failedById(id); //needs define
-    } catch(e) {
-    }
-  });
+  event('IGAccount:downloadIGAva', ({ id, uuid }) => IGAccount.avatar(id,uuid));
 
-  events.on('ig_account:verified', async ({ id })=>{
-    try {
-      await IGAccount.goodById(id); //needs define
-    } catch(e) {
-    }
-  });
+  event('IGAcccount:fail', ({ id }) => IGAccount.fail(id));
 
-  events.on('job:complete', async ({ jobId, jobName }) => {
-    try {
-      await objects[jobName].setCompletedById(jobId);
-    } catch(e) {
-      ///???? CRITICAL FUCKING ERROR
-    }
-  });
+  event('IGAccount:good', ({ id }) => IGAccount.good(id));
 
+  event('Post:published', ({ id }) => Post.setPublished(id));
 
-  events.on('job:error', ({ error, body, jobId, jobName })=>{
-    try {
-      await objects[jobName].setFailedById(jobId); //needs define
-    } catch(e) {
-    }
-  });
+  event('job:complete', ({ jobId, jobName }) => objects[jobName].complete(jobId));
 
-
+  event('job:error', ({ error, body, jobId, jobName }) => objects[jobName].fail(jobId));
 
 
   const verifyIg = () => RunWithDevice({

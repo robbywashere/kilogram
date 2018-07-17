@@ -64,8 +64,14 @@ module.exports = {
     },
   },
   StaticMethods: {
-    get statusTypes() {
-      return ({ GOOD, FAILED, UNVERIFIED });
+    avatarUUID(id,avatarUUID){
+      return this.updateById(id,{ where: { avatarUUID }})
+    },
+    good(id) {
+      return this.updateById(id,{ status: GOOD });
+    },
+    fail(id) {
+      return this.updateById(id,{ status: GOOD });
     }
   },
   Init({ Photo }) {

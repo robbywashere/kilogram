@@ -44,7 +44,7 @@ async function downloadIGAva({
 
     await new Promise((rs, rx) => reqPipe.get(body.avatar).pipe(reqPipe.put(url)).on('finish', rs).on('error', rx));
 
-    events.emit('ig_avatar:downloaded', { id: IGAccount.id, jobId });
+    events.emit('IGAccount:downloadIGAva', { id: IGAccount.id, uuid, jobId, jobName });
     events.emit('job:complete',{ jobId, jobName })
   } catch (error) {
     try { await Photo.destroy({ where: { uuid: body.uuid }}) } catch(e){ /* :shrug: */};
@@ -104,14 +104,14 @@ async function verifyIG({ // emit
     body = get(agentResult, 'body', {});
     // Positive result
     if (body.login === true) {
-      events.emit('ig_account:verified', { id: IGAccount.id });
-      // events.emit('ig_account_success',{ id: IGAccountId })
+      events.emit('IGAccount:good', { jobId, jobName, id: IGAccount.id });
+      // events.emit('IGAccount_success',{ id: IGAccountId })
       // await IGAccount.good();
       // return { success: true, body }
     }
     // Negative result
     if (body.login === false && body.type === 'creds_error') {
-      events.emit('ig_account:failed', { IGAccountId: IGAccount.id });
+      events.emit('IGAccount:fail', { jobId, jobName, IGAccountId: IGAccount.id });
       // await IGAccount.fail();
       //   return { success: true, body };
     }
@@ -152,12 +152,12 @@ async function post({
     body = get(agentResult, 'body', {});
 
     if (agentResult.success) {
-      events.emit('post:published', { id: Post.id, jobId });
+      events.emit('Post:published', { id: Post.id, jobId, jobName });
       // await Post.setPublished(); // IF this fails , post will be re-done?!
     }
 
     if (get(agentResult, 'body.type') === 'creds_error') { 
-      events.emit('ig_account:failed', { id: IGAccount.id, jobId, body });
+      events.emit('IGAccount:fail', { id: IGAccount.id, jobId, jobName, body });
       //     await IGAccount.fail();
     }
     events.emit('job:complete',{ jobId, jobName })
