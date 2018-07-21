@@ -76,7 +76,7 @@ function loadObject(object, registry) {
 
   //update by id
   model.updateById = function updateById(id,ups,q,o) {
-    q.where = { ...q.where, { id } }
+    q.where = { ...q.where, id }
     return model.update(ups,q,o);
   }
 

@@ -1,15 +1,20 @@
-const { logger } = require('./logger');
 const demand = require('../lib/demand');
 const { EventEmitter } = require('events');
 /* eslint-disable no-await-in-loop */
 
 
 class Spinner extends EventEmitter {
-  constructor({ fn = demand('fn'), debounce = 1000 }) {
+
+  static create(...args){
+    return (new Spinner(...args)).start();
+  }
+  constructor({ fn = demand('fn'), concurrent = 1, debounce = 1000 }) {
     super();
     this.fn = fn;
     this.debounce = debounce;
     this.break = false;
+    this.concurrent = concurrent;
+    //this.map = new Map();
   }
 
   setBreak(b){
@@ -18,22 +23,31 @@ class Spinner extends EventEmitter {
 
   stop(){
     this.break = true;
-  }
-
-  async start() {
-    while (!this.break) {
-      const debouncer = new Promise(rs => setTimeout(rs, this.debounce));
-      try {
-        const result = await this.fn();
-        this.emit('cycle', result);
-      } catch (e) {
-        this.emit('error', e);
-      }
-      await debouncer;
-    }
     this.emit('close');
     this.removeAllListeners();
   }
+
+  start() {
+    for (let i = 0; i < this.concurrent; i++) {
+      (async ()=>{
+        while (!this.break) {
+          const debouncer = new Promise(rs => setTimeout(rs, this.debounce));
+          try {
+            const result = await this.fn();
+            this.emit('resolve', result);
+          } catch (e) {
+            this.emit('reject', e);
+          }
+          finally {
+            //
+          }
+          await debouncer;
+        }
+      })()
+    }
+    return this;
+  }
+
 }
 
-module.exports = Runner;
+module.exports = Spinner;

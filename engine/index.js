@@ -1,7 +1,8 @@
 const objects = require('../objects');
+
 const {
-  IGAccount, PostJob, VerifyIGJob, Device, SendEmailJob, DownloadIGAvaJob,
-} = objects; 
+  Post, IGAccount, PostJob, VerifyIGJob, Device, SendEmailJob, DownloadIGAvaJob,
+} = objects;
 
 const config = require('config');
 const { logger } = require('../lib/logger');
@@ -21,14 +22,15 @@ async function RunWithDevice({
   nodeName = demand('nodeName'),
   minioClient = demand('minioClient'),
 }) {
-  let device;
-  let job;
-  if ((device = await Device.popNodeDevice(nodeName)) && (job = await model.popJob())) {
-    const agent = new DeviceAgent.Agent({ deviceId: device.adbId });
-    return JobRun({
-      events, job, minioClient, agent, task, model,
-    });
-  } else if (device) {
+  return () => {
+    let device;
+    let job;
+    if ((device = await Device.popNodeDevice(nodeName)) && (job = await model.popJob())) {
+      const agent = new DeviceAgent.Agent({ deviceId: device.adbId });
+      return JobRun({
+        events, job, minioClient, agent, task, model,
+      });
+    }
     if (device) return device.setFree();
   }
 }
@@ -39,11 +41,13 @@ async function Run({
   model = demand('model'),
   minioClient = demand('minioClient'),
 }) {
-  let job;
-  if (!(job = await model.popJob())) return;
-  return JobRun({
-    events, task, job, minioClient, model,
-  });
+  return ()=> {
+    let job;
+    if (!(job = await model.popJob())) return;
+    return JobRun({
+      events, task, job, minioClient, model,
+    });
+  }
 }
 
 
@@ -65,48 +69,22 @@ function JobRun({
   });
 }
 
-/*
-function runJob({
-  JobModel = demand('JobModel'),
-  jobTasks = demand('jobTasks'),
-} = {}) {
-  return async function () {
-    let job;
-    if (job = await JobModel.popJob()) {
-      try {
-        await job.denormalize();
-        await jobTasks({ ...job, job });
-      } catch (err) {
-        await job.backout(err, true);
-        logger.error(`-- Unexpected error occurred running ${JobModel.name}: ${job.id}`);
-        logger.error(err);
-      }
-    }
-  };
-} */
-
-
-const main = function ({
-  nodeName = config.get('DEVICE_NODE_NAME'),
-  minioClient = (new MClient()),
-  interval = 1000,
-} = {}) {
-
+function EngineEvents() {
   const events = new EventEmitter();
 
-  const event(name, func) {
-
-    events.on(name, async (body) => { 
+  function event(name, func) {
+    events.on(name, async (body) => {
       try {
         await func(body);
-      } catch(e) {
-        logger.critical(`Event ${name} emitted from job: ${body.jobName}, id ${body.jobId} failed`)
-        //TODO: retry func X times, then shutdown server? - db is offline etc?
+      } catch (e) {
+        //     logger.critical(`Event ${name} emitted from job: ${body.jobName}, id ${body.jobId} failed`);
+        events.emit('error', { name, jobName: body.jobName, jobId: body.jobId });
+        // TODO: retry func X times?
       }
     });
   }
 
-  event('IGAccount:downloadIGAva', ({ id, uuid }) => IGAccount.avatar(id,uuid));
+  event('IGAccount:downloadIGAva', ({ id, uuid }) => IGAccount.avatar(id, uuid));
 
   event('IGAcccount:fail', ({ id }) => IGAccount.fail(id));
 
@@ -116,42 +94,92 @@ const main = function ({
 
   event('job:complete', ({ jobId, jobName }) => objects[jobName].complete(jobId));
 
-  event('job:error', ({ error, body, jobId, jobName }) => objects[jobName].fail(jobId));
+  event('job:error', ({
+    error, body, jobId, jobName,
+  }) => objects[jobName].fail(jobId));
+
+  return events;
+}
 
 
-  const verifyIg = () => RunWithDevice({
+function VerifyIGSprocket({ nodeName, events, minioClient, concurrent, debounce }){ 
+  const fn = RunWithDevice({
     model: VerifyIGJob,
     task: Tasks.verifyIG,
     nodeName,
     minioClient,
     events,
   });
+  return Spinner.create({ fn, concurrent, debounce });
+}
 
-  const post = () => RunWithDevice({
+
+function PostSprocket({ nodeName, events, minioClient, concurrent, debounce }) {
+  const fn = RunWithDevice({
     model: PostJob,
     task: Tasks.post,
     nodeName,
     minioClient,
     events,
   });
+  return Spinner.create({ fn, concurrent, debounce });
+}
 
-  const sendEmail = () => Run({
+function SendEmailSprocket({ nodeName, events, minioClient, concurrent, debounce }) {
+  const fn = Run({
     model: SendEmailJob,
     task: Tasks.sendEmail,
     minioClient: {},
     events,
   });
+  return Spinner.create({ fn, concurrent, debounce });
+}
 
-  const downloadAva = () => Run({
+function DownloadAvaSprocket({ nodeName, events, minioClient, concurrent, debounce }) {
+  const fn = Run({
     model: DownloadIGAvaJob,
     task: Tasks.downloadIGAva,
     minioClient,
     events,
   });
+  return Spinner.create({ fn, concurrent, debounce });
+}
 
-  const deviceSync = Device.syncDevices.bind(Device);
+function SyncDeviceSprocket(){
+  const fn = Device.syncDevices.bind(Device);
+  return Spinner.create({ fn, concurrent, debounce });
+}
+
+
+const main = function ({
+  nodeName = config.get('DEVICE_NODE_NAME'),
+  minioClient = (new MClient()),
+  debounce = 1000,
+  events = EngineEvents();
+} = {}) {
+
+  events.on('error', ({ name, jobName, jobId }) =>
+    logger.critical(`Event handler from name: ${name}, emitted from job: ${jobName}, id ${jobId} failed`));
+
+  const concurrent = 3;
+
+  const spinz = [
+    VerifyIGSprocket({ nodeName, events, minioClient, concurrent, debounce }),
+    PostSprocket({ nodeName, events, minioClient, concurrent, debounce }),
+    SendEmailSprocket({ nodeName, events, minioClient, concurrent, debounce }),
+    DownloadAvaSprocket({ nodeName, events, minioClient, concurrent, debounce }), 
+    SyncDeviceSprocket(),
+  ]
+
+  return () => spinz.forEach(z => z.stop());
 };
 
 module.exports = {
-  runDeviceJob, run, main,
+  main,
+  EngineEvents,
+  VerifyIGSprocket,
+  PostSprocket,
+  SendEmailSprocket,
+  DownloadAvaSprocket,
+  SyncDeviceSprocket,
 };

@@ -30,8 +30,6 @@ async function downloadIGAva({
       throw new Error('could not locate IG Avatar in body html');
     }
 
-    //    const mc = (typeof minioClient !== 'undefined') ? minioClient : (new minio.MClientPublic());
-
     const { url, objectName, uuid } = await minioClient.newPhoto({
       AccountId: IGAccount.AccountId,
       IGAccountId: IGAccount.id,
@@ -51,7 +49,6 @@ async function downloadIGAva({
     events.emit('job:error', { error, body, jobId, jobName });
   }
 
-  //   return Promise.all([IGAccount.update({ avatarUUID: result.body.uuid }), job.complete()]);
 }
 
 async function sendEmail({
@@ -66,17 +63,13 @@ async function sendEmail({
 }) {
   try {
 
-    //Agent
     const emailer = new Emailer({ });
     await emailer.send({
       to, from, msg: message, subject,
     });
-    //end
     events.emit('job:complete',{ jobId, jobName })
   } catch (error) {
     events.emit('job:error',{ jobId, jobName, error, body: {} })
-    //body.error = err;
-    // return { success: false, body, error: err };
   }
 }
 
@@ -91,7 +84,6 @@ async function verifyIG({ // emit
   let body = {};
   try {
 
-    //Agent
     const agentResult = await agent.exec({
       cmd: 'verify_ig_dance',
       args: {
@@ -99,26 +91,18 @@ async function verifyIG({ // emit
         password: IGAccount.password,
       },
     });
-    //end
 
     body = get(agentResult, 'body', {});
-    // Positive result
+
     if (body.login === true) {
       events.emit('IGAccount:good', { jobId, jobName, id: IGAccount.id });
-      // events.emit('IGAccount_success',{ id: IGAccountId })
-      // await IGAccount.good();
-      // return { success: true, body }
     }
-    // Negative result
     if (body.login === false && body.type === 'creds_error') {
       events.emit('IGAccount:fail', { jobId, jobName, IGAccountId: IGAccount.id });
-      // await IGAccount.fail();
-      //   return { success: true, body };
     }
     events.emit('job:complete',{ jobId, jobName })
   } catch (error) {
     events.emit('job:error', { error, body, jobId, jobName });
-    // return { success: false, body: {}, error: err };
   }
 }
 
@@ -153,12 +137,10 @@ async function post({
 
     if (agentResult.success) {
       events.emit('Post:published', { id: Post.id, jobId, jobName });
-      // await Post.setPublished(); // IF this fails , post will be re-done?!
     }
 
     if (get(agentResult, 'body.type') === 'creds_error') { 
       events.emit('IGAccount:fail', { id: IGAccount.id, jobId, jobName, body });
-      //     await IGAccount.fail();
     }
     events.emit('job:complete',{ jobId, jobName })
   } catch (error) {

@@ -23,7 +23,7 @@ const Promise = require('bluebird');
 
 // TODO: Possible memory link, interferes with other tests, must be ran seperately
 
-describe('engine tests', () => {
+describe.skip('engine tests', () => {
   describe('main() loop', () => {
     let Device1,
       Device2,
@@ -74,7 +74,7 @@ describe('engine tests', () => {
     });
 
 
-    it.only('should \'runDeviceJob\' \'PostJobRun\' and \'VerifyIGJobRun\'', async ()=> {
+    it('should \'runDeviceJob\' \'PostJobRun\' and \'VerifyIGJobRun\'', async ()=> {
       PostJobRun_STUB.restore();
       VerifyIGJobRun_STUB.restore();
       sandbox.spy(minio.MClient.prototype, 'constructor');

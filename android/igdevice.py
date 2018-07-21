@@ -12,7 +12,7 @@ def random_string(length=15):
 
 
 
-class IGDevice:
+class IGDevice(object):
     def __init__(self, device_id):
         self.device_id = device_id
         self.device = Device(device_id)
