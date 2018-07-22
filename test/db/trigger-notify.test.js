@@ -56,7 +56,7 @@ describe('trigger notify functionality', () => {
     });
   });
 
-  it.skip('TODO: should be able to listen for Notification triggers created by PostJob status change', async function(){
+  it('TODO: should be able to listen for Notification triggers created by PostJob status change', async function(){
 
 
     const {

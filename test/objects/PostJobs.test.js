@@ -74,7 +74,7 @@ describe('objects/PostJob', () => {
 
 
 
-  it.skip('TODO: should create a Notification when PostJob.status is updated', async ()=>{
+  it('TODO: should create a Notification when PostJob.status is updated', async ()=>{
 
     const {
       user, account, igAccount, photo, post,
