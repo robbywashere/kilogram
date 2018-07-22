@@ -90,7 +90,8 @@ ALTER TYPE public."enum_PostJobs_status" OWNER TO postgres;
 CREATE TYPE public."enum_Posts_status" AS ENUM (
     'DRAFT',
     'PUBLISH',
-    'PUBLISHED'
+    'PUBLISHED',
+    'FAILED'
 );
 
 
