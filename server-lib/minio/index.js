@@ -13,7 +13,8 @@ const { chunk } = require('lodash');
 const minioObj = require('./minioObject');
 const demand = require('../../lib/demand');
 
-const { EventEmitter } = require('events');
+//const { EventEmitter } = require('events');
+const EventEmitter = require('../../lib/eventEmitter');
 
 const {
   removeObject,

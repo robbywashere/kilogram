@@ -8,7 +8,7 @@ const Routes = require('../../controllers/minio');
 
 const { signedURL } = require('../../server-lib/minio/middlewares');
 
-const EventEmitter = require('events');
+const EventEmitter = require('../../lib/eventEmitter');
 
 const { Duplex } = require('stream');
 

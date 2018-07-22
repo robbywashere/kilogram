@@ -1,5 +1,7 @@
 const demand = require('../lib/demand');
-const { EventEmitter } = require('events');
+//const { EventEmitter } = require('events');
+const EventEmitter = require('../lib/eventEmitter');
+
 /* eslint-disable no-await-in-loop */
 
 
@@ -23,8 +25,8 @@ class Spinner extends EventEmitter {
 
   stop(){
     this.break = true;
+    this.once('close', ()=> this.clearListeners());
     this.emit('close');
-    this.removeAllListeners();
   }
 
   start() {

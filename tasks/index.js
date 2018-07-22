@@ -55,17 +55,13 @@ async function sendEmail({
   events = demand('events'),
   jobId = demand('jobId'),
   jobName = demand('jobName'),
-  reqAsync = requestAsync,
-  reqPipe = request,
-  email: {
-    to, from, msg: message, subject, //demand?
-  },
+  data: { to, from, msg, subject } = demand('data'),
 }) {
   try {
-
     const emailer = new Emailer({ });
+    const email = 
     await emailer.send({
-      to, from, msg: message, subject,
+      to, from, msg, subject,
     });
     events.emit('job:complete',{ jobId, jobName })
   } catch (error) {
@@ -98,7 +94,7 @@ async function verifyIG({ // emit
       events.emit('IGAccount:good', { jobId, jobName, id: IGAccount.id });
     }
     if (body.login === false && body.type === 'creds_error') {
-      events.emit('IGAccount:fail', { jobId, jobName, IGAccountId: IGAccount.id });
+      events.emit('IGAccount:fail', { jobId, jobName, id: IGAccount.id });
     }
     events.emit('job:complete',{ jobId, jobName })
   } catch (error) {
@@ -137,12 +133,14 @@ async function post({
 
     if (agentResult.success) {
       events.emit('Post:published', { id: Post.id, jobId, jobName });
+      events.emit('job:complete',{ jobId, jobName })
+    } else if (get(agentResult, 'body.type') === 'creds_error') { 
+      events.emit('job:error',{ jobId, jobName, error: new Error('IGAccount credentials error') })
+      events.emit('IGAccount:fail', { jobId, jobName, id: IGAccount.id });
+    } else {
+      events.emit('job:error', { error: new Error('Unknown'), body, jobId, jobName });
     }
 
-    if (get(agentResult, 'body.type') === 'creds_error') { 
-      events.emit('IGAccount:fail', { id: IGAccount.id, jobId, jobName, body });
-    }
-    events.emit('job:complete',{ jobId, jobName })
   } catch (error) {
     events.emit('job:error', { error, body, jobId, jobName });
   }

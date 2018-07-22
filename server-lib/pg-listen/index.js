@@ -10,7 +10,8 @@ const demand = require('../../lib/demand');
 
 const { get } = require('lodash');
 
-const { EventEmitter } = require('events');
+//const { EventEmitter } = require('events');
+const EventEmitter = require('../../lib/eventEmitter');
 
 const uuidLib = require('uuid');
 
@@ -101,7 +102,7 @@ class PGListen {
   }
 
   async disconnect(unlisten = true) {
-    this.events.removeAllListeners();
+    this.events.clearListeners();
     this.persist = false;
     return this.client.end();
   }
@@ -157,7 +158,7 @@ class PGListen {
       `);
 
       await new Promise(_ => setTimeout(_, delayMs));
-      this.client.removeAllListeners();
+      this.client.clearListeners();
       delete this.client;
       this.connect(msExp + 1);
     });

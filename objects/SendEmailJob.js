@@ -8,9 +8,9 @@ module.exports = {
   },
   StaticMethods: {
     ...GenJobObj.StaticMethods,
-    new({ to, from, body, subject }) {
+    new({ to, from, msg, subject }) {
       return this.sequelize.models.SendEmailJob.create({
-        data: { to, from, message: body, subject }
+        data: { to, from, msg: body, subject }
       });
     }
   },

@@ -27,13 +27,6 @@ class PythonBridge {
     });
   }
 
-  //this.eventEmitter.on( ig:exception
-  //                      ig:payload
-  //                      ig:client_err:not_authorized
-  //                      ig:stdout
-  //                      ig:stderr
-  //                      ig:end
-
   cmd(method, args = {}) {
     return new Promise((resolve, reject) => {
       const shell = PythonBridge.shell();

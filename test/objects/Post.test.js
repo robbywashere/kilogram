@@ -37,43 +37,28 @@ describe('objects/Post', () => {
 
   });
 
-  it ('should scope SUCCESS/published posts where PostJob is SUCCESS', async ()=>{
-
+  it.skip('TODO: should scope SUCCESS/published posts where PostJob is SUCCESS', async ()=>{
     const {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
-
     const job = await initJob(post);
-
     const posts1 = await Post.published();
-
     assert.equal(posts1.length, 0)
-
     await job.update({ status: 'SUCCESS' });
-
     const posts2 = await Post.published();
-
     assert.equal(posts2.length, 1)
-
   });
-  it ('should scope FAILED/not published Posts where PostJob is FAILED', async ()=>{
 
+  it.skip('TODO: should scope FAILED/not published Posts where PostJob is FAILED', async ()=>{
     const {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
-
     const job = await initJob(post);
-
     const posts1 = await Post.failed();
-
     assert.equal(posts1.length, 0)
-
     await job.update({ status: 'FAILED' });
-
     const posts2 = await Post.failed();
-
     assert.equal(posts2.length, 1)
-
   });
 
 

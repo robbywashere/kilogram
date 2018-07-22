@@ -26,7 +26,7 @@ module.exports = {
       allowNull: false,
     },
     status: {
-      type: ENUM('DRAFT', 'PUBLISH', 'PUBLISHED'),
+      type: ENUM('DRAFT', 'PUBLISH', 'PUBLISHED', 'FAILED'),
       defaultValue: 'PUBLISH',
     },
   },
@@ -38,19 +38,23 @@ module.exports = {
     this.hasOne(PostJob, { onDelete: 'cascade' });
     this.belongsTo(Photo, { foreignKey: 'photoUUID', targetKey: 'uuid' } );
 
-    this.addScope('published', {
+    /* this.addScope('published', {
       include: [PostJob],
       where: {
-        '$PostJob.status$': { [Op.eq]: 'SUCCESS' },
+        [Op.or]: {
+          //  '$PostJob.status$': 'SUCCESS',
+          'status': 'PUBLISHED'
+        }
       },
     });
 
     this.addScope('failed', {
       include: [PostJob],
       where: {
-        '$PostJob.status$': { [Op.eq]: 'FAILED' },
+        //'$PostJob.status$': { [Op.eq]: 'FAILED' },
+        'status': 'FAILED'
       },
-    });
+    });*/
 
     this.addScope('withJob', { include: [PostJob] });
     this.addScope('due', {
@@ -65,6 +69,8 @@ module.exports = {
   Hooks: {
   },
   Scopes: {
+    published: { where: { status: 'PUBLISHED' } },
+    failed: { where: { status: 'PUBLISHED' } },
     withAll: { include: [{ all: true }] },
     userScoped(user) {
       const { Account, User } = this.sequelize.models;

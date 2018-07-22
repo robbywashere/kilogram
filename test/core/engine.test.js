@@ -1,261 +1,253 @@
+const Spinner = require('../../engine/spinner');
 const {
-  runDeviceJob, run, main, syncDevices,
+  main,
+  EngineEvents,
+  VerifyIGSprocket,
+  PostSprocket,
+  SendEmailSprocket,
+  DownloadAvaSprocket,
+  SyncDeviceSprocket,
+  EventRegister,
 } = require('../../engine');
 const {
   createAccountUserPostJob,
   createUserAccountIGAccountPhotoPost,
-  deviceFactory
+  deviceFactory,
 } = require('../helpers');
 const sinon = require('sinon');
 const assert = require('assert');
 const cmds = require('../../android/cmds');
 const minio = require('../../server-lib/minio');
+const OBJECTS = require('../../objects');
 const {
-  Account, IGAccount, Device, Post, PostJob, VerifyIGJob
-} = require('../../objects');
+  Account, IGAccount, Device, Post, PostJob, VerifyIGJob,
+} = OBJECTS;
 const syncDb = require('../../db/sync');
-const Runner = require('../../tasks');
 const DeviceAgent = require('../../android/deviceAgent');
+// const { EventEmitter } = require('events');
+
+const EventEmitter = require('../../lib/eventEmitter');
 
 const Promise = require('bluebird');
 
-// TODO: ADD useFakeTimers
 
-// TODO: Possible memory link, interferes with other tests, must be ran seperately
-
-describe.skip('engine tests', () => {
-  describe('main() loop', () => {
+describe('engine', () => {
+  describe('Sprockets', () => {
     let Device1,
       Device2,
       Device3,
-      breakers = [],
-      photo,
-      post,
-      user,
-      account,
-      igAccount,
-      sandbox,
-      start,
-      PostJobRun_STUB,
-      VerifyIGJobRun_STUB;
-
-
+      events,
+      SprocketArgs,
+      Sprocket,
+      sandbox;
     beforeEach(async () => {
       await syncDb(true);
-      ({
-        user, account, photo, post, igAccount,
-      } = await createUserAccountIGAccountPhotoPost());
-      await igAccount.good();
 
-      Device1 = await deviceFactory(1,'HOME1');
-      Device2 = await deviceFactory(2,'HOME1');
-      Device3 = await deviceFactory(3,'HOME1');
+      await Promise.all([
+        deviceFactory(1, 'HOME1').then(d=>Device1 = d),
+        deviceFactory(2, 'HOME1').then(d=>Device2 = d),
+        deviceFactory(3, 'HOME1').then(d=>Device3 = d)
+      ]);
+
       sandbox = sinon.sandbox.create();
       sandbox.stub(cmds, 'adbDevices').resolves([Device1, Device2, Device3].map(d => d.adbId));
-      PostJobRun_STUB = sandbox.stub(Runner, 'PostJobRun').resolves(async () => {});
-      VerifyIGJobRun_STUB = sandbox.stub(Runner, 'VerifyIGJobRun').resolves(async () => {});
 
-      //const mclientStubInstance = sinon.spy(() => sinon.createStubInstance(minio.MClient));
-      //agentStub = sandbox.stub(DeviceAgent, 'Agent').returns(mclientStubInstance());
+      events = EngineEvents();
+      events.on('eventError',({ error })=>console.error(error));
+      events.on('job:error',({ error, body, jobId, jobName })=>console.error(error));
 
-      start = ()=> breakers = main({ nodeName: 'HOME1', interval: 500 });
+      SprocketArgs = { 
+        nodeName: 'HOME1', 
+        events,
+        minioClient: {}, 
+        concurrent: 1, 
+        debounce: 500 
+      }
+
+
     });
+
 
     afterEach(() => {
-      breakers.forEach(brk => brk());
-      breakers = [];
       try { sandbox.restore(); } catch (e) { /* */ }
-    });
-    // await createAccountUserPostJob()
-
-    it('shoud run and return an array of "breakers" which stop execution of function within Run harness', async () => {
-      start();
-      assert(breakers.length > 0);
+      events.clearListeners();
+      try {  Sprocket.stop() } catch(e) {};
     });
 
+    describe('VerifyIGSprocket', () => {
 
-    it('should \'runDeviceJob\' \'PostJobRun\' and \'VerifyIGJobRun\'', async ()=> {
-      PostJobRun_STUB.restore();
-      VerifyIGJobRun_STUB.restore();
-      sandbox.spy(minio.MClient.prototype, 'constructor');
-      sandbox.stub(minio.MClient.prototype, 'pullPhoto').resolves('/tmp/somefile.jpg');
-      sandbox.stub(DeviceAgent.Agent.prototype, 'exec').resolves({ success: true, body: { login: true } });
-      start();
+      afterEach(()=>{
+      });
 
-      //logger.debug('Waiting for post to complete ...')
-      while (!(await PostJob.completed()).length) {
-        await Promise.delay(250);
-      }
+      it('should run task VerifyIG and verify IGAccount', async () => {
 
-      const igvs = await IGAccount.verified();
-      assert.equal(igvs.length,1);
+        Sprocket = VerifyIGSprocket(SprocketArgs);
+        Sprocket.on('reject',console.error);
 
-      assert.equal(igvs[0].status, 'GOOD');
+        sandbox.stub(DeviceAgent.Agent.prototype, 'exec').resolves({ success: true, body: { login: true } });
 
-      const vijcs = await VerifyIGJob.completed();
-      assert.equal(vijcs.length,1);
-      assert.equal(vijcs[0].status,'SUCCESS');
+        const { igAccount } = await createAccountUserPostJob();
 
-      const pjcs = await PostJob.completed();
-      assert.equal(pjcs.length,1);
-      assert.equal(pjcs[0].status, 'SUCCESS');
+        assert.equal(igAccount.status,'UNVERIFIED');
 
-    });
+        assert(await VerifyIGJob.findOne());
 
-    it('\t should put PostJob in progress with device', async () => {
+        while (!(await IGAccount.verified()).length) {
+          await Promise.delay(250);
+        }
 
-      start();
+        const iga = await IGAccount.findById(igAccount.id);
 
-      while (!(await PostJob.inProgress()).length) {
-        /* Wait for job  */
-      }
+        assert.equal(iga.status,'GOOD');
 
-      const pj = await PostJob.findOne();
-
-      assert(pj);
-
-      assert(pj.isInProgress());
-
-      let agent;
-      while(true) {
-        try {
-          ({ agent } = PostJobRun_STUB.getCall(0).args[0]);
-          break;
-        } catch(e) {}
-        await new Promise(rs=>process.nextTick(rs))
-      }
-      assert(agent.deviceId);
+      }).timeout(2000);
 
     });
+    describe('PostSprocket', () => {
+      it('should run task PostSprocket', async () => {
+
+        sandbox.stub(DeviceAgent.Agent.prototype, 'exec').resolves({ success: true, body: { login: true } });
+        const minioClient = { pullPhoto: async ()=> 'localfilename' }
+        Sprocket = PostSprocket({ ...SprocketArgs, minioClient });
+        Sprocket.on('reject',console.error);
+
+        const { post, job } = await createAccountUserPostJob();
 
 
-    it('\t Should put VerifyIGJob in progress with device', async () => {
-      start();
-      while (!(await VerifyIGJob.inProgress()).length) {
-        /* */
-      }
-      const vij = await VerifyIGJob.findOne();
-      assert(vij);
-      assert(vij.isInProgress());
+        assert.equal(post.status,'PUBLISH');
 
-      let agent;
-      while(true) {
-        try {
-          ({ agent } = VerifyIGJobRun_STUB.getCall(0).args[0]);
-          break;
-        } catch(e) {}
-        await new Promise(rs=>process.nextTick(rs))
-      }
-      assert(agent.deviceId);
+        while (!(await Post.published()).length) {
+          await Promise.delay(1000);
+        }
 
-    })
+        const p = (await Post.published())[0];
+
+        assert.equal(p.status,'PUBLISHED');
+
+      });
+    });
+    describe('SendEmailSprocket', () => {
+      it('should run task SendEmailSprocket', () => {
+
+      });
+    });
+    describe('DownloadAvaSprocket', () => {
+      it('should run task DownloadAvaSprocket', () => {
+
+      });
+    });
+    describe('SyncDeviceSprocket', () => {
+      it('should run task SyncDeviceSprocket', () => {
+
+      });
+    });
   });
 
 
-  describe('engine unit', () => {
-    let agentStub;
-    let jobRunStub;
-    const sandbox = sinon.sandbox.create();
+  describe('EventRegister', () => {
+    it('should register an event with a callback', async () => {
+      const ee = new EventEmitter();
 
-    beforeEach(async () => {
-      await syncDb(true);
-      const adbDevicesStub = sandbox.stub(cmds, 'adbDevices').resolves(['adbId1', 'adbId2']);
-      const deviceIdSpy = sinon.spy();
-      const agentStubInstance = sinon.spy(() => sinon.createStubInstance(DeviceAgent.Agent));
-      agentStub = sandbox.stub(DeviceAgent, 'Agent').returns(agentStubInstance());
+      const eventr = EventRegister(ee);
 
-      jobRunStub = sandbox.stub(Runner, 'PostJobRun').resolves((async () => {
-        return { success: true };
-      })());
+      const callMeProm = new Promise(rs => eventr('call:me', async ({ payload }) => {
+        rs(payload);
+      }));
+
+      ee.emit('call:me', { payload: true });
+
+      const pl = await callMeProm;
+
+      assert.equal(pl, true);
     });
 
-    afterEach(() => {
-      sandbox.restore();
-    });
+    it('registered event should emit "eventError" when error in callback', async () => {
+      const flip = false;
 
+      const ee = new EventEmitter();
 
-    it('should match queued PostJobs to free devices', async () => {
-      const d1 = await Device.create({
-        adbId: 'adbId1',
-        idle: true,
-        online: true,
-        enabled: true,
+      const eventr = EventRegister(ee);
+
+      eventr('call:me', async ({ payload }) => {
+        throw new Error('I HAZ ERROR');
       });
 
-      const d2 = await Device.create({
-        adbId: 'adbId2',
-        idle: false,
-        online: true,
-        enabled: true,
-      });
-
-      const p = (await createAccountUserPostJob()).post;
+      process.nextTick(() => ee.emit('call:me', { payload: true }));
+      const error = await new Promise(rs => ee.on('eventError', ({ name, error }) => rs(error)));
+      assert.equal(error, 'Error: I HAZ ERROR');
+    });
+  });
 
 
-      const jobRunner = sinon.stub().resolves((async () => {
-        return { success: true };
-      })());
+  describe('Spinner', () => {
+    it('Should continue call of given function with n concurrency x debounce time', async () => {
+      let count = 0;
+      const fn = async () => count++;
 
-      await runDeviceJob({ nodeName: 'HOME1', jobRunner, JobModel: PostJob })();
+      const spin = new Spinner({ fn, concurrent: 3, debounce: 1000 });
 
-      const { agent, job } = jobRunner.getCall(0).args[0];
+      spin.start(); // .on('resolve',console.log);
 
-      assert(agent.constructor instanceof sinon.constructor);
+      await new Promise(rs => process.nextTick(rs));
 
-      assert.equal(job.id, p.PostJob.id);
+      spin.stop();
 
-      assert(agentStub.calledWith({ deviceId: 'adbId1' }));
-
-      await d1.reload();
-
-      assert(d1.idle);
+      assert.equal(count, 3);
     });
 
+    it('Should emit a "resolve" event on every fn resolve', async () => {
+      let resolveCount = 0;
+      let count = 0;
+      const myfn = async () => count++;
 
-    it('should run a function every x amount of milli seconds', async function () {
-      this.timeout(5000);
+      const spin = new Spinner({ fn: myfn, concurrent: 3, debounce: 1000 });
 
-      let called = 0;
-      const fn = () => { called++; return Promise.resolve(); };
-      const timer = run(fn, 500);
-      await Promise.delay(1000);
-      timer.close();
-      assert(called, 2);
+      spin.start().on('resolve', () => resolveCount++);
+
+      await new Promise(rs => process.nextTick(rs));
+
+      spin.stop();
+
+      assert.equal(count, 3);
+      assert.equal(resolveCount, 3);
     });
 
 
-    it('should sync plugged in devices to db', async () => {
-      const d1 = await Device.create({
-        adbId: 'adbId1',
-        idle: true,
-        online: false,
-      });
+    it('Should emit a "reject" event on every fn error', async () => {
+      let rejectCount = 0;
+      const count = 0;
+      const myfn = async () => {
+        throw new Error('I HAZ ERROR!');
+      };
 
-      const d2 = await Device.create({
-        adbId: 'adbId2',
-        idle: false,
-        online: false,
-      });
+      const spin = new Spinner({ fn: myfn, concurrent: 3, debounce: 1000 });
 
-      const d3 = await Device.create({
-        adbId: 'adbId3',
-        idle: false,
-        online: true,
-      });
+      spin.start().on('reject', () => rejectCount++);
 
-      await syncDevices();
+      await new Promise(rs => process.nextTick(rs));
 
-      await d1.reload();
-      await d2.reload();
-      await d3.reload();
+      spin.stop();
 
-      assert(d1.get('online'));
-      assert(d1.get('idle'));
+      assert.equal(rejectCount, 3);
+    });
 
-      assert(d2.get('online'));
-      assert(d2.get('idle'));
+    it('Should emit a "close" when Spinner instance is .stop()\'ed ', async () => {
+      const myfn = async () => {};
 
-      assert(!d3.get('online'));
+      let closeEvent = false;
+
+      const spin = new Spinner({ fn: myfn, concurrent: 3, debounce: 1000 });
+
+      // nextTick'ing because we want to maybe use async events? idk
+      spin.start().on('close', () => process.nextTick(() => closeEvent = true));
+
+      const closePromise = new Promise(rs => spin.on('close', rs));
+
+      spin.stop();
+
+      await closePromise;
+
+      assert(closeEvent);
     });
   });
 });

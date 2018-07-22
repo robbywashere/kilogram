@@ -35,8 +35,11 @@ module.exports = {
   },
   Hooks: {
     async beforeUpdate(igAccount) {
+      //TODO: rate limit?!
       if (igAccount.password !== igAccount._previousDataValues.password) {
+        const { VerifyIGJob } = this.sequelize.models;
         igAccount.set('status',UNVERIFIED);
+        await VerifyIGJob.create(igAccount);
       }
     }, 
     async afterCreate({ id }) {
@@ -65,7 +68,7 @@ module.exports = {
   },
   StaticMethods: {
     avatarUUID(id,avatarUUID){
-      return this.updateById(id,{ where: { avatarUUID }})
+      return this.updateById(id,{ avatarUUID })
     },
     good(id) {
       return this.updateById(id,{ status: GOOD });

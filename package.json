@@ -70,7 +70,7 @@
   },
   "scripts": {
     "start": "node ./server/index.js",
-    "py:install": "pip install -r ./python/requirements.txt",
+    "py:install": "pip3 install -r ./android/requirements.txt",
     "dev:tabs": "export LOG_LEVEL=3 && ./scripts/tab yarn run minio:up & ./scripts/tab yarn run dev & ./scripts/tab yarn run crx:start & ./scripts/tab yarn run device-node",
     "crx:start": "export PORT=3001 && react-scripts start",
     "crx:build": "react-scripts build",

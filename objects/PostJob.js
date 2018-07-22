@@ -12,8 +12,8 @@ const db = require('../db'); // TODO: possible circular dep?
 module.exports = {
   Name: 'PostJob',
   Properties: {
-    ...JobProperties,
-    Photo: {
+    ...JobProperties
+    /*Photo: {
       type: sequelize.VIRTUAL,
       get() {
         return this.Post.get('Photo');
@@ -21,7 +21,7 @@ module.exports = {
       set(val) {
         return this.Post.set('Photo', val);
       },
-    },
+  },*/
   },
   ScopeFunctions: true,
   Scopes: {
@@ -32,7 +32,7 @@ module.exports = {
   Init({
     Post, Photo, IGAccount, Account,
   }) {
-    this.belongsTo(Post, { foreignKey: { unique: true } });
+    this.belongsTo(Post, { foreignKey: { unique: true, allowNull: false } });
     this.belongsTo(Account, { onDelete: 'cascade', foreignKey: { allowNull: false } });
     this.belongsTo(IGAccount, { foreignKey: { allowNull: false } });
     this.addScope('withPost', { include: [{ model: Post, include: [Photo] }] });
