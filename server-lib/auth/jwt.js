@@ -1,5 +1,3 @@
-
-
 const jwt = require('express-jwt');
 const Router = require('express').Router;
 const config = require('config');
@@ -13,30 +11,35 @@ module.exports = function JWT(app) {
 
   if (typeof app !== 'undefined') app.use(require('body-parser').json());
 
-  router.post('/auth', handler(async (req, res, next) => {
-    const { username, password } = req.body;
+  router.post(
+    '/auth',
+    handler(async (req, res, next) => {
+      const { username, password } = req.body;
 
-    const user = await User.findOne({ where: { email: username }, include: [Account] });
+      const user = await User.findOne({ where: { email: username }, include: [Account] });
 
-    if (!user || (user && !(await user.verifyPassword(password)))) {
-      throw new Unauthorized();
-    }
+      if (!user || (user && !(await user.verifyPassword(password)))) {
+        throw new Unauthorized();
+      }
 
-    const { id, superAdmin, email } = user.toJSON();
+      const { id, superAdmin, email } = user.toJSON();
 
-    const Accounts = user.Accounts.map(A => ({ id: A.id, role: A.UserAccount.role }));
+      const Accounts = user.Accounts.map(A => ({ id: A.id, role: A.UserAccount.role }));
 
-    const token = jwtToken.sign({
-      id,
-      email,
-      superAdmin,
-      Accounts,
-      exp: config.get('SESSION_EXPIRE'),
-    }, config.get('APP_SECRET'));
+      const token = jwtToken.sign(
+        {
+          id,
+          email,
+          superAdmin,
+          Accounts,
+          exp: config.get('SESSION_EXPIRE'),
+        },
+        config.get('APP_SECRET'),
+      );
 
-    res.send({ token });
-  }));
-
+      res.send({ token });
+    }),
+  );
 
   router.use(jwt({ secret: config.get('APP_SECRET') }));
 

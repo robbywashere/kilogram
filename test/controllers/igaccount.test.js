@@ -1,4 +1,3 @@
-
 const assert = require('assert');
 
 const { loadObjectControllers } = require('../../controllers');
@@ -34,7 +33,6 @@ describe('IGAccount Controller', () => {
       AccountId: account.id
     }) */
 
-
     assert(account);
 
     // await account.addIGAccount(igAccount);
@@ -44,7 +42,6 @@ describe('IGAccount Controller', () => {
     app.use(IGAccountController());
 
     app.use(serverErrors);
-
 
     const res1 = await request(app)
       .post('/')
@@ -64,7 +61,6 @@ describe('IGAccount Controller', () => {
       })
       .expect(400);
 
-
     assert.equal(res3.body.message, 'Validation error');
 
     const res2 = await request(app)
@@ -75,7 +71,6 @@ describe('IGAccount Controller', () => {
     assert(res2.body[0].id);
     assert(!res2.body[0].password);
     assert.equal(res2.body[0].AccountId, account.id);
-
 
     const res4 = await request(app)
       .post('/')

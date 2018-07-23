@@ -1,20 +1,17 @@
-
 const demand = require('../../lib/demand');
 const { Trigger } = require('./triggers');
 
-
-function prefixer(p, stmt, meta){
-  if (!p || p.length === 0) return stmt + ';';
-  let prefix = p.pop();
+function prefixer(p, stmt, meta) {
+  if (!p || p.length === 0) return `${stmt};`;
+  const prefix = p.pop();
   if (meta && p.length === 0) {
     return `json_build_object('${prefix}',${stmt}, 'meta','${JSON.stringify(meta)}'::json);`;
-  } else {
-    return prefixer(p, `json_build_object('${prefix}',${stmt})`, meta);
   }
+  return prefixer(p, `json_build_object('${prefix}',${stmt})`, meta);
 }
 
-const TriggerProcedureInsert =  ({ 
-  watchTable = demand('watchTable'),  
+const TriggerProcedureInsert = ({
+  watchTable = demand('watchTable'),
   watchColumn = demand('watchColumn'),
   insertTable = demand('insertTable'),
   meta = null,
@@ -24,23 +21,21 @@ const TriggerProcedureInsert =  ({
   when = '',
   prefix,
   jsonField = 'body',
-})=> {
+}) => {
+  const tpName = trigProcName || `t__${watchTable}_${insertTable}`.toLowerCase();
 
-  const tpName = (trigProcName) ? trigProcName : `t__${watchTable}_${insertTable}`.toLowerCase();
+  const rowDataMap = recordKeys.map(key => `'${key}', NEW."${key}"`).join(',');
 
-  const rowDataMap = recordKeys.map((key)=> `'${key}', NEW."${key}"`).join(',');
+  const PREFIX = typeof prefix === 'string' ? prefix.split('.') : prefix;
 
-  let PREFIX = (typeof prefix === "string") ? prefix.split('.') : prefix; 
-
-  let BODY = prefixer([].concat(PREFIX),`json_build_object(${rowDataMap})`,meta);
+  const BODY = prefixer([].concat(PREFIX), `json_build_object(${rowDataMap})`, meta);
 
   let foreignKeyFields;
   let foreignKeyValues;
   if (foreignKeys) {
-    foreignKeyFields =  foreignKeys.map(k=>`"${k}"`).join(',');
-    foreignKeyValues =  foreignKeys.map(k=>`NEW."${k}"`).join(',');
+    foreignKeyFields = foreignKeys.map(k => `"${k}"`).join(',');
+    foreignKeyValues = foreignKeys.map(k => `NEW."${k}"`).join(',');
   }
-
 
   const triggerQuery = Trigger()
     .drop(true)
@@ -51,17 +46,15 @@ const TriggerProcedureInsert =  ({
     .args(null)
     .exec(tpName).query;
 
+  const fields = ['"createdAt"', '"updatedAt"', jsonField, foreignKeyFields]
+    .filter(x => x)
+    .join(',');
 
-  const fields = ['"createdAt"','"updatedAt"',jsonField,foreignKeyFields]
-    .filter(x=>x).join(',');
-
-  const values = ['NOW()','NOW()',jsonField,foreignKeyValues]
-    .filter(x=>x).join(',');
+  const values = ['NOW()', 'NOW()', jsonField, foreignKeyValues].filter(x => x).join(',');
 
   const INSERT = `"${insertTable}" (${fields})`;
 
   const VALUES = `(${values});`;
-
 
   return `
 CREATE OR REPLACE FUNCTION ${tpName}() RETURNS TRIGGER AS $$
@@ -84,11 +77,7 @@ $$ LANGUAGE plpgsql;
 
 ${triggerQuery}
 
-`
-}
+`;
+};
 
-
-
-module.exports = TriggerProcedureInsert ; 
-
-
+module.exports = TriggerProcedureInsert;

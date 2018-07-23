@@ -39,7 +39,6 @@ class AccountPolicy extends BasePolicy {
   }
 }
 
-
 class AccountResource extends Resource {
   async _findUser(id, scope = User) {
     const user = scope.findById(id);
@@ -64,7 +63,7 @@ class AccountResource extends Resource {
   async addUser({ user, params }) {
     let { id, userId, role } = params;
 
-    role = (role === 'admin') ? 'admin' : 'member';
+    role = role === 'admin' ? 'admin' : 'member';
 
     const account = await this._findAccount(user, id);
 
@@ -76,10 +75,14 @@ class AccountResource extends Resource {
   }
 }
 
-//verb,path,action
+// verb,path,action
 module.exports = function AccountController() {
   const router = new Router();
-  const resource = new AccountResource({ model: Account, policy: AccountPolicy, scope: AccountPolicy.scope });
+  const resource = new AccountResource({
+    model: Account,
+    policy: AccountPolicy,
+    scope: AccountPolicy.scope,
+  });
 
   router.get('/', resource.action('index'));
   router.get('/:id', resource.action('show'));

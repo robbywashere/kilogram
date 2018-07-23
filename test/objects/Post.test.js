@@ -1,5 +1,3 @@
-
-
 const {
   Account, IGAccount, PostJob, Post, Photo, User,
 } = require('../../objects');
@@ -14,7 +12,13 @@ const SEQ = require('../../db');
 const Promise = require('bluebird');
 const {
   createUserAccountIGAccountPhotoPost,
-  initJob, ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob,
+  initJob,
+  ezUser,
+  newIGAccount,
+  ezUserAccount,
+  createUserPostJob,
+  createAccountUserPost,
+  createAccountUserPostJob,
 } = require('../helpers');
 const { logger } = require('../../lib/logger');
 const {
@@ -29,45 +33,43 @@ describe('objects/Post', () => {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
 
-    let pj = await initJob(post);
+    const pj = await initJob(post);
 
     await post.destroy();
 
-    assert(!(await PostJob.findById(1)))
-
+    assert(!(await PostJob.findById(1)));
   });
 
-  it.skip('TODO: should scope SUCCESS/published posts where PostJob is SUCCESS', async ()=>{
+  it.skip('TODO: should scope SUCCESS/published posts where PostJob is SUCCESS', async () => {
     const {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
     const job = await initJob(post);
     const posts1 = await Post.published();
-    assert.equal(posts1.length, 0)
+    assert.equal(posts1.length, 0);
     await job.update({ status: 'SUCCESS' });
     const posts2 = await Post.published();
-    assert.equal(posts2.length, 1)
+    assert.equal(posts2.length, 1);
   });
 
-  it.skip('TODO: should scope FAILED/not published Posts where PostJob is FAILED', async ()=>{
+  it.skip('TODO: should scope FAILED/not published Posts where PostJob is FAILED', async () => {
     const {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
     const job = await initJob(post);
     const posts1 = await Post.failed();
-    assert.equal(posts1.length, 0)
+    assert.equal(posts1.length, 0);
     await job.update({ status: 'FAILED' });
     const posts2 = await Post.failed();
-    assert.equal(posts2.length, 1)
+    assert.equal(posts2.length, 1);
   });
-
 
   it('should be destroyed when Account is destroyed', async () => {
     const {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
 
-    assert((await Post.findById(post.id)));
+    assert(await Post.findById(post.id));
     await account.destroy();
     assert(!(await Post.findById(post.id)));
   });
@@ -77,11 +79,10 @@ describe('objects/Post', () => {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
 
-    assert((await Post.findById(post.id)));
+    assert(await Post.findById(post.id));
     await igAccount.destroy();
     assert(!(await Post.findById(post.id)));
   });
-
 
   it('should find due posts with .due', async () => {
     const { post } = await createAccountUserPost();
@@ -99,26 +100,25 @@ describe('objects/Post', () => {
     assert(post.PostJob);
   });
 
+  it('should scope a Post query to a user argument with .userScoped', async () => {
+    const { user: user1, account: account1, post: post1 } = await createAccountUserPost({
+      email: 'a@a.com',
+    });
+    const { user: user2, account: account2, post: post2 } = await createAccountUserPost({
+      email: 'b@b.com',
+    });
+    const { user: user3, account: account3, post: post3 } = await createAccountUserPost({
+      email: 'c@c.com',
+    });
 
-  it('should scope a Post query to a user argument with .userScoped',async () =>{
-
-    const { user: user1, account: account1, post: post1 } = await createAccountUserPost({ email: 'a@a.com' });
-    const { user: user2, account: account2, post: post2 } = await createAccountUserPost({ email: 'b@b.com' });
-    const { user: user3, account: account3, post: post3 } = await createAccountUserPost({ email: 'c@c.com' });
-
-
-    const scopedPosts1 = await Post.userScoped(user1)
+    const scopedPosts1 = await Post.userScoped(user1);
     assert(scopedPosts1.length === 1);
     assert(scopedPosts1[0].id === post1.id);
 
-    const scopedPosts2 = await Post.userScoped(user2)
+    const scopedPosts2 = await Post.userScoped(user2);
     assert(scopedPosts2[0].id === post2.id);
     assert(scopedPosts2.length === 1);
-
-  })
-
-
-
+  });
 
   it.skip('should respond to withUserForId with .User object', async () => {
     const { post } = await createAccountUserPostJob();

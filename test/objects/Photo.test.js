@@ -7,6 +7,5 @@ const { Op } = require('sequelize');
 describe('Photo object', () => {
   beforeEach(() => DBSync(true));
 
-  it.skip('should', async () => {
-  });
+  it.skip('should', async () => {});
 });

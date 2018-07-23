@@ -12,7 +12,6 @@ const { userRecoveryEmail } = require('../../emails');
 
 const { genPasswordKey } = require('../../objects/_helpers');
 
-
 module.exports = function UserRecoveryController() {
   const router = new Router();
   router.post('/:email', async (req, res, next) => {
@@ -21,7 +20,10 @@ module.exports = function UserRecoveryController() {
       const user = await User.newRecovery(email);
       if (!user) throw new NotFound(); // TODO: return res.sendStatus(200) more secure?
       const recoveryEmail = new emailer();
-      await recoveryEmail.send({ msg: userRecoveryEmail({ key: user.passwordKey }), to: user.email });
+      await recoveryEmail.send({
+        msg: userRecoveryEmail({ key: user.passwordKey }),
+        to: user.email,
+      });
       res.sendStatus(200);
     } catch (err) {
       next(err);

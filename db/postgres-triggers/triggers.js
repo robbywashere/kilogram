@@ -1,6 +1,5 @@
-
 const {
-  get, snakeCase, isString, isUndefined, isPlainObject, isArray
+  get, snakeCase, isString, isUndefined, isPlainObject, isArray,
 } = require('lodash');
 
 function Trigger(Name, Params = {}) {
@@ -8,21 +7,20 @@ function Trigger(Name, Params = {}) {
   const eventMap = new Set(eventsStr.split(','));
 
   const self = {
-
     Name,
 
     Params,
 
-    toString(){
+    toString() {
       return this.query;
     },
 
     actionPrep(actionType, preposition) {
-      let [[action, columns]] = (isString(actionType))
+      let [[action, columns]] = isString(actionType)
         ? [[actionType, []]]
         : Object.entries(actionType);
 
-      columns = (isString(columns) ? [columns] : columns);
+      columns = isString(columns) ? [columns] : columns;
 
       action = action.toUpperCase();
 
@@ -30,19 +28,19 @@ function Trigger(Name, Params = {}) {
 
       //-----
       //
-      
 
       self.Params.PrepositionAction = `${preposition} ${action}`;
 
       self.Params.Columns = columns;
 
-      self.Params.Summary = `${preposition} ${(action !== 'UPDATE') ? action : (`UPDATE${
-        (columns.length) ? ' OF ' : ''
-      }${ columns.map(c => (`"${c}"`)).join(', ')}`)}`;
+      self.Params.Summary = `${preposition} ${
+        action !== 'UPDATE'
+          ? action
+          : `UPDATE${columns.length ? ' OF ' : ''}${columns.map(c => `"${c}"`).join(', ')}`
+      }`;
 
       return self;
     },
-
 
     table(t) {
       self.Params.Table = t;
@@ -71,8 +69,17 @@ function Trigger(Name, Params = {}) {
     },
 
     when(w) {
-      if (!w) { self.Params.When = false; return self }
-      self.Params.When = ((w.trim().toUpperCase().substr(0,4) !== "WHEN") ? `WHEN ${w}` : w);
+      if (!w) {
+        self.Params.When = false;
+        return self;
+      }
+      self.Params.When =
+        w
+          .trim()
+          .toUpperCase()
+          .substr(0, 4) !== 'WHEN'
+          ? `WHEN ${w}`
+          : w;
       return self;
     },
 
@@ -81,11 +88,9 @@ function Trigger(Name, Params = {}) {
         Table, Columns, Action, PrepositionAction,
       } = self.Params;
 
-      return [
-        snakeCase(Table),
-        self.key,
-        ((Columns) ? Columns.map(snakeCase).join(':') : false),
-      ].filter(x => x).join(':');
+      return [snakeCase(Table), self.key, Columns ? Columns.map(snakeCase).join(':') : false]
+        .filter(x => x)
+        .join(':');
     },
 
     before(a) {
@@ -95,11 +100,14 @@ function Trigger(Name, Params = {}) {
     },
 
     args(a) {
-      if (!a) { self.Params.Args = null; return self }
+      if (!a) {
+        self.Params.Args = null;
+        return self;
+      }
       if (!isArray(a)) {
         throw new TypeError('Trigger().args expects type Array');
       }
-      self.Params.Args = a.join('\',\'');
+      self.Params.Args = a.join("','");
       return self;
     },
 
@@ -108,24 +116,17 @@ function Trigger(Name, Params = {}) {
       return self;
     },
 
-
     get key() {
       return snakeCase(self.Params.PrepositionAction);
     },
 
     get name() {
-      return (self.Params.Name) ? self.Params.Name : self.computeName();
+      return self.Params.Name ? self.Params.Name : self.computeName();
     },
 
     get query() {
       let {
-        Summary,
-        Procedure,
-        Drop = false,
-        Table,
-        Name,
-        When,
-        Args,
+        Summary, Procedure, Drop = false, Table, Name, When, Args,
       } = self.Params;
 
       if (isUndefined(Name)) {
@@ -136,18 +137,17 @@ function Trigger(Name, Params = {}) {
         Args = Name;
       }
 
-
-      const ArgsParens = (Args) ? `('${Args}')` : '()';
+      const ArgsParens = Args ? `('${Args}')` : '()';
 
       if (isUndefined(Procedure)) {
-        throw TypeError('Trigger() - Procedure undefined, use .exec(<Name>)')
+        throw TypeError('Trigger() - Procedure undefined, use .exec(<Name>)');
       }
 
       return `
-      ${(Drop) ? `DROP TRIGGER IF EXISTS "${Name}" ON "${Table}";\n` : ''}\tCREATE TRIGGER "${Name}"
+      ${Drop ? `DROP TRIGGER IF EXISTS "${Name}" ON "${Table}";\n` : ''}\tCREATE TRIGGER "${Name}"
       ${Summary} ON "${Table}"
       FOR EACH ROW
-      ${(When) || ''} 
+      ${When || ''} 
       EXECUTE PROCEDURE ${Procedure}${ArgsParens};
       `;
     },
@@ -156,6 +156,4 @@ function Trigger(Name, Params = {}) {
   return self;
 }
 
-
 module.exports = { Trigger };
-

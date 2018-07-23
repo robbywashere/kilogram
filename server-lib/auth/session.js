@@ -7,7 +7,6 @@ const pgSession = require('connect-pg-simple')(session);
 const config = require('config');
 const pgConnectConfig = require('../../db/config')[config.get('NODE_ENV')];
 
-
 class PGSessionClass {
   constructor({ secret = demand('PGSessionClass requires { secret: <String> } ') } = {}) {
     this.secret = secret;
@@ -22,7 +21,7 @@ class PGSessionClass {
   init({ secret = this.secret } = {}) {
     this._sessioner = session({
       store: new pgSession({
-        conObject: pgConnectConfig 
+        conObject: pgConnectConfig,
       }),
       secret,
       resave: false,
@@ -33,7 +32,7 @@ class PGSessionClass {
   }
 
   serialize(user, cb) {
-    cb(null,user.serialize());
+    cb(null, user.serialize());
   }
 
   async deserialize({ id }, cb) {
@@ -49,7 +48,6 @@ class PGSessionClass {
     }
   }
 }
-
 
 class CookieSessionClass {
   constructor({ secret = demand('CookieSessionClass requires { secret: <String> } ') }) {
@@ -71,11 +69,13 @@ class CookieSessionClass {
     return this._sessioner;
   }
 
-  serialize(user, cb) { return cb(null, user.serialize()); }
+  serialize(user, cb) {
+    return cb(null, user.serialize());
+  }
 
   async deserialize({ id }, cb) {
     try {
-      const user = await User.withAccountsForId(id); //nessa?
+      const user = await User.withAccountsForId(id); // nessa?
       if (!user) throw new Error('Invalid User/User does not exist');
       else {
         cb(null, user);
@@ -86,6 +86,5 @@ class CookieSessionClass {
     }
   }
 }
-
 
 module.exports = { CookieSessionClass, PGSessionClass };

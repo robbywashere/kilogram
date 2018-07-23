@@ -1,4 +1,3 @@
-
 const {
   Forbidden, BadRequest, Unauthorized, NotFound,
 } = require('http-errors');
@@ -19,8 +18,11 @@ const basePolicy = require('./basePolicy');
 // TODO: maybe #beforeAction is the wrong abstraction, a 'before action' could be executed using express's routing logic
 // app.get('/admin',function beforeAction(req,res,next){ ..... next() }, action);
 
-const EmptyCollection = () => ({ // TODO should probably make class wrappers for everything which is returned - save()'d serialize()'d
-  save() { return undefined; },
+const EmptyCollection = () => ({
+  // TODO should probably make class wrappers for everything which is returned - save()'d serialize()'d
+  save() {
+    return undefined;
+  },
   serialize() {
     return [];
   },
@@ -69,9 +71,9 @@ module.exports = class BaseResource {
     const order = [];
     const sortParams = sortQuery.split(',');
     sortParams.forEach((sortParam) => {
-      const type = (sortParam.indexOf('-') === 0) ? 'DESC' : 'ASC';
+      const type = sortParam.indexOf('-') === 0 ? 'DESC' : 'ASC';
       const name = sortParam.replace(/^-/, '');
-      if (!columns.includes(name)) throw new BadRequest(`column '${name}' is not sortable/does not exist`);
+      if (!columns.includes(name)) { throw new BadRequest(`column '${name}' is not sortable/does not exist`); }
       order.push([name, type]);
     });
     return order;
@@ -95,7 +97,6 @@ module.exports = class BaseResource {
     res.send(rows.map(i => i.serialize()));
   }
 
-
   beforeAction(req) {
     // if (req.user isn't superAdmin) then ...
     return this.policy.authorizeRequest(req); // TODO: is this too tight of coupling?
@@ -106,7 +107,7 @@ module.exports = class BaseResource {
     delete opts.index; // TODO: delete is dumb
 
     const instanceFn = this[name];
-    if (typeof instanceFn !== 'function') throw new TypeError(`Controller action '${name}' is not a function`);
+    if (typeof instanceFn !== 'function') { throw new TypeError(`Controller action '${name}' is not a function`); }
 
     return async (req, res, next) => {
       try {
@@ -115,25 +116,26 @@ module.exports = class BaseResource {
         await (opts.beforeAction || this.beforeAction.bind(this))(req); // TODO: shame
         if (typeof reqOpts === 'function') reqOpts = reqOpts(req);
 
-        const transportFn = (isIndexAction) ? this._transportIndex : this._transport;
+        const transportFn = isIndexAction ? this._transportIndex : this._transport;
         let operators;
 
         if (isIndexAction) {
-          const parsedOps = Object.entries(req.query)
-            .reduce((p, [key, value]) => {
-              if (key.substring(0, 1) === '$') p[key.substring(1)] = value;
-              return p;
-            }, {});
+          const parsedOps = Object.entries(req.query).reduce((p, [key, value]) => {
+            if (key.substring(0, 1) === '$') p[key.substring(1)] = value;
+            return p;
+          }, {});
 
           operators = this.constructor.operators(parsedOps);
           reqOpts.where = { ...operators, ...reqOpts.where };
           const order = this.constructor.sort(req.query.sort, this.sortableColumns);
           const { limit, offset } = this.constructor.page(req.query);
           reqOpts = {
-            ...reqOpts, limit, offset, order,
+            ...reqOpts,
+            limit,
+            offset,
+            order,
           };
         }
-
 
         reqOpts.scope = reqOpts.scope || this.scope;
         if (req.query.scope) {
@@ -143,13 +145,16 @@ module.exports = class BaseResource {
         // this.constructor.scope(req.query.scope)
 
         const instance = await instanceFn.bind(this)(req, { opts: reqOpts, req });
-        const reqParams = Object.assign({ }, req.params, req.body);
+        const reqParams = Object.assign({}, req.params, req.body);
         const policy = new this.policy({ instance, user: req.user, params: reqParams });
-        const policyFn = (policy[name]) ? policy[name].bind(policy) : policy.default;
+        const policyFn = policy[name] ? policy[name].bind(policy) : policy.default;
 
         if (await policyFn()) {
           return await transportFn({
-            opts: reqOpts, req, res, instance,
+            opts: reqOpts,
+            req,
+            res,
+            instance,
           });
         }
         throw new Forbidden();
@@ -157,7 +162,7 @@ module.exports = class BaseResource {
         if (get(e, 'constructor.name') === 'ClientError') {
           return next(e);
         }
-        if ((e.name.substr(0, 9) === 'Sequelize') || (get(e, 'constructor.name') === 'ClientError')) {
+        if (e.name.substr(0, 9) === 'Sequelize' || get(e, 'constructor.name') === 'ClientError') {
           return next(new BadRequest(e.message));
         }
         logger.debug(`Controller Error in '${get(this, 'constructor.name')}':`, e);
@@ -168,16 +173,15 @@ module.exports = class BaseResource {
 
   static assertIntId(id) {
     const numId = parseInt(id);
-    if (!numId > 0) throw new BadRequest('Bad value for /:id\' - must be integer > 0');
+    if (!numId > 0) throw new BadRequest("Bad value for /:id' - must be integer > 0");
     return numId;
   }
 
   static collectionWhere({ ids, opts }) {
-    if (!ids || !ids.length) throw new BadRequest('No IDs provided, assumed collection: \n But missing array of ids');
+    if (!ids || !ids.length) { throw new BadRequest('No IDs provided, assumed collection: \n But missing array of ids'); }
     //  const ids = header.split(',').map(id=>parseInt(id.trim()))
     return { ...opts.where, id: { [Op.in]: ids } };
   }
-
 
   resource() {
     const router = new Router();
@@ -191,7 +195,6 @@ module.exports = class BaseResource {
     router.delete('/:id', this.action('destroy'));
     return router;
   }
-
 
   async show({ user, params }, { opts }) {
     const scope = opts.scope;
@@ -221,16 +224,15 @@ module.exports = class BaseResource {
   }
 
   async collectionCreate({ headers, body }, { next }) {
-    if (!Array.isArray(body)) throw new BadRequest('Collection expects body to be of type \'Array\'');
+    if (!Array.isArray(body)) throw new BadRequest("Collection expects body to be of type 'Array'");
     const sanitizedBody = body.map(o => this.model.sanitizeParams(o));
     let result;
-    sanitizedBody.save = async () => result = await this.model.bulkCreate(sanitizedBody, { returning: true });
-    sanitizedBody.serialize = () =>
-      result.map(i => i.serialize());
+    sanitizedBody.save = async () =>
+      (result = await this.model.bulkCreate(sanitizedBody, { returning: true }));
+    sanitizedBody.serialize = () => result.map(i => i.serialize());
 
     return sanitizedBody;
   }
-
 
   async collectionDestroy({
     headers, body, user, query,
@@ -246,7 +248,7 @@ module.exports = class BaseResource {
 
     let result;
 
-    instances.save = async () => result = await this.model.destroy({ ...whereIds });
+    instances.save = async () => (result = await this.model.destroy({ ...whereIds }));
     instances.serialize = () => instances.map(i => ({ id: i.serialize().id }));
     return instances;
   }
@@ -261,17 +263,17 @@ module.exports = class BaseResource {
     const whereIds = { where: { id: { [Op.in]: instances.map(i => i.id) } } };
     const sanitizedBody = this.model.sanitizeParams(body);
     let result;
-    instances.save = async () => result = await this.model.update(sanitizedBody, { ...whereIds, returning: true });
-    instances.serialize = () => ((get(result, 1)) ? result[1].map(i => i.serialize()) : []);
+    instances.save = async () =>
+      (result = await this.model.update(sanitizedBody, { ...whereIds, returning: true }));
+    instances.serialize = () => (get(result, 1) ? result[1].map(i => i.serialize()) : []);
     return instances;
   }
 
   async destroy({ user, params }, { opts }) {
     const scope = opts.scope;
     const resource = await scope(user).findById(params.id, opts);
-    //?if (!instances.length) return EmptyCollection();
+    // ?if (!instances.length) return EmptyCollection();
     resource.save = resource.destroy;
     return resource;
   }
 };
-

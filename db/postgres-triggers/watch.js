@@ -2,7 +2,7 @@ const PGListen = require('../../server-lib/pg-listen');
 
 class Watcher {
   constructor({ debug, pgListenClient } = {}) {
-    this.pgListenClient = pgListenClient || (new PGListen({ debug }));
+    this.pgListenClient = pgListenClient || new PGListen({ debug });
   }
 
   watch(...args) {

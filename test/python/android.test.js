@@ -1,10 +1,8 @@
-
 const exec = require('../../android/exec');
 const cmds = require('../../android/cmds');
 const fixies = require('../helpers').fixtures();
 const sinon = require('sinon');
 const assert = require('assert');
-
 
 describe('android', () => {
   describe('cmds/adbDevices', () => {

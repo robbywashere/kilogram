@@ -1,12 +1,9 @@
-
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../../db/sync');
 const { Device } = require('../../objects');
 
-
 describe('Devices', () => {
-
   beforeEach(async () => sync(true));
 
   describe('popDevice', () => {
@@ -31,7 +28,7 @@ describe('Devices', () => {
         online: true,
         idle: true,
         enabled: true,
-        nodeName: 'specialPlace'
+        nodeName: 'specialPlace',
       });
 
       const device = await Device.popNodeDevice('specialPlace');
@@ -39,7 +36,6 @@ describe('Devices', () => {
       assert.equal(device.get('adbId'), 'popdid');
     });
   });
-
 
   describe('register', () => {
     it('should register new devices given a set of ids', async () => {
@@ -70,34 +66,33 @@ describe('Devices', () => {
     it(` - should disable and enable a device via the disable and enable method
        - should return disabled and enabled devices
   `, async () => {
-        const d = await Device.create({
-          online: false,
-          idle: false,
-          adbId: 'did',
-          enabled: false,
-        });
-
-        assert.equal(d.enabled, false);
-
-        await d.enable();
-
-        assert.equal(d.enabled, true);
-
-        assert.deepEqual('did', (await Device.enabled())[0].get('adbId'));
-
-        await d.disable();
-
-        assert.equal(d.enabled, false);
-
-        assert.deepEqual([], (await Device.enabled()));
-
-        assert.deepEqual('did', (await Device.disabled())[0].get('adbId'));
+      const d = await Device.create({
+        online: false,
+        idle: false,
+        adbId: 'did',
+        enabled: false,
       });
+
+      assert.equal(d.enabled, false);
+
+      await d.enable();
+
+      assert.equal(d.enabled, true);
+
+      assert.deepEqual('did', (await Device.enabled())[0].get('adbId'));
+
+      await d.disable();
+
+      assert.equal(d.enabled, false);
+
+      assert.deepEqual([], await Device.enabled());
+
+      assert.deepEqual('did', (await Device.disabled())[0].get('adbId'));
+    });
   });
 
   describe('freeDangling by ids', () => {
     it('should `free` devices where online:false, idle:false given a list of ids', async () => {
-
       await Device.create({
         online: false,
         idle: false,
@@ -106,8 +101,9 @@ describe('Devices', () => {
       });
       await Device.freeDanglingByIds(['did']);
 
-      const freed = await Device.findOne({ 
-        where: { online: true, idle: true, adbId: 'did' } });
+      const freed = await Device.findOne({
+        where: { online: true, idle: true, adbId: 'did' },
+      });
 
       assert(freed);
     });
@@ -134,13 +130,16 @@ describe('Devices', () => {
 
       const minutes = 5;
 
-      const timeAgo = new Date((new Date()).getTime() - (minutes + 1) * 60000);
-      const cutOff = new Date((new Date()).getTime() - (minutes) * 60000);
+      const timeAgo = new Date(new Date().getTime() - (minutes + 1) * 60000);
+      const cutOff = new Date(new Date().getTime() - minutes * 60000);
       assert(timeAgo < cutOff); // Sanity checking
 
-      d.set({
-        updatedAt: timeAgo,
-      }, { raw: true });
+      d.set(
+        {
+          updatedAt: timeAgo,
+        },
+        { raw: true },
+      );
 
       d.changed('updatedAt', true);
 
@@ -151,18 +150,13 @@ describe('Devices', () => {
 
       const zombies = await Device.zombies();
 
-
       assert.equal(1, zombies.length);
       assert.equal(true, zombies[0].online);
       assert.equal(false, zombies[0].idle);
     });
   });
 
-  describe.skip('restore devices in locked state; where idle: false and BUT no work is being done on them', () => {
-
-
-  });
-
+  describe.skip('restore devices in locked state; where idle: false and BUT no work is being done on them', () => {});
 
   describe('syncDevices', () => {
     it('should update devices (online: true where in <adb devices ids> and (online: false where not in <adb device ids>)', async () => {
@@ -186,7 +180,6 @@ describe('Devices', () => {
       assert.equal(!on.online, (await Device.findById(on.id)).online);
     });
   });
-
 
   describe('syncAll', () => {
     it('should sync new devices with #register and #syncOnline, returning JSON when second argument is `true`', async () => {

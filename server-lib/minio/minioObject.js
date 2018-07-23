@@ -1,4 +1,3 @@
-
 const demand = require('../../lib/demand');
 const bson = require('bson');
 const _ = require('lodash');
@@ -26,7 +25,12 @@ class bass64 {
     keys.forEach(([x, y]) => o.set(x, y));
     return c => (o.has(c) ? o.get(c) : c);
   }
-  static translate(str, cipher) { return str.split('').map(cipher).join(''); }
+  static translate(str, cipher) {
+    return str
+      .split('')
+      .map(cipher)
+      .join('');
+  }
 }
 
 const b64 = new bass64(BASS64CIPH);
@@ -40,18 +44,21 @@ class v5 {
   }
 
   static dec(str) {
-    return new Buffer(base64url.decode(str),'base64');
+    return new Buffer(base64url.decode(str), 'base64');
   }
 
   static parse(objectname) {
     return msgpack.decode(v5.dec(objectname));
   }
   static create(obj) {
-    const sortedObj = _(obj).toPairs().sortBy(0).fromPairs().value();
+    const sortedObj = _(obj)
+      .toPairs()
+      .sortBy(0)
+      .fromPairs()
+      .value();
     return v5.enc(msgpack.encode(sortedObj).toString('base64'));
   }
 }
-
 
 class v4 {
   static enc(str) {
@@ -69,7 +76,6 @@ class v4 {
     return v4.enc(msgpack.encode(obj).toString('base64'));
   }
 }
-
 
 class v3 {
   static enc(str) {
@@ -90,7 +96,6 @@ class v3 {
   }
 }
 
-
 class v2 {
   static enc(str) {
     return b64.in(new Buffer(str).toString('base64'));
@@ -105,7 +110,6 @@ class v2 {
     return v2.enc(JSON.stringify(obj));
   }
 }
-
 
 const schemas = {
   v2,
@@ -130,5 +134,8 @@ function parse(objectname) {
 }
 
 module.exports = {
-  ...schemas, schemas, parse, create,
+  ...schemas,
+  schemas,
+  parse,
+  create,
 };

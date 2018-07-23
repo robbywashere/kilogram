@@ -3,7 +3,6 @@ const demand = require('../../lib/demand');
 const { get } = require('lodash');
 const { BadRequest, Unauthorized } = require('http-errors');
 
-
 // TODO: dont think this is even needed ?
 // TODO: needs AUTH
 function removeObject({ minioClient = demand('minioClient') }) {
@@ -29,7 +28,6 @@ function listObjects({ minioClient = demand('minioClient') }) {
   };
 }
 
-
 function signedURL({ minioClient = demand('minioClient'), type = 'POST' }) {
   return async (req, res, next) => {
     try {
@@ -37,7 +35,10 @@ function signedURL({ minioClient = demand('minioClient'), type = 'POST' }) {
 
       if (typeof AccountId === 'undefined') throw new BadRequest('Must include AccountId:');
 
-      if (typeof get(req, 'user.accountIds') !== 'function' || !req.user.accountIds().includes(AccountId)) throw new Unauthorized('User not authorized for given AccountId');
+      if (
+        typeof get(req, 'user.accountIds') !== 'function' ||
+        !req.user.accountIds().includes(AccountId)
+      ) { throw new Unauthorized('User not authorized for given AccountId'); }
 
       const { uuid, url, objectName } = await minioClient.newPhoto({ AccountId, type });
 
@@ -47,6 +48,5 @@ function signedURL({ minioClient = demand('minioClient'), type = 'POST' }) {
     }
   };
 }
-
 
 module.exports = { signedURL, removeObject, listObjects };

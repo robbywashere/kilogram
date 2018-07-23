@@ -29,7 +29,6 @@ class PostPolicy extends AuthPolicy {
   }
 }
 
-
 module.exports = function PostController() {
   const router = new Router();
   const resource = new Resource({ model: Post, policy: PostPolicy });

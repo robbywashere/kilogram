@@ -1,10 +1,8 @@
-
 const assert = require('assert');
 const express = require('express');
 const handler = require('../../lib/handler');
 const sinon = require('sinon');
 const request = require('supertest');
-
 
 describe('lib.handler', () => {
   it('should catch error, log them, then call the next function with said error', async () => {

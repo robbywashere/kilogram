@@ -8,11 +8,14 @@ const Promise = require('bluebird');
 const sequelize = require('sequelize');
 const {
   initJob,
-  ezUserAccount, newIGAccount, createAccountUserPostJob, createAccountUserPost, createUserPostJob,
+  ezUserAccount,
+  newIGAccount,
+  createAccountUserPostJob,
+  createAccountUserPost,
+  createUserPostJob,
   createUserAccountIGAccountPhotoPost,
 } = require('../helpers');
 const { times, constant } = require('lodash');
-
 
 describe('objects/PostJob', () => {
   beforeEach(async () => await sync(true));
@@ -32,7 +35,6 @@ describe('objects/PostJob', () => {
       photoUUID: photo.uuid,
     };
 
-
     const post = await Post.create(props);
 
     await PostJob.initPostJobs();
@@ -45,7 +47,6 @@ describe('objects/PostJob', () => {
     const jobSearch2 = await PostJob.findAll();
     assert.equal(jobSearch2.length, 1);
   });
-
 
   it('should create jobs for all outstanding posts with .initPostJobs', async () => {
     const user = await ezUserAccount();
@@ -62,7 +63,6 @@ describe('objects/PostJob', () => {
       photoUUID: photo.uuid,
     };
 
-
     await Post.bulkCreate(times(9, constant(props)));
     await PostJob.initPostJobs();
     // Run again to assure no dupes
@@ -70,7 +70,6 @@ describe('objects/PostJob', () => {
     const jobs = await PostJob.findAll();
     assert.equal(9, jobs.length);
   });
-
 
   it('TODO: should create a Notification when PostJob.status is updated', async () => {
     const {
@@ -80,7 +79,7 @@ describe('objects/PostJob', () => {
     const job = await initJob(post);
 
     // const posts1 = await Post.published();
-    //assert.equal(posts1.length, 0);
+    // assert.equal(posts1.length, 0);
 
     await job.update({ status: 'SUCCESS' });
 
@@ -101,7 +100,6 @@ describe('objects/PostJob', () => {
 
     assert.equal(notif[0].body.data.PostJob.status, 'SUCCESS');
   });
-
 
   it('should respond to withPost and withPostForId with a .Post object with a .Photo object', async () => {
     const { post } = await createAccountUserPostJob();
@@ -155,7 +153,11 @@ describe('objects/PostJob', () => {
 
   it('should report outstanding jobs', async () => {
     const account = await Account.create();
-    const igAccount = await IGAccount.create({ AccountId: account.id, username: 'xxxxx', password: 'xxxxx' });
+    const igAccount = await IGAccount.create({
+      AccountId: account.id,
+      username: 'xxxxx',
+      password: 'xxxxx',
+    });
 
     const j = await PostJob.create({
       AccountId: account.id,

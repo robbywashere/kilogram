@@ -9,11 +9,11 @@ const path = require('path');
   try {
     await dbSync(true);
     const schemaPath = getSchemaPath();
-    const { username, database } = dbConfig['development'];
+    const { username, database } = dbConfig.development;
     await pgSchemaDumpFile({ path: schemaPath, username, database });
     process.exit(0);
-  } catch(e) {
+  } catch (e) {
     logger.error(e);
     throw e;
   }
-})();
+}());

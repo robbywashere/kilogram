@@ -1,4 +1,3 @@
-
 const { IGAccount } = require('../../objects');
 const Resource = require('../lib/baseResource');
 const AuthPolicy = require('../lib/authPolicy');
@@ -38,7 +37,6 @@ class IGAccountPolicy extends AuthPolicy {
     return this._accounts();
   }
 }
-
 
 module.exports = function IGAccountController() {
   const router = new Router();

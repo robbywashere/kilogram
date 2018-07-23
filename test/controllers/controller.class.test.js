@@ -1,4 +1,3 @@
-
 const { Post, User, Device } = require('../../objects');
 const { Router } = require('express');
 const express = require('express');
@@ -10,7 +9,6 @@ const DBSync = require('../../db/sync');
 const { loadObject, initObjects, newRegistry } = require('../../server-lib/objectLoader');
 const { Op, STRING, INTEGER } = require('sequelize');
 const assert = require('assert');
-
 
 const BaseResource = require('../../controllers/lib/baseResource');
 const BasePolicy = require('../../controllers/lib/basePolicy');
@@ -43,7 +41,6 @@ class AllowAllPolicy extends BasePolicy {
   }
 }
 
-
 const testObj = {
   Name: 'TestObj',
   Properties: {
@@ -62,24 +59,18 @@ const testObj = {
   Scopes: {
     fooIsBar: { where: { foo: 'bar' } },
     userScoped(user) {
-      return (user.admin) ? {} : { where: { UserId: user.id } };
+      return user.admin ? {} : { where: { UserId: user.id } };
     },
   },
-  Hooks: {
-  },
-  Methods: {
-  },
-  StaticMethods: {
-  },
-  Init() {
-  },
+  Hooks: {},
+  Methods: {},
+  StaticMethods: {},
+  Init() {},
 };
-
 
 const registry = newRegistry();
 loadObject(testObj, registry);
 initObjects(registry);
-
 
 const { TestObj } = registry.objects;
 
@@ -87,7 +78,6 @@ describe('class controller', () => {
   let app;
   beforeEach(async () => {
     await DBSync(true);
-
 
     const resource = new BaseResource({
       model: TestObj,
@@ -105,8 +95,7 @@ describe('class controller', () => {
     app.use(router);
   });
 
-
-  it('should index with GET \'/\'', async () => {
+  it("should index with GET '/'", async () => {
     await TestObj.create({ foo: 'bar' });
 
     const response = await request(app)
@@ -117,7 +106,7 @@ describe('class controller', () => {
     assert.equal(response.body[0].foo, 'bar');
   });
 
-  it('should create new resource with POST \'/\'  ', async () => {
+  it("should create new resource with POST '/'  ", async () => {
     const response = await request(app)
       .post('/')
       .send({ foo: 'foo' })
@@ -130,12 +119,11 @@ describe('class controller', () => {
     assert.equal(testobj.foo, 'foo');
   });
 
-  it('should create new resources POST \'/collection\' ', async () => {
+  it("should create new resources POST '/collection' ", async () => {
     const response = await request(app)
       .post('/collection')
       .send([{ foo: 'foo1' }, { foo: 'foo2' }])
       .expect(200);
-
 
     const ids = response.body.map(i => i.id).sort();
     assert.equal(ids.length, 2);
@@ -147,8 +135,7 @@ describe('class controller', () => {
     assert(tobj2);
   });
 
-
-  it(' should delete resources in bulk DELETE \'/collection?ids=[...]\'', async () => {
+  it(" should delete resources in bulk DELETE '/collection?ids=[...]'", async () => {
     const tobjs = await TestObj.bulkCreate([{}, {}, {}], { returning: true });
 
     const ids = tobjs.map(i => i.id).sort();
@@ -163,7 +150,7 @@ describe('class controller', () => {
 
     assert.deepEqual(ids, destroyedIds);
   });
-  it(' should return empty collection when deleting resources in bulk DELETE that do not exist\'/collection?ids=[...]\'', async () => {
+  it(" should return empty collection when deleting resources in bulk DELETE that do not exist'/collection?ids=[...]'", async () => {
     const tobjs = await TestObj.bulkCreate([{}, {}, {}], { returning: true });
 
     const ids = [99, 100, 101];
@@ -176,7 +163,6 @@ describe('class controller', () => {
 
     assert.equal(response.body.length, 0);
   });
-
 
   it('should patch a resource with PATCH /:id', async () => {
     const tobj = await TestObj.create({ foo: 'first ' });
@@ -192,8 +178,9 @@ describe('class controller', () => {
   });
 
   it('should BULK patch resources with PATCH /?ids=[...]', async () => {
-    const tobjs = await TestObj.bulkCreate([{ foo: 'first' }, { foo: 'first' }, { foo: 'first' }], { returning: true });
-
+    const tobjs = await TestObj.bulkCreate([{ foo: 'first' }, { foo: 'first' }, { foo: 'first' }], {
+      returning: true,
+    });
 
     const ids = tobjs.map(to => to.id).sort();
     assert(ids.length, 3);
@@ -213,10 +200,10 @@ describe('class controller', () => {
     assert.equal(body[2].foo, 'second');
   });
 
-
   it('should return empty array when BULK patch resources with PATCH with ids that do not exist /?ids=[...]', async () => {
-    const tobjs = await TestObj.bulkCreate([{ foo: 'first' }, { foo: 'first' }, { foo: 'first' }], { returning: true });
-
+    const tobjs = await TestObj.bulkCreate([{ foo: 'first' }, { foo: 'first' }, { foo: 'first' }], {
+      returning: true,
+    });
 
     const ids = [99, 100, 101];
     assert(ids.length, 3);
@@ -232,22 +219,19 @@ describe('class controller', () => {
     assert.equal(body.length, 0);
   });
 
-  it('should paginate 100 per page (default) resources with GET \'/?page=<n>\' ', async () => {
+  it("should paginate 100 per page (default) resources with GET '/?page=<n>' ", async () => {
     const tobjs = await TestObj.bulkCreate(times(300, () => ({ foo: 'bar' })));
 
     assert(tobjs.length, 300);
-    const response1 = await request(app)
-      .get('/', { page: 0 });
+    const response1 = await request(app).get('/', { page: 0 });
 
     assert.equal(response1.body.length, 100);
     assert.equal(response1.body[0].id, 1);
     assert.equal(response1.body[99].id, 100);
 
-
     const response2 = await request(app)
       .get('/')
       .query({ page: 1 });
-
 
     assert.equal(response2.body.length, 100);
     assert.equal(response2.body[0].id, 101);
@@ -257,14 +241,12 @@ describe('class controller', () => {
       .get('/')
       .query({ page: 2 });
 
-
     assert.equal(response3.body.length, 100);
     assert.equal(response3.body[0].id, 201);
     assert.equal(response3.body[99].id, 300);
   });
 
-
-  it('should paginate a given count as in per page( query param: count) per page resources with GET \'/?page=<n>\' ', async () => {
+  it("should paginate a given count as in per page( query param: count) per page resources with GET '/?page=<n>' ", async () => {
     const tobjs = await TestObj.bulkCreate(times(300, () => ({ foo: 'bar' })));
 
     assert(tobjs.length, 300);
@@ -276,21 +258,18 @@ describe('class controller', () => {
     assert.equal(response1.body[0].id, 1);
     assert.equal(response1.body[49].id, 50);
 
-
     const response2 = await request(app)
       .get('/')
       .query({ page: 1, count: 50 });
-
 
     assert.equal(response2.body.length, 50);
     assert.equal(response2.body[0].id, 51);
     assert.equal(response2.body[49].id, 100);
   });
 
-
   it('should sort ASC and DESC given param: sort=<column> ', async () => {
-    let count = 0; const alpha = () => 'abcdefghijklmnopqrstuvwxyz'.split('')[count++];
-
+    let count = 0;
+    const alpha = () => 'abcdefghijklmnopqrstuvwxyz'.split('')[count++];
 
     const tobjs = await TestObj.bulkCreate(times(10, () => ({ foo: alpha() })));
 
@@ -304,7 +283,6 @@ describe('class controller', () => {
     assert.equal(ids[0], 10);
     assert.equal(ids[9], 1);
 
-
     const response2 = await request(app)
       .get('/')
       .query({ sort: 'id' });
@@ -315,13 +293,11 @@ describe('class controller', () => {
     assert.equal(ids2[9], 10);
   });
 
-
   it.skip('should sort by multiple columns');
 
-  it('should scope GET \'/\' on given ?scope=', async () => {
+  it("should scope GET '/' on given ?scope=", async () => {
     const tobj = await TestObj.create({ foo: 'bar' });
     await TestObj.create({ foo: 'fooisnotbar' });
-
 
     const response = await request(app)
       .get('/')
@@ -331,7 +307,6 @@ describe('class controller', () => {
     assert.equal(response.body.length, 1);
     assert.equal(response.body[0].foo, 'bar');
   });
-
 
   it('should respond to operator functions in query', async () => {
     const tobj = await TestObj.create({ foo: 'findTHISstring' });
@@ -354,12 +329,10 @@ describe('class controller', () => {
 
     assert.equal(response1b.body.length, 0);
 
-
     const response2 = await request(app)
       .get('/')
       .query({ $foo: { like: '%THIS%' } });
     assert.equal(response2.body.length, 1);
-
 
     const response3 = await request(app)
       .get('/')
@@ -383,10 +356,9 @@ describe('class controller', () => {
 describe('controller class polcy', () => {
   class RestrictivePolicy extends BasePolicy {
     index() {
-      return (this.user && !!this.user.superAdmin);
+      return this.user && !!this.user.superAdmin;
     }
   }
-
 
   it('should only allow user.superAdmin === true to index a resource', async () => {
     const resource = new BaseResource({
@@ -412,7 +384,6 @@ describe('controller class polcy', () => {
       .get('/')
       .expect(200);
   });
-
 
   it('should allow instance level checks', async () => {
     class MyResource extends BaseResource {
@@ -447,4 +418,3 @@ describe('controller class polcy', () => {
       .expect(403);
   });
 });
-

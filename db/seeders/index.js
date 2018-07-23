@@ -19,7 +19,8 @@ module.exports = {
 `;
 
 function seed(action) {
-  return sync(false).then(() => Promise.all(slurpDir(seed => seed[action](DB.queryInterface, Sequelize))));
+  return sync(false).then(() =>
+    Promise.all(slurpDir(seed => seed[action](DB.queryInterface, Sequelize))));
 }
 
 function up() {
@@ -32,7 +33,7 @@ function create(n) {
   }
 
   const name = n.replace(' ', '-').toLowerCase();
-  const filepath = join(__dirname, `${name}-${(new Date()).getTime()}.js`);
+  const filepath = join(__dirname, `${name}-${new Date().getTime()}.js`);
   return util.promisify(writeFile)(filepath, NEW_SEED);
 }
 

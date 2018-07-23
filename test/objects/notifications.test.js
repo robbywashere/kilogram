@@ -7,11 +7,15 @@ const { Op, fn, literal } = sequelize;
 
 const assert = require('assert');
 const {
-  ezUser, newIGAccount, ezUserAccount, createUserPostJob, createAccountUserPost, createAccountUserPostJob,
+  ezUser,
+  newIGAccount,
+  ezUserAccount,
+  createUserPostJob,
+  createAccountUserPost,
+  createAccountUserPostJob,
 } = require('../helpers');
 
 const dbSync = require('../../db/sync');
-
 
 describe('Notifications', () => {
   beforeEach(() => dbSync(true));
@@ -35,7 +39,6 @@ describe('Notifications', () => {
     await notif.markAsRead(user.id);
   });
 
-
   it('should list notifications for users own account(s) only', async () => {
     const user1 = await ezUserAccount();
 
@@ -45,9 +48,7 @@ describe('Notifications', () => {
       email: 'user2@user2.com',
     });
 
-
     await user2.reloadWithAccounts();
-
 
     const accountid2 = user2.Accounts[0].id;
 
@@ -66,11 +67,12 @@ describe('Notifications', () => {
       AccountId: accountid2,
     });
 
-
-    const user2Notifs = await Notification.unread({
-      UserId: user2.id,
-    }, { attributes: ['id'] });
-
+    const user2Notifs = await Notification.unread(
+      {
+        UserId: user2.id,
+      },
+      { attributes: ['id'] },
+    );
 
     assert.equal(user2Notifs.length, 1);
 
@@ -85,13 +87,11 @@ describe('Notifications', () => {
       email: 'user2@user2.com',
     });
 
-
     await user2.reloadWithAccounts();
 
     const accountid2 = user2.Accounts[0].id;
 
     (await Account.findById(accountid)).addUser(user2);
-
 
     const notif = await Notification.create({
       body: { title: 'notif1' },
@@ -112,20 +112,20 @@ describe('Notifications', () => {
     await notif.markAsRead(user1.id);
 
     const user1Notifs = await Notification.unread({
-      AccountId: accountid, UserId: user1.id,
+      AccountId: accountid,
+      UserId: user1.id,
     });
 
     const user2Notifs = await Notification.unread({
-      AccountId: accountid, UserId: user2.id,
+      AccountId: accountid,
+      UserId: user2.id,
     });
 
     // Should not contain '1', which has been read by user1
     assert.deepEqual(user1Notifs.map(un => un.id), [2]);
 
-
     // Should contain unread notfs from accountid for user2
     assert.deepEqual(user2Notifs.map(un => un.id), [1, 2]);
-
 
     const user2AllUnreadNotifs = await Notification.unread({
       UserId: user2.id,
@@ -134,7 +134,6 @@ describe('Notifications', () => {
     assert.deepEqual(user2AllUnreadNotifs.map(un => un.id).sort(), [1, 2, 3]);
 
     await Notification.markAllAsRead(user2.id);
-
 
     const user2AllNotifsAfterRead = await Notification.unread({
       UserId: user2.id,

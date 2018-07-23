@@ -1,4 +1,3 @@
-
 const { BadRequest } = require('http-errors');
 
 module.exports = function requireParams(props, body) {
@@ -7,4 +6,3 @@ module.exports = function requireParams(props, body) {
     throw new BadRequest(`${missing.join(',')} missing from request`);
   }
 };
-

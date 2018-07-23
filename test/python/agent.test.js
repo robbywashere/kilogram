@@ -1,14 +1,11 @@
-
 const { Agent } = require('../../android/deviceAgent');
 // const IGAccount = require('../../objects/IGAccount');
 const PythonShell = require('python-shell');
 const sinon = require('sinon');
 const assert = require('assert');
 
-
 describe('class Agent', () => {
   const sandbox = sinon.sandbox.create();
-
 
   afterEach(() => {
     sandbox.restore();

@@ -1,4 +1,3 @@
-
 const basePolicy = require('./basePolicy');
 const { get } = require('lodash');
 const { Forbidden, Unauthorized } = require('http-errors');

@@ -16,15 +16,14 @@ function loadFixture(name) {
 function fixtures() {
   const fixies = readdirSync(`${__dirname}/../fixtures`);
   const o = {};
-  fixies.forEach(f => o[f] = loadFixture(f));
+  fixies.forEach(f => (o[f] = loadFixture(f)));
   return o;
 }
 
 function appLogger(app) {
   app.use((err, req, res, next) => {
     console.error('>>> express logger', err);
-    res.status(err.statusCode || 500)
-      .send(err.msg || err.toString());
+    res.status(err.statusCode || 500).send(err.msg || err.toString());
     throw err;
   });
 }
@@ -36,13 +35,14 @@ function fakeReadStream(string = 'fakeReadStream()') {
   s.push(null);
 }
 
-const deviceFactory = (n, nodeName = 'HOME1') => Device.create({
-  adbId: `adbId${n}`,
-  idle: true,
-  online: true,
-  enabled: true,
-  nodeName,
-});
+const deviceFactory = (n, nodeName = 'HOME1') =>
+  Device.create({
+    adbId: `adbId${n}`,
+    idle: true,
+    online: true,
+    enabled: true,
+    nodeName,
+  });
 
 function runMinio({ log = true, testDir = './.minio-test-data' } = {}) {
   const stderr = [];
@@ -64,7 +64,6 @@ function runMinio({ log = true, testDir = './.minio-test-data' } = {}) {
   });
   return minio;
 }
-
 
 function exprezz(user = {}) {
   const app = require('express')();
@@ -93,7 +92,11 @@ async function initJob({ id, AccountId, IGAccountId }) {
 }
 
 function newIGAccount(user) {
-  return IGAccount.create({ username: 'username', password: 'password', AccountId: user.Accounts[0].id });
+  return IGAccount.create({
+    username: 'username',
+    password: 'password',
+    AccountId: user.Accounts[0].id,
+  });
 }
 
 async function createUserAccountIGAccountPhotoPost(userOpts) {
@@ -104,24 +107,31 @@ async function createUserAccountIGAccountPhotoPost(userOpts) {
   const photo = await Photo.createPostPhoto();
 
   const post = await createPhotoPost({
-    user, account, igAccount, postOpts: { description: '#description' },
+    user,
+    account,
+    igAccount,
+    postOpts: { description: '#description' },
   });
 
-
   return {
-    account, igAccount, user, post, photo,
+    account,
+    igAccount,
+    user,
+    post,
+    photo,
   };
 }
 
-async function userCreate(opts,moreOpts) {
-
-  const user = await User.create({
-    password: 'blah',
-    email: 'test@test.com',
-    ...opts
-  },moreOpts);
+async function userCreate(opts, moreOpts) {
+  const user = await User.create(
+    {
+      password: 'blah',
+      email: 'test@test.com',
+      ...opts,
+    },
+    moreOpts,
+  );
   return user.reloadWithAccounts();
-
 }
 
 async function createAccountUserPostJob(userOpts) {
@@ -138,20 +148,29 @@ async function createAccountUserPostJob(userOpts) {
     photoUUID: photo.uuid,
   });
 
-
   await initJob(post);
   await post.reloadWithAll();
 
   return {
-    account, igAccount, user, post, job: post.PostJob,
+    account,
+    igAccount,
+    user,
+    post,
+    job: post.PostJob,
   };
 }
 
 function ezUser(opts, moreOpts) {
-  return User.create(Object.assign({
-    password: 'blah',
-    email: 'test@test.com',
-  }, opts), moreOpts);
+  return User.create(
+    Object.assign(
+      {
+        password: 'blah',
+        email: 'test@test.com',
+      },
+      opts,
+    ),
+    moreOpts,
+  );
 }
 
 function ezUserAccount(opts) {
@@ -172,26 +191,32 @@ async function createAccountUserPost(userOpts) {
     PhotoId: photo.id,
   });
   return {
-    account, igAccount, user, post,
+    account,
+    igAccount,
+    user,
+    post,
   };
 }
 function createPhotoPost({
   account, igAccount, user, postOpts = {}, photoOpts = {},
 }) {
-  return Post.create({
-    postDate: new Date(),
-    AccountId: account.id,
-    IGAccountId: igAccount.id,
-    UserId: user.id,
-    ...postOpts,
-    Photo: {
-      bucket: 'uploads',
-      type: 'POST',
-      ...photoOpts,
+  return Post.create(
+    {
+      postDate: new Date(),
+      AccountId: account.id,
+      IGAccountId: igAccount.id,
+      UserId: user.id,
+      ...postOpts,
+      Photo: {
+        bucket: 'uploads',
+        type: 'POST',
+        ...photoOpts,
+      },
     },
-  }, {
-    include: [Photo],
-  });
+    {
+      include: [Photo],
+    },
+  );
 }
 
 async function createAccountUserPostJob2() {

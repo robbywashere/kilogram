@@ -1,10 +1,8 @@
-
 const { loadObject, initObjects, newRegistry } = require('../../server-lib/objectLoader');
 
 const { STRING, INTEGER, Model } = require('sequelize');
 const DBSync = require('../../db/sync');
 const assert = require('assert');
-
 
 describe('objectLoader', () => {
   let InitObjs = {};
@@ -29,16 +27,19 @@ describe('objectLoader', () => {
     ScopeFunctions: true,
     Scopes: {
       userScoped(user) {
-        return (user.admin) ? {} : { where: { UserId: user.id } };
+        return user.admin ? {} : { where: { UserId: user.id } };
       },
     },
-    Hooks: {
-    },
+    Hooks: {},
     Methods: {
-      instanceMeth() { return true; },
+      instanceMeth() {
+        return true;
+      },
     },
     StaticMethods: {
-      staticMeth() { return true; },
+      staticMeth() {
+        return true;
+      },
     },
     Init(objs) {
       InitObjs = objs;
@@ -82,7 +83,6 @@ describe('objectLoader', () => {
     assert.equal(empty.length, 0);
   });
 
-
   it('should register omitted and permitted keys', () => {
     assert.deepEqual(TestObj.permitted, { foo: true });
     assert.deepEqual(TestObj.omitted, { bar: true, UserId: true });
@@ -112,4 +112,3 @@ describe('objectLoader', () => {
     assert.deepEqual(Object.keys(toJSON), ['id', 'foo', 'updatedAt', 'createdAt']);
   });
 });
-

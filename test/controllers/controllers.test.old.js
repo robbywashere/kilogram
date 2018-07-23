@@ -1,4 +1,3 @@
-
 const initController = require('../../controllers');
 const { MClient } = require('../../server-lib/minio');
 const { loadObjectControllers } = require('../../controllers');
@@ -58,14 +57,10 @@ describe.skip('controllers', () => {
           return { where: { UserId: user.id } };
         },
       },
-      Hooks: {
-      },
-      Methods: {
-      },
-      StaticMethods: {
-      },
-      Init() {
-      },
+      Hooks: {},
+      Methods: {},
+      StaticMethods: {},
+      Init() {},
     };
     const registry = newRegistry();
     loadObject(testObj, registry);
@@ -135,7 +130,6 @@ describe.skip('controllers', () => {
       .send({ foo: 'bar' })
       .expect(404);
 
-
     await t1.reload();
 
     assert.equal(t1.foo, null);
@@ -150,7 +144,6 @@ describe.skip('controllers', () => {
     await t1.reload();
 
     assert.equal(t1.bar, null);
-
 
     const res5 = await request(app)
       .put('/testobjs/2')
@@ -172,7 +165,6 @@ describe.skip('controllers', () => {
 
     const client = new MClient();
     initController({ app, sequelize: DB, client });
-
 
     try {
       const res = await request(app)
@@ -248,7 +240,6 @@ describe.skip('controllers', () => {
       .post(`/user_recovery/${email}`)
       .expect(200);
 
-
     await user.reload();
 
     const newPass = 'blah2';
@@ -260,9 +251,8 @@ describe.skip('controllers', () => {
 
     await user.reload();
 
-    assert((await user.verifyPassword(newPass)));
+    assert(await user.verifyPassword(newPass));
   });
-
 
   it('should do user invite', async () => {
     const account = await Account.create({});
@@ -278,7 +268,6 @@ describe.skip('controllers', () => {
     assert(user.Accounts.map(a => a.id).includes(account.id));
   });
 
-
   it.skip('>>>> ok', async () => {
     const user = await ezUser({ admin: false });
     const user2 = await ezUser({ admin: true });
@@ -290,7 +279,6 @@ describe.skip('controllers', () => {
     const post = await Post.create({ postDate: new Date(), UserId: 1 });
 
     const post2 = await Post.create({ postDate: new Date(), UserId: 2 });
-
 
     const app = exprezz(user);
     const client = new MClient();
@@ -324,7 +312,6 @@ describe.skip('controllers', () => {
     const igaccount = await IGAccount.create();
     const user2 = await ezUser({ email: 'y@y.com' });
     const post = await Post.create({
-
       AccountId: account.id,
       IGAccountId: igaccount.id,
       postDate: new Date(),

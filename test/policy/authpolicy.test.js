@@ -1,4 +1,3 @@
-
 const authPolicy = require('../../controllers/lib/authPolicy');
 
 const assert = require('assert');
@@ -11,7 +10,7 @@ describe('auth policy', () => {
   });
 
   it('should throw Forbidden when #authorizeRequest called with user with no accounts', () => {
-    assert.throws(() => authPolicy.authorizeRequest({ user: { } }), Error);
+    assert.throws(() => authPolicy.authorizeRequest({ user: {} }), Error);
   });
 
   it('should NOT throw Forbidden or Unauthorized when #authorizeRequest called with user with accounts', () => {

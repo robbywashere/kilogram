@@ -1,4 +1,3 @@
-
 const {
   Account, IGAccount, User, UserAccount,
 } = require('../../objects');
@@ -21,7 +20,6 @@ describe('Account object', () => {
 
     await account.reloadWithIgAccounts();
 
-
     await account.addUserAs(user, 'admin');
 
     await account.addUserAs(user2, 'member');
@@ -35,8 +33,7 @@ describe('Account object', () => {
     assert(users[1].UserAccount.role, 'member');
   });
 
-  it('should scope an Account query to a user argument with .userScoped',async () =>{
-
+  it('should scope an Account query to a user argument with .userScoped', async () => {
     const user1 = await ezUserAccount({ email: 'y@y.com' });
     const user2 = await ezUserAccount({ email: 'x@x.com' });
 
@@ -47,25 +44,22 @@ describe('Account object', () => {
     const user1Accounts = await Account.userScoped(user1);
     const user2Accounts = await Account.userScoped(user2);
 
-    assert(user1Accounts.length,2);
+    assert(user1Accounts.length, 2);
 
+    const user1AccountIds = (await user1.reload({ include: [Account] })).Accounts.map(a => a.id);
 
-    let user1AccountIds = (await user1.reload({ include: [Account] })).Accounts.map(a=>a.id);
-
-    let user1scopedAccountIds  = user1Accounts.map(ua=>ua.id);
+    const user1scopedAccountIds = user1Accounts.map(ua => ua.id);
 
     assert.deepEqual(user1AccountIds, user1scopedAccountIds);
 
     assert.equal(user1AccountIds.length, 2);
 
-    let user2AccountIds = (await user2.reload({ include: [Account] })).Accounts.map(a=>a.id);
+    const user2AccountIds = (await user2.reload({ include: [Account] })).Accounts.map(a => a.id);
 
-    let user2scopedAccountIds  = user2Accounts.map(ua=>ua.id);
+    const user2scopedAccountIds = user2Accounts.map(ua => ua.id);
 
     assert.deepEqual(user2AccountIds, user2scopedAccountIds);
 
     assert.equal(user2AccountIds.length, 1);
-
-  })
-
+  });
 });

@@ -1,4 +1,3 @@
-
 const sinon = require('sinon');
 const dbSync = require('../../db/sync');
 

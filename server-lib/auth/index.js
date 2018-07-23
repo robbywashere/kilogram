@@ -20,7 +20,7 @@ const { logger } = require('../../lib/logger');
 
 const { CookieSession, PGSession } = require('./session');
 
-//TODO: dep inj initialized sessioner({ secret })
+// TODO: dep inj initialized sessioner({ secret })
 
 module.exports = function Auth(app, { sessionStrategy = demand('sessionStrategy') }) {
   // TODO??: app.use(require('body-parser').urlencoded({ extended: true }));
@@ -32,8 +32,12 @@ module.exports = function Auth(app, { sessionStrategy = demand('sessionStrategy'
   passport.use(new Strategy(async (username, password, cb) => {
     try {
       const user = await User.scope('withAccounts').findOne({ where: { email: username } });
-      if (!user || !user.Accounts) { return cb(null, false); }
-      if (!(await user.verifyPassword(password))) { return cb(null, false); }
+      if (!user || !user.Accounts) {
+        return cb(null, false);
+      }
+      if (!(await user.verifyPassword(password))) {
+        return cb(null, false);
+      }
       return cb(null, user);
     } catch (e) {
       return cb(e);
@@ -45,7 +49,9 @@ module.exports = function Auth(app, { sessionStrategy = demand('sessionStrategy'
   const router = new Router();
   router.get('/auth', (req, res, next) => {
     const user = req.user;
-    if (!user) { return next(new Forbidden()); }
+    if (!user) {
+      return next(new Forbidden());
+    }
     res.send({ user: user.serialize() });
   });
   router.post('/auth', passport.authenticate('local'), (req, res) => {

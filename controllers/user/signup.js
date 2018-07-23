@@ -18,7 +18,6 @@ const { genPasswordKey } = require('../../objects/_helpers');
 
 const querystring = require('querystring');
 
-
 const requireParams = require('../lib/requireParams');
 
 module.exports = function UserSignUpController() {
@@ -51,4 +50,3 @@ module.exports = function UserSignUpController() {
   });
   return router;
 };
-

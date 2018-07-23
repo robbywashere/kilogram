@@ -4,12 +4,7 @@ const demand = require('../../lib/demand');
 const assertLogin = require('../lib/assertLogin');
 const { BadRequest, Unauthorized } = require('http-errors');
 
-const {
-  removeObject,
-  listObjects,
-  signedURL,
-} = require('../../server-lib/minio/middlewares');
-
+const { removeObject, listObjects, signedURL } = require('../../server-lib/minio/middlewares');
 
 // TODO: test assertLogin here
 module.exports = function MinioController({ minioClient = demand('minioClient') }) {
@@ -20,4 +15,3 @@ module.exports = function MinioController({ minioClient = demand('minioClient') 
   router.post('/url', signedURL({ minioClient }));
   return router;
 };
-

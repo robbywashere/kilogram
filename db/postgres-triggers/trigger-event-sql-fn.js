@@ -26,4 +26,3 @@ module.exports = (name = 'trigger_notify_event') => `CREATE OR REPLACE FUNCTION 
         RETURN NULL; 
     END;
 $$ LANGUAGE plpgsql;`;
-

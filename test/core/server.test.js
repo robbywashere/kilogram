@@ -22,19 +22,21 @@ describe('server', () => {
         };
         const mc = new MClient({ bucket, client });
         app.use(Routes({ minioClient: mc }));
-        const expectation = [{ bucketName: 'testbucket', url: 'http://fakeurl/object' },
+        const expectation = [
           { bucketName: 'testbucket', url: 'http://fakeurl/object' },
-          { bucketName: 'testbucket', url: 'http://fakeurl/object' }];
+          { bucketName: 'testbucket', url: 'http://fakeurl/object' },
+          { bucketName: 'testbucket', url: 'http://fakeurl/object' },
+        ];
 
-        const response = await request(app).get('/objects').expect(200);
+        const response = await request(app)
+          .get('/objects')
+          .expect(200);
         assert.deepEqual(expectation, response.body);
       });
     });
 
     describe.skip('POST /uploads?name=', () => {
       // THIS IS ALREADY TEST ;)
-
-
     });
     describe('DELETE /objects?name=', () => {
       it('should remove the object from the minio store', async () => {
@@ -45,7 +47,9 @@ describe('server', () => {
         const mc = new MClient({ bucket, client });
         app.use(Routes({ minioClient: mc }));
 
-        const response = await request(app).delete('/objects?name=photo.jpg').expect(200);
+        const response = await request(app)
+          .delete('/objects?name=photo.jpg')
+          .expect(200);
 
         assert(client.removeObject.calledWith(bucket, 'photo.jpg'));
       });

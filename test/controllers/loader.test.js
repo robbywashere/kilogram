@@ -1,4 +1,3 @@
-
 const {
   load, parsePaths, endpoint, isCntrlFile,
 } = require('../../controllers/_load');
@@ -33,23 +32,21 @@ describe('_load.js', () => {
     assert(params.app.use.calledWith('/prefix/endpoint', router));
   });
 
-
   it('should recognize cntrl file', () => {
     assert(isCntrlFile('index.js'));
     assert(!isCntrlFile('_name.js'));
     assert(!isCntrlFile('.name.js'));
   });
 
-
   it('should parsePaths given a directory', () => {
     let stub1;
     let lstatStub;
 
-    stub1 = sinon.stub(fs, 'readdirSync')
+    stub1 = sinon
+      .stub(fs, 'readdirSync')
       .onCall(0)
       .returns(['user', 'account'])
       .returns(['index.js', '.file.js']);
-
 
     lstatStub = sinon.stub(fs, 'lstatSync').returns({
       isDirectory: () => true,
@@ -58,23 +55,25 @@ describe('_load.js', () => {
 
     const result = parsePaths('/Absolute/Root/');
 
-    assert.deepEqual(result, [{
-      path: '/Absolute/Root/user/index.js',
-      endpoint: '/user/',
-    }, {
-      path: '/Absolute/Root/account/index.js',
-      endpoint: '/account/',
-    },
+    assert.deepEqual(result, [
+      {
+        path: '/Absolute/Root/user/index.js',
+        endpoint: '/user/',
+      },
+      {
+        path: '/Absolute/Root/account/index.js',
+        endpoint: '/account/',
+      },
     ]);
 
     stub1.restore();
     lstatStub.restore();
 
-    stub1 = sinon.stub(fs, 'readdirSync')
+    stub1 = sinon
+      .stub(fs, 'readdirSync')
       .onCall(0)
       .returns(['user', 'account'])
       .returns(['action.js']);
-
 
     lstatStub = sinon.stub(fs, 'lstatSync').returns({
       isDirectory: () => true,
@@ -83,18 +82,18 @@ describe('_load.js', () => {
 
     const result2 = parsePaths('/Absolute/Root/');
 
-    assert.deepEqual(result2, [{
-      path: '/Absolute/Root/user/action.js',
-      endpoint: '/user/action',
-    }, {
-      path: '/Absolute/Root/account/action.js',
-      endpoint: '/account/action',
-    },
+    assert.deepEqual(result2, [
+      {
+        path: '/Absolute/Root/user/action.js',
+        endpoint: '/user/action',
+      },
+      {
+        path: '/Absolute/Root/account/action.js',
+        endpoint: '/account/action',
+      },
     ]);
-
 
     stub1.restore();
     lstatStub.restore();
   });
 });
-

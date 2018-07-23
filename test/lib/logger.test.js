@@ -1,4 +1,3 @@
-
 const {
   getLogLevel, logger, makeLogger, setLogLevel, levels,
 } = require('../../lib/logger');
@@ -17,8 +16,8 @@ describe('logger', () => {
   it('should obey log level when logging', () => {
     let spy;
     const consoleLogger = {
-      log: arg => spy = arg,
-      error: arg => spy = arg,
+      log: arg => (spy = arg),
+      error: arg => (spy = arg),
     };
 
     const myLogger = makeLogger(consoleLogger);

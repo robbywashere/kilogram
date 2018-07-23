@@ -1,8 +1,4 @@
-const {
-  retryConnRefused,
-  MClient,
-  WrapMinioClient,
-} = require('../../server-lib/minio');
+const { retryConnRefused, MClient, WrapMinioClient } = require('../../server-lib/minio');
 
 const Routes = require('../../controllers/minio');
 
@@ -42,7 +38,6 @@ const objects = require('../../objects');
 
 const { Account, Photo } = objects;
 
-
 describe('MClient class', () => {
   describe('WrapMinioClient', () => {
     describe('>>>', () => {
@@ -63,21 +58,21 @@ describe('MClient class', () => {
         sandbox.restore();
         callCount = 0;
       });
-      it(
-        'should Pass custom wrapped client to constructor',
-        async () => {
-          const transport = http;
-          const client = WrapMinioClient((new Minio.Client({ endPoint: '127.0.0.1', transport, secure: false })), { retryDelayFn: () => 0 });
-          const mc = new MClient({ bucket: 'bucket', client });
+      it('should Pass custom wrapped client to constructor', async () => {
+        const transport = http;
+        const client = WrapMinioClient(
+          new Minio.Client({ endPoint: '127.0.0.1', transport, secure: false }),
+          { retryDelayFn: () => 0 },
+        );
+        const mc = new MClient({ bucket: 'bucket', client });
 
-          try {
-            await mc.client.listBuckets();
-          } catch (e) {
-            assert.equal(e.code, 'ECONNREFUSED');
-          }
-          assert.equal(callCount, 6);
-        },
-      );
+        try {
+          await mc.client.listBuckets();
+        } catch (e) {
+          assert.equal(e.code, 'ECONNREFUSED');
+        }
+        assert.equal(callCount, 6);
+      });
     });
     it('should wrap minio client to recover from error connection refusedes', async () => {
       let callCount = 0;
@@ -110,11 +105,14 @@ describe('MClient class', () => {
         Promise.delay.restore();
       });
 
-
       it('should attempt given fn, retrying on on error.code == ECONNREFUSED, retrying N times before throwing an error', async () => {
         const expectedError = new Error('ThEre WaS eRrOr');
 
-        const fn = sinon.spy(async () => { const e = expectedError; e.code = 'ECONNREFUSED'; throw e; });
+        const fn = sinon.spy(async () => {
+          const e = expectedError;
+          e.code = 'ECONNREFUSED';
+          throw e;
+        });
         try {
           await retryConnRefused({
             fn,
@@ -192,7 +190,6 @@ describe('MClient class', () => {
     });
   });
 
-
   describe('listen', () => {
     it('should register minio listener and add notification to the event emitter', () => {
       const client = {};
@@ -203,7 +200,10 @@ describe('MClient class', () => {
       const eventFn = () => {};
       const mc = new MClient({ client, bucket: 'bucket' });
       mc.listen({ events: eventFn });
-      assert(client.listenBucketNotification.calledWith('bucket', '', '', ['s3:ObjectCreated:*', 's3:ObjectRemoved:*']));
+      assert(client.listenBucketNotification.calledWith('bucket', '', '', [
+        's3:ObjectCreated:*',
+        's3:ObjectRemoved:*',
+      ]));
       assert(spyFn.calledWith('notification', eventFn));
     });
 
@@ -232,7 +232,6 @@ describe('MClient class', () => {
         set(delRecord, 's3.object.key', key);
         set(delRecord, 's3.bucket.name', 'deltestBucket');
         set(delRecord, 'eventName', 's3:ObjectRemoved:Deleted');
-
 
         const ee = new EventEmitter();
         const client = {
@@ -272,7 +271,6 @@ describe('MClient class', () => {
       set(delRecord, 's3.bucket.name', 'deltestBucket');
       set(delRecord, 'eventName', 's3:ObjectRemoved:Deleted');
 
-
       const putFn = sinon.stub().resolves(putRecord);
       const delFn = sinon.stub().resolves(delRecord);
       const eventFn = MClient.Event({ putFn, delFn });
@@ -296,7 +294,7 @@ describe('MClient class', () => {
 
       const photo = await Photo.createPostPhoto();
 
-      const uuid = photo.uuid; 
+      const uuid = photo.uuid;
 
       const key = photo.objectName;
 
@@ -313,9 +311,9 @@ describe('MClient class', () => {
       const eventHandler = MClient.PhotoEvents();
 
       await eventHandler(putRecord);
-      assert((await Photo.scope('uploaded').findOne()));
+      assert(await Photo.scope('uploaded').findOne());
       await eventHandler(delRecord);
-      assert((await Photo.scope('deleted').findOne()));
+      assert(await Photo.scope('deleted').findOne());
     });
   });
 
@@ -329,22 +327,23 @@ describe('MClient class', () => {
     it('should return a signed url', async () => {
       const user = await ezUser({ Accounts: {} }, { include: [objects.Account] });
       const client = new MClient({
-        client: { async presignedPutObject() { return 'http://fakeurl/photo'; } },
+        client: {
+          async presignedPutObject() {
+            return 'http://fakeurl/photo';
+          },
+        },
       });
 
       const router = Routes({ minioClient: client });
-
 
       const app = exprezz(user);
 
       app.use(router);
 
-
       const res = await request(app)
         .post('/url')
         .send({ AccountId: user.Accounts[0].id })
         .expect(200);
-
 
       const newPhoto = await Photo.findOne();
 
@@ -353,14 +352,15 @@ describe('MClient class', () => {
         url: 'http://fakeurl/photo',
         uuid: newPhoto.uuid,
       });
-
-
     });
-
 
     it('should throw a 401 error when no user is on req obj and requests a signedurl', async () => {
       const client = new MClient({
-        client: { async presignedPutObject() { return 'http://fakeurl/photo'; } },
+        client: {
+          async presignedPutObject() {
+            return 'http://fakeurl/photo';
+          },
+        },
       });
 
       const router = Routes({ minioClient: client });
@@ -369,17 +369,12 @@ describe('MClient class', () => {
 
       app.use(router);
 
-
       const res = await request(app)
         .post('/url')
         .send({ name: 'filename.jpg', AccountId: 1 })
         .expect(401);
     });
 
-
-    it.skip('should next(ERR) on bad mime type', async () => {
-
-    });
+    it.skip('should next(ERR) on bad mime type', async () => {});
   });
 });
-

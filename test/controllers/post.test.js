@@ -1,5 +1,3 @@
-
-
 const assert = require('assert');
 
 const { loadObjectControllers } = require('../../controllers');
@@ -25,19 +23,23 @@ const minioObj = require('../../server-lib/minio/minioObject');
 describe('Post Controller', () => {
   beforeEach(() => dbSync(true));
 
-
   it('Should not only allow post creation for users not member of Account and subsequent IGAccount', async () => {
-    const user = await ezUser({ Accounts: { } }, {
-      include: [Account],
-    });
+    const user = await ezUser(
+      { Accounts: {} },
+      {
+        include: [Account],
+      },
+    );
 
-
-    const badUser = await ezUser({
-      email: 'badUser@baduser.com',
-      Accounts: { },
-    }, {
-      include: [Account],
-    });
+    const badUser = await ezUser(
+      {
+        email: 'badUser@baduser.com',
+        Accounts: {},
+      },
+      {
+        include: [Account],
+      },
+    );
 
     const igAccount = await newIGAccount(user);
 
@@ -59,9 +61,12 @@ describe('Post Controller', () => {
   });
 
   it('Should only allow post creation for users of member of Account and IGAccount', async () => {
-    const user = await ezUser({ Accounts: { } }, {
-      include: [Account],
-    });
+    const user = await ezUser(
+      { Accounts: {} },
+      {
+        include: [Account],
+      },
+    );
 
     const igAccount = await newIGAccount(user);
 
@@ -81,6 +86,4 @@ describe('Post Controller', () => {
       })
       .expect(200);
   });
-
-
 });

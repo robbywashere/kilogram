@@ -1,4 +1,3 @@
-
 module.exports = class BasePolicy {
   constructor({ instance, user, params } = {}) {
     this.params = params;
@@ -45,4 +44,3 @@ module.exports = class BasePolicy {
     return false;
   }
 };
-

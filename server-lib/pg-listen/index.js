@@ -10,7 +10,7 @@ const demand = require('../../lib/demand');
 
 const { get } = require('lodash');
 
-//const { EventEmitter } = require('events');
+// const { EventEmitter } = require('events');
 const EventEmitter = require('../../lib/eventEmitter');
 
 const uuidLib = require('uuid');
@@ -38,11 +38,7 @@ class PGListen {
     this.uuid = uuid;
     this.json = json;
     this.persist = persist;
-    this.debug = (typeof debug === 'function')
-      ? debug
-      : (debug === true)
-        ? logger.debug
-        : () => {};
+    this.debug = typeof debug === 'function' ? debug : debug === true ? logger.debug : () => {};
 
     this.events = new EventEmitter();
     this.channels = new Set(channels);
@@ -93,11 +89,11 @@ class PGListen {
 
   async getChannels() {
     return get(
-      (await this.client.query(`
+      await this.client.query(`
       SELECT array_to_json(array_agg(pg_listening_channels)) 
       AS channels
-      FROM pg_listening_channels()`)
-      ), 'rows[0].channels',
+      FROM pg_listening_channels()`),
+      'rows[0].channels',
     );
   }
 
@@ -117,7 +113,7 @@ class PGListen {
       this.connected = true;
       this.events.emit('connect');
 
-      const { host = '*', port = '*' } = (get(this.client, 'connectionParameters') || {});
+      const { host = '*', port = '*' } = get(this.client, 'connectionParameters') || {};
 
       this.debug(`PGListen connected to ${host}:${port}`);
 
@@ -125,7 +121,6 @@ class PGListen {
         this.listen(ch);
       });
     });
-
 
     this.client.on('notification', (msg) => {
       this.debug(msg);
@@ -137,7 +132,6 @@ class PGListen {
       }
     });
 
-
     this.client.on('error', async (err) => {
       // TODO: ???
       if (!this.persist) this.events.emit('error', err);
@@ -148,8 +142,8 @@ class PGListen {
       if (!this.persist) return;
 
       this.connected = false;
-      const msExp = ((retry > 5) ? 5 : retry);
-      const delayMs = (2 ** msExp) * 1000;
+      const msExp = retry > 5 ? 5 : retry;
+      const delayMs = 2 ** msExp * 1000;
       logger.status(`
         PGListen Disconnect:
         -  UUID: ${this.uuid}
@@ -169,6 +163,5 @@ class PGListen {
     });
   }
 }
-
 
 module.exports = PGListen;

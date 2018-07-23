@@ -1,7 +1,13 @@
 const {
-  Post, Account, VerifyIGJob, IGAccount, User, UserAccount, DownloadIGAvaJob 
+  Post,
+  Account,
+  VerifyIGJob,
+  IGAccount,
+  User,
+  UserAccount,
+  DownloadIGAvaJob,
 } = require('../../objects');
-const { ezUser} = require('../helpers');
+const { ezUser } = require('../helpers');
 const DBSync = require('../../db/sync');
 const assert = require('assert');
 
@@ -28,7 +34,6 @@ describe('IGAccount object', () => {
     assert.equal(account.IGAccounts[0].AccountId, igAccount.AccountId);
   });
 
-
   it('should be destroyed IGAccount when Account is destroyed', async () => {
     const account = await Account.create({});
     const igAccount = await IGAccount.create({
@@ -36,7 +41,7 @@ describe('IGAccount object', () => {
       password: 'password',
       AccountId: account.id,
     });
-    assert((await IGAccount.findById(igAccount.id)));
+    assert(await IGAccount.findById(igAccount.id));
     await account.destroy();
     assert(!(await IGAccount.findById(igAccount.id)));
   });
@@ -57,15 +62,13 @@ describe('IGAccount object', () => {
     assert.equal(igAccount.status, 'UNVERIFIED');
   });
 
-
-  it('should create a \'VerifyIGJob\' and \'DownloadIGAvaJob\' job afterCreate', async () => {
+  it("should create a 'VerifyIGJob' and 'DownloadIGAvaJob' job afterCreate", async () => {
     const account = await Account.create({});
     const igAccount = await IGAccount.create({
       username: 'username',
       password: 'password',
       AccountId: account.id,
     });
-
 
     const vig = await VerifyIGJob.findOne();
     const dig = await DownloadIGAvaJob.findOne();

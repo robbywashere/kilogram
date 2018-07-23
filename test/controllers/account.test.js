@@ -1,4 +1,3 @@
-
 const assert = require('assert');
 
 const { loadObjectControllers } = require('../../controllers');
@@ -18,9 +17,15 @@ const AccountController = require('../../controllers/account');
 describe('Account Controller', () => {
   beforeEach(() => dbSync(true));
   it('finale: Should include account when scoped as such', async () => {
-    const user = await User.create({
-      superAdmin: true, password: 'x', email: 'x@x.com', Accounts: { },
-    }, { include: [Account] });
+    const user = await User.create(
+      {
+        superAdmin: true,
+        password: 'x',
+        email: 'x@x.com',
+        Accounts: {},
+      },
+      { include: [Account] },
+    );
 
     const app = exprezz(user);
 
@@ -43,7 +48,6 @@ describe('Account Controller', () => {
 
     await account.addUserAs(user, 'member');
     await account.addUserAs(userAdmin, 'admin');
-
 
     await user.reloadWithAccounts();
     await userAdmin.reloadWithAccounts();
@@ -70,10 +74,13 @@ describe('Account Controller', () => {
 
     user.reloadWithAccounts();
 
-    const userToAdd = await ezUser({
-      email: 'userToAdd@example.com',
-      Accounts: { },
-    }, { include: [Account] });
+    const userToAdd = await ezUser(
+      {
+        email: 'userToAdd@example.com',
+        Accounts: {},
+      },
+      { include: [Account] },
+    );
 
     const app = exprezz(user);
 
@@ -85,7 +92,7 @@ describe('Account Controller', () => {
 
     await userToAdd.reloadWithAccounts();
 
-    const addedAccount = userToAdd.Accounts.find(a=>a.id === account.id);
+    const addedAccount = userToAdd.Accounts.find(a => a.id === account.id);
 
     assert(addedAccount);
 
@@ -94,8 +101,6 @@ describe('Account Controller', () => {
     assert.equal(addedAccount.UserAccount.role, 'member');
 
     assert.equal(addedAccount.UserAccount.UserId, userToAdd.id);
-
-
   });
 
   it('should add existing user to account as role admin', async () => {
@@ -107,10 +112,13 @@ describe('Account Controller', () => {
 
     user.reloadWithAccounts();
 
-    const userToAdd = await ezUser({
-      email: 'userToAdd@example.com',
-      Accounts: { },
-    }, { include: [Account] });
+    const userToAdd = await ezUser(
+      {
+        email: 'userToAdd@example.com',
+        Accounts: {},
+      },
+      { include: [Account] },
+    );
 
     const app = exprezz(user);
 
@@ -122,7 +130,7 @@ describe('Account Controller', () => {
 
     await userToAdd.reloadWithAccounts();
 
-    const addedAccount = userToAdd.Accounts.find(a=>a.id === account.id);
+    const addedAccount = userToAdd.Accounts.find(a => a.id === account.id);
 
     assert(addedAccount);
 
@@ -131,8 +139,5 @@ describe('Account Controller', () => {
     assert.equal(addedAccount.UserAccount.role, 'admin');
 
     assert.equal(addedAccount.UserAccount.UserId, userToAdd.id);
-
-
   });
-
 });

@@ -1,6 +1,11 @@
-
 const {
-  BucketEvents, Account, Photo, IGAccount, Notification, PostJob, Post
+  BucketEvents,
+  Account,
+  Photo,
+  IGAccount,
+  Notification,
+  PostJob,
+  Post,
 } = require('../../objects');
 const dbSync = require('../../db/sync');
 const { delay } = require('bluebird');
@@ -22,7 +27,7 @@ describe('trigger notify functionality', () => {
   let watcher = {};
 
   beforeEach(() => dbSync(true));
-  afterEach(() => ((typeof watcher.disconnect === 'function') ? watcher.disconnect() : null));
+  afterEach(() => (typeof watcher.disconnect === 'function' ? watcher.disconnect() : null));
 
   // TODO: move
   it('should persist PGListen connections', async function () {
@@ -56,9 +61,7 @@ describe('trigger notify functionality', () => {
     });
   });
 
-  it('TODO: should be able to listen for Notification triggers created by PostJob status change', async function(){
-
-
+  it('TODO: should be able to listen for Notification triggers created by PostJob status change', async () => {
     const {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
@@ -67,13 +70,19 @@ describe('trigger notify functionality', () => {
 
     await watcher.connect();
 
-
     const Q = new Promise((rs, rx) => {
       watcher.subscribe(Notification.TableTriggers.after_insert, (payload) => {
+        logger.debug(JSON.stringify(payload, null, 4));
 
-        logger.debug(JSON.stringify(payload,null,4));
-        
-        const { data: { body: { data: { PostJob: { status, PostId, AccountId } }  } } } = payload;
+        const {
+          data: {
+            body: {
+              data: {
+                PostJob: { status, PostId, AccountId },
+              },
+            },
+          },
+        } = payload;
         try {
           assert.equal(status, 'SUCCESS');
           assert.equal(AccountId, igAccount.id);
@@ -85,21 +94,16 @@ describe('trigger notify functionality', () => {
       });
     });
 
-
     const job = await initJob(post);
 
     const posts1 = await Post.published();
 
-    assert.equal(posts1.length, 0)
+    assert.equal(posts1.length, 0);
 
     await job.update({ status: 'SUCCESS' });
 
     return Q;
-  
-  
-  
   });
-
 
   it('should update a Photo object on upload minio event', async function () {
     this.timeout(5000);
@@ -108,7 +112,7 @@ describe('trigger notify functionality', () => {
     const uuid = uuidv4();
 
     const photo = await Photo.createPostPhoto({ uuid });
-    //const objectName = minioObject.create('v4', { uuid });
+    // const objectName = minioObject.create('v4', { uuid });
 
     watcher = new Watcher({ debug: logger.debug });
     await watcher.connect();
@@ -129,18 +133,15 @@ describe('trigger notify functionality', () => {
         }
       });
     });
-    process.nextTick(() =>BucketEvents.create({
-      key: photo.objectName,
-      value: minioEventFixture,
-    }));
+    process.nextTick(() =>
+      BucketEvents.create({
+        key: photo.objectName,
+        value: minioEventFixture,
+      }));
     await Q;
 
-
-    assert.equal((await Photo.uploaded()).length, 1); 
-  
-  
+    assert.equal((await Photo.uploaded()).length, 1);
   });
-
 
   it('should should make a table triggerable', async function () {
     this.timeout(5000);
@@ -163,9 +164,8 @@ describe('trigger notify functionality', () => {
     return Q;
   });
 
-
   // TODO define a custom Object instead of using IGAccount
-  it('IGAccount object columns should be \'triggerable\'', async function () {
+  it("IGAccount object columns should be 'triggerable'", async function () {
     this.timeout(5000);
 
     watcher = new Watcher({ debug: logger.debug });
@@ -180,10 +180,11 @@ describe('trigger notify functionality', () => {
       AccountId: account.id,
     });
 
-
     const Q = new Promise((rs, rx) => {
       watcher.subscribe(IGAccount.Triggerables.status, (payload) => {
-        const { data: { status, id, AccountId } } = payload;
+        const {
+          data: { status, id, AccountId },
+        } = payload;
         try {
           assert.equal(status, 'GOOD');
           assert.equal(id, ig.id);

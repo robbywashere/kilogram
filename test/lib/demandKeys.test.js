@@ -1,4 +1,3 @@
-
 const demandKeys = require('../../lib/demandKeys');
 const assert = require('assert');
 

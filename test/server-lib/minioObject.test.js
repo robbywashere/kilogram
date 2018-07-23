@@ -12,7 +12,10 @@ describe('minio object store format', () => {
   describe.skip('v1', () => {
     it('should encode and decode', (done) => {
       const args = {
-        uuid, meta, userId, extension,
+        uuid,
+        meta,
+        userId,
+        extension,
       };
       const result = mo.create('v1', args);
       assert(result.length <= 256);
@@ -24,7 +27,10 @@ describe('minio object store format', () => {
   describe('v2', () => {
     it('should encode and decode', (done) => {
       const args = {
-        uuid, meta, userId, extension,
+        uuid,
+        meta,
+        userId,
+        extension,
       };
       const result = mo.create('v2', args);
       assert(result.length <= 256);
@@ -33,11 +39,13 @@ describe('minio object store format', () => {
     });
   });
 
-
   describe('v3', () => {
     it('should encode and decode', (done) => {
       const args = {
-        uuid, meta, userId, extension,
+        uuid,
+        meta,
+        userId,
+        extension,
       };
       const result = mo.create('v3', args);
       assert(result.length <= 256);
@@ -49,7 +57,10 @@ describe('minio object store format', () => {
   describe('v4', () => {
     it('should encode and decode', (done) => {
       const args = {
-        uuid, meta, userId, extension,
+        uuid,
+        meta,
+        userId,
+        extension,
       };
       const result = mo.create('v4', args);
       assert(result.length <= 256);
@@ -61,7 +72,10 @@ describe('minio object store format', () => {
   describe('v5', () => {
     it('should encode and decode', (done) => {
       const args = {
-        uuid, meta, userId, extension,
+        uuid,
+        meta,
+        userId,
+        extension,
       };
       const result = mo.create('v5', args);
       assert(result.length <= 256);

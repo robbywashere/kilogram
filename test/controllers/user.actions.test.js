@@ -1,4 +1,3 @@
-
 const { Account, User, UserInvite } = require('../../objects');
 const assert = require('assert');
 const { ezUser, exprezz, appLogger } = require('../helpers');
@@ -7,12 +6,10 @@ const request = require('supertest');
 const inviteRedemption = require('../../controllers/user/invite_redemption');
 const signup = require('../../controllers/user/signup');
 
-
 const recovery = require('../../controllers/user/recovery');
 
 describe('User actions', () => {
   beforeEach(() => dbSync(true));
-
 
   it('should do user signup along with user verify', async () => {
     const app = exprezz();
@@ -26,8 +23,7 @@ describe('User actions', () => {
       });
 
     const user = await User.findOne({
-      where:
-      { email: 'newuser@blah.com' },
+      where: { email: 'newuser@blah.com' },
     });
 
     assert(user);
@@ -46,7 +42,6 @@ describe('User actions', () => {
     assert(user.verified);
   });
 
-
   it('should do password recovery', async () => {
     const email = 'example@example.com';
 
@@ -56,11 +51,9 @@ describe('User actions', () => {
 
     app.use(recovery());
 
-
     const res1 = await request(app)
       .post(`/${email}`)
       .expect(200);
-
 
     await user.reload();
 
@@ -73,11 +66,10 @@ describe('User actions', () => {
 
     await user.reload();
 
-    assert((await user.verifyPassword(newPass)));
+    assert(await user.verifyPassword(newPass));
   });
 
-
-  it('User not created by person, but is created by invite - should respond do PUT \'/\' user invite of specified key creating a User with a password Key if one does not exist', async () => {
+  it("User not created by person, but is created by invite - should respond do PUT '/' user invite of specified key creating a User with a password Key if one does not exist", async () => {
     const email = 'myWackyEmail@example.com';
     const password = 'myWackyNewPassword';
 
@@ -102,12 +94,10 @@ describe('User actions', () => {
       })
       .expect(200);
 
-
     const { key } = res.body;
     const user = await User.findOne({ where: { passwordKey: key } });
 
     assert(user);
-
 
     const res2 = await request(app)
       .put('/recovery')
@@ -116,14 +106,13 @@ describe('User actions', () => {
 
     await user.reload();
 
-    assert((await user.verifyPassword(password)));
+    assert(await user.verifyPassword(password));
   });
 
-  it('should respond do PUT \'/\' user invite of specified key for existing user', async () => {
+  it("should respond do PUT '/' user invite of specified key for existing user", async () => {
     const existingUser = await ezUser({
       email: 'existinguser@x.com',
     });
-
 
     const account = await Account.create({});
     const ui = await UserInvite.create({

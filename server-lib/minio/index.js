@@ -13,14 +13,10 @@ const { chunk } = require('lodash');
 const minioObj = require('./minioObject');
 const demand = require('../../lib/demand');
 
-//const { EventEmitter } = require('events');
+// const { EventEmitter } = require('events');
 const EventEmitter = require('../../lib/eventEmitter');
 
-const {
-  removeObject,
-  listObjects,
-  signedURL,
-} = require('./middlewares');
+const { removeObject, listObjects, signedURL } = require('./middlewares');
 
 /* https://docs.minio.io/docs/minio-bucket-notification-guide
  After updating the configuration file, restart the Minio server to put the changes into effect. The server will print a line like SQS ARNs:  arn:minio:sqs::1:postgresql at start-up if there were no errors.
@@ -28,7 +24,8 @@ const {
 Note that, you can add as many PostgreSQL server endpoint configurations as needed by providing an identifier (like "1" in the example above) for the PostgreSQL instance and an object of per-server configuration parameters
 */
 
-const ClientConfig = () => ({ // TODO leverage / move to config/default.js
+const ClientConfig = () => ({
+  // TODO leverage / move to config/default.js
   endPoint: config.get('MINIO_ENDPOINT'),
   bucket: config.get('MINIO_BUCKET'),
   publicBucket: config.get('MINIO_BUCKET'),
@@ -39,7 +36,6 @@ const ClientConfig = () => ({ // TODO leverage / move to config/default.js
   secretKey: config.get('S3_SECRET_KEY'),
   tmpDir: config.get('MINIO_TMP_DIR'),
 });
-
 
 function WrapMinioClient(client = demand('client instance/client.prototype'), opts = {}) {
   const wrapMethods = `makeBucket
@@ -64,12 +60,19 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
   presignedPutObject
   removeAllBucketNotification
   getBucketPolicy
-  setBucketPolicy`.split('\n').map(x => x.trim());
+  setBucketPolicy`
+    .split('\n')
+    .map(x => x.trim());
 
   wrapMethods.forEach((m) => {
     const wfn = client[m];
     if (typeof wfn !== 'undefined') {
-      client[m] = (...args) => retryConnRefused({ ...opts, fn: async () => wfn.bind(client)(...args), debug: `Function: ${m}` });
+      client[m] = (...args) =>
+        retryConnRefused({
+          ...opts,
+          fn: async () => wfn.bind(client)(...args),
+          debug: `Function: ${m}`,
+        });
     }
   });
   return client;
@@ -79,7 +82,6 @@ function WrapMinioClient(client = demand('client instance/client.prototype'), op
 // Rename MClient to MStore - since the implimentation details are not abstracted and nearly hard-coded to fit the needs of this application
 //
 
-
 class MClient {
   constructor({
     bucket = ClientConfig().bucket,
@@ -87,20 +89,24 @@ class MClient {
     sqsArn = ClientConfig().sqsArn,
     config = ClientConfig(),
     client,
-  } = {}) { // TODO bucket should just go off of 'config' not be passed diff
+  } = {}) {
+    // TODO bucket should just go off of 'config' not be passed diff
     this.config = config;
     this.bucket = bucket;
     this.sqsArn = sqsArn;
     this.region = region;
-    this.client = (client) || WrapMinioClient(new Minio.Client(config));
+    this.client = client || WrapMinioClient(new Minio.Client(config));
   }
 
-  static ClientFactory(config){
-    return WrapMinioClient(new Minio.Client(config))
+  static ClientFactory(config) {
+    return WrapMinioClient(new Minio.Client(config));
   }
 
   listen({ bucket = this.bucket, client = this.client, events }) {
-    const listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*', 's3:ObjectRemoved:*']);
+    const listener = client.listenBucketNotification(bucket, '', '', [
+      's3:ObjectCreated:*',
+      's3:ObjectRemoved:*',
+    ]);
     logger.debug('Listening for s3/minio events ....');
     listener.on('notification', events);
     return listener;
@@ -122,10 +128,7 @@ class MClient {
     watcherEventObj = BucketEvents.TableTriggers.after_insert,
   } = {}) {
     const EE = new EventEmitter();
-    await Promise.all([
-      this.createBucketNotifications({ sqsArn }),
-      watcher.connect(),
-    ]);
+    await Promise.all([this.createBucketNotifications({ sqsArn }), watcher.connect()]);
     await watcher.subscribe(watcherEventObj, (payload) => {
       const Records = get(payload, 'data.value.Records') || [];
       for (const record of Records) {
@@ -134,7 +137,6 @@ class MClient {
     });
     return { eventEmitter: EE, end: watcher.disconnect.bind(watcher) };
   }
-
 
   async listenMinioAdapter({
     bucket = this.bucket,
@@ -148,7 +150,10 @@ class MClient {
     const $ = { eventEmitter: EE };
 
     function makeListener() {
-      $.listener = minioClient.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*', 's3:ObjectRemoved:*']);
+      $.listener = minioClient.listenBucketNotification(bucket, '', '', [
+        's3:ObjectCreated:*',
+        's3:ObjectRemoved:*',
+      ]);
 
       $.end = function () {
         $.listener.removeAllListeners();
@@ -159,7 +164,6 @@ class MClient {
       $.listener.on('notification', (data) => {
         EE.emit('notification', data);
       });
-
 
       $.listener.on('error', async (err) => {
         $.end();
@@ -173,14 +177,16 @@ class MClient {
     return $;
   }
 
-
   listenPersist({ bucket = this.bucket, client = this.client, events }) {
     const Listener = {
       // ? should emmit to?  -> emitter: new EventEmitter(),
     };
 
     function makeListener(retry = 0) {
-      Listener.listener = client.listenBucketNotification(bucket, '', '', ['s3:ObjectCreated:*', 's3:ObjectRemoved:*']);
+      Listener.listener = client.listenBucketNotification(bucket, '', '', [
+        's3:ObjectCreated:*',
+        's3:ObjectRemoved:*',
+      ]);
 
       const listener = Listener.listener;
       Listener.terminate = () => {
@@ -228,12 +234,11 @@ class MClient {
   }
   async listObjectsWithSURLs() {
     const objects = await s2p(this.client.listObjects(this.bucket));
-    objects.forEach(o => o.bucketName = this.bucket);
-    for (const o of chunk(objects, 20)) { // <--- Fanout
-      await Promise.all(o
-        .map(obj => this.client
-          .presignedGetObject(this.bucket, obj.name, 30)
-          .then(u => obj.url = u)));
+    objects.forEach(o => (o.bucketName = this.bucket));
+    for (const o of chunk(objects, 20)) {
+      // <--- Fanout
+      await Promise.all(o.map(obj =>
+        this.client.presignedGetObject(this.bucket, obj.name, 30).then(u => (obj.url = u))));
     }
     return objects;
   }
@@ -252,22 +257,34 @@ class MClient {
     return this.listenPersist({ events: MClient.PhotoEvents() });
   }
   static getSQSARNS(configPath) {
-    return Object.entries(JSON.parse(fs.readFileSync(configPath, 'utf-8').toString()))
-      .reduce((arnsqs, [type, entries]) => (
-        {
-          ...arnsqs,
-          ...{
-            ...(!(Object.values(entries).some(c => c.enable)) ? {} : {
+    return Object.entries(JSON.parse(fs.readFileSync(configPath, 'utf-8').toString())).reduce(
+      (arnsqs, [type, entries]) => ({
+        ...arnsqs,
+        ...{
+          ...(!Object.values(entries).some(c => c.enable)
+            ? {}
+            : {
               [type]: Object.entries(entries)
                 .filter(([, conf]) => conf.enable)
-                .reduce((accum, [name, conf]) => ({ ...accum, [name]: `arn:minio:sqs::${name}:${type}` }), { }),
+                .reduce(
+                  (accum, [name, conf]) => ({
+                    ...accum,
+                    [name]: `arn:minio:sqs::${name}:${type}`,
+                  }),
+                  {},
+                ),
             }),
-          },
-        }
-      ), {});
+        },
+      }),
+      {},
+    );
   }
 
-  async createBucketNotifications({ bucket = this.bucket, events = [Minio.ObjectCreatedAll, Minio.ObjectRemovedAll], sqsArn = this.sqsArn } = {}) {
+  async createBucketNotifications({
+    bucket = this.bucket,
+    events = [Minio.ObjectCreatedAll, Minio.ObjectRemovedAll],
+    sqsArn = this.sqsArn,
+  } = {}) {
     try {
       const queue = new Minio.QueueConfig(sqsArn);
       [].concat(events).forEach(e => queue.addEvent(e));
@@ -330,18 +347,19 @@ class MClient {
             await delFn({ key });
           }
         } catch (e) {
-          logger.error(`Could not respond to minio event ${{ event }} for ${{ key }}, encountered error...\n ${e}`);
+          logger.error(`Could not respond to minio event ${{ event }} for ${{
+            key,
+          }}, encountered error...\n ${e}`);
         }
       }
     };
   }
 }
 
-
 class MClientPublic extends MClient {
-  constructor(...args){
+  constructor(...args) {
     super(...args);
-    this.bucket = ClientConfig().publicBucket
+    this.bucket = ClientConfig().publicBucket;
   }
 }
 
@@ -358,7 +376,8 @@ async function retryConnRefused({
     if (err.code === 'NoSuchBucket') throw err;
     if (retryCount <= max) {
       logger.debug('MINIO CLIENT ERROR :', err);
-      logger.debug(`Minio connect Error: Connection refused ~ retrying ${retryCount}/${max} - ${debug || get(fn, 'name')}`);
+      logger.debug(`Minio connect Error: Connection refused ~ retrying ${retryCount}/${max} - ${debug ||
+          get(fn, 'name')}`);
       await Promise.delay(retryDelayFn(retryCount));
       return retryConnRefused({
         fn,
@@ -372,8 +391,13 @@ async function retryConnRefused({
   }
 }
 
-
 module.exports = {
-  WrapMinioClient, signedURL, removeObject, retryConnRefused, MClient, MClientPublic, ClientConfig, listObjects,
+  WrapMinioClient,
+  signedURL,
+  removeObject,
+  retryConnRefused,
+  MClient,
+  MClientPublic,
+  ClientConfig,
+  listObjects,
 };
-

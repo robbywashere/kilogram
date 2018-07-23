@@ -22,7 +22,6 @@ class PhotoPolicy extends AuthPolicy {
   }
 }
 
-
 module.exports = function PhotoController() {
   const router = new Router();
   const resource = new Resource({ model: Photo, policy: PhotoPolicy });
