@@ -15,7 +15,7 @@ const InitPostJobQuery = `
     "PostJobs"
     ("PostId", "IGAccountId", "AccountId", "createdAt", "updatedAt") (
       SELECT 
-        "Posts"."id",
+      "Posts"."id",
         "Posts"."IGAccountId",
         "Posts"."AccountId",
         NOW() "createdAt",

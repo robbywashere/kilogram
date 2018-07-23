@@ -37,7 +37,7 @@ describe('objects/Post', () => {
 
   });
 
-  it('TODO: should scope SUCCESS/published posts where PostJob is SUCCESS', async ()=>{
+  it.skip('TODO: should scope SUCCESS/published posts where PostJob is SUCCESS', async ()=>{
     const {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
@@ -49,7 +49,7 @@ describe('objects/Post', () => {
     assert.equal(posts2.length, 1)
   });
 
-  it('TODO: should scope FAILED/not published Posts where PostJob is FAILED', async ()=>{
+  it.skip('TODO: should scope FAILED/not published Posts where PostJob is FAILED', async ()=>{
     const {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();

@@ -104,7 +104,7 @@ describe('engine', () => {
 
     });
     describe('PostSprocket', () => {
-      it('should run task PostSprocket', async () => {
+      it('should run task PostSprocket, setting Post to Published when complete', async () => {
 
         sandbox.stub(DeviceAgent.Agent.prototype, 'exec').resolves({ success: true, body: { login: true } });
         const minioClient = { pullPhoto: async ()=> 'localfilename' }

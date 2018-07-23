@@ -41,7 +41,7 @@ describe('IGAccount object', () => {
     assert(!(await IGAccount.findById(igAccount.id)));
   });
 
-  it('TODO: should set status to UNVERIFIED on password change of IGAccount', async () => {
+  it('should set status to UNVERIFIED on password change of IGAccount', async () => {
     const account = await Account.create({});
     const igAccount = await IGAccount.create({
       username: 'username',

@@ -194,7 +194,8 @@ describe('Tasks', ()=>{
     })
 
 
-    it ('should emit job:error and IGAccount:fail on unsuccessful deviceAgent login and post attempt', async ()=>{
+    it('should emit Post:failed and job:error on unsuccessful posting');
+    it ('should emit job:error, Post:failed and IGAccount:fail on unsuccessful deviceAgent login and post attempt', async ()=>{
 
       const events = new EventEmitter();
 
@@ -227,8 +228,7 @@ describe('Tasks', ()=>{
 
     })
 
-      it.skip('should retry tasks , failing on the 3rd try', async () => {
-      })
+      it('should retry tasks x times before complete failure')
 
     it ('should emit job:error on unknown deviceAgent login error and post attempt', async ()=>{
 

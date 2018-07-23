@@ -9,7 +9,7 @@ const sequelize = require('sequelize');
 const {
   initJob,
   ezUserAccount, newIGAccount, createAccountUserPostJob, createAccountUserPost, createUserPostJob,
-createUserAccountIGAccountPhotoPost
+  createUserAccountIGAccountPhotoPost,
 } = require('../helpers');
 const { times, constant } = require('lodash');
 
@@ -37,14 +37,13 @@ describe('objects/PostJob', () => {
 
     await PostJob.initPostJobs();
     const jobSearch1 = await PostJob.findAll();
-    assert.equal(jobSearch1.length,0);
+    assert.equal(jobSearch1.length, 0);
 
     await igaccount.good();
 
     await PostJob.initPostJobs();
     const jobSearch2 = await PostJob.findAll();
-    assert.equal(jobSearch2.length,1);
-
+    assert.equal(jobSearch2.length, 1);
   });
 
 
@@ -66,34 +65,33 @@ describe('objects/PostJob', () => {
 
     await Post.bulkCreate(times(9, constant(props)));
     await PostJob.initPostJobs();
-    // Run again to assure no dupes 
+    // Run again to assure no dupes
     await PostJob.initPostJobs();
     const jobs = await PostJob.findAll();
     assert.equal(9, jobs.length);
   });
 
 
-
-  it('TODO: should create a Notification when PostJob.status is updated', async ()=>{
-
+  it('TODO: should create a Notification when PostJob.status is updated', async () => {
     const {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
 
     const job = await initJob(post);
 
-    const posts1 = await Post.published();
-
-    assert.equal(posts1.length, 0)
+    // const posts1 = await Post.published();
+    //assert.equal(posts1.length, 0);
 
     await job.update({ status: 'SUCCESS' });
 
+    await post.update({ status: 'PUBLISHED' });
+
     const posts2 = await Post.published();
 
-    assert.equal(posts2.length, 1)
+    assert.equal(posts2.length, 1);
 
     let notif;
-    while ( !(notif = await Notification.findAll()).length ) {
+    while (!(notif = await Notification.findAll()).length) {
       await Promise.delay(0);
     }
 
@@ -102,8 +100,6 @@ describe('objects/PostJob', () => {
     assert.equal(notif[0].body.data.PostJob.PostId, posts2[0].id);
 
     assert.equal(notif[0].body.data.PostJob.status, 'SUCCESS');
-    
-
   });
 
 

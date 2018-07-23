@@ -8,7 +8,7 @@ const config = require('config');
 const { logger } = require('../lib/logger');
 const demand = require('../lib/demand');
 const Tasks = require('../tasks');
-const MClient = require('../server-lib/minio');
+const { MClient } = require('../server-lib/minio');
 const Spinner = require('./spinner');
 
 const DeviceAgent = require('../android/deviceAgent');
@@ -105,6 +105,8 @@ function EngineEvents(events = new EventEmitter()) {
   eventr('IGAccount:good', ({ id }) => IGAccount.good(id));
 
   eventr('Post:published', ({ id }) => Post.setPublished(id));
+
+  eventr('Post:failed', ({ id }) => Post.setFailed(id));
 
   eventr('job:complete', ({ jobId, jobName }) => objects[jobName].complete(jobId));
 
@@ -205,8 +207,10 @@ const main = function ({
     DownloadAvaSprocket({
       nodeName, events, minioClient, concurrent, debounce,
     }),
-    SyncDeviceSprocket({ concurrent, nodeName, debounce }),
-    InitPostJobsSprocket({ concurrent, nodeName, debounce }),
+
+    SyncDeviceSprocket({ concurrent: 1, nodeName, debounce }),
+
+    InitPostJobsSprocket({ concurrent: 1, nodeName, debounce }),
   ];
 
   spinz.forEach(z => z.on('reject', (error) => logger.error(error)));

@@ -92,10 +92,16 @@ module.exports = {
     setPublished() {
       return this.update({ status: 'PUBLISHED' });
     },
+    setFailed() {
+      return this.update({ status: 'FAILED' });
+    },
   },
   StaticMethods: {
     setPublished(id) {
       return this.updateById(id,{ status: 'PUBLISHED' });
+    },
+    setFailed(id) {
+      return this.updateById(id,{ status: 'FAILED' });
     },
     async createWithPhoto(opts) {
       return this.create({

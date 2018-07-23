@@ -13,15 +13,6 @@ module.exports = {
   Name: 'PostJob',
   Properties: {
     ...JobProperties
-    /*Photo: {
-      type: sequelize.VIRTUAL,
-      get() {
-        return this.Post.get('Photo');
-      },
-      set(val) {
-        return this.Post.set('Photo', val);
-      },
-  },*/
   },
   ScopeFunctions: true,
   Scopes: {
@@ -38,6 +29,7 @@ module.exports = {
     this.addScope('withPost', { include: [{ model: Post, include: [Photo] }] });
 
     // TODO: pull this out into something reusable by other objects
+    // TODO: this logic should should be hooked into the ./engine's job:complete emmitter
     this.sequelize.addHook('afterBulkSync', () => {
       const assocs = Object.keys(this.associations).map(a => `${a}Id`);
       const watchColumn = 'status';

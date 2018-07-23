@@ -39,9 +39,10 @@ module.exports = {
       if (igAccount.password !== igAccount._previousDataValues.password) {
         const { VerifyIGJob } = this.sequelize.models;
         igAccount.set('status',UNVERIFIED);
-        await VerifyIGJob.create(igAccount);
+        await VerifyIGJob.create({ IGAccountId: igAccount.id });
       }
     }, 
+    //TODO: beforeCreate verify IGAccount exists
     async afterCreate({ id }) {
       const { VerifyIGJob, DownloadIGAvaJob } = this.sequelize.models;
       const igaccount = { IGAccountId: id };

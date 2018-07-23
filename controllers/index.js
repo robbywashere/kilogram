@@ -54,7 +54,7 @@ function loadObjectControllers({ app, sequelize = DB, objects = Objects }) {
   });
 
   Object.keys(objects).map((k) => {
-    const resource = finale.resource({ model: objects[k] });
+    const resource = finale.resource({ model: objects[k], associations: true });
 
     ['list', 'read', 'delete', 'update', 'create'].forEach((action) => {
       resource[action].auth((req, res, context) => {

@@ -40,7 +40,7 @@ const spaceCat = {
 };
 
 let APP;
-let TIMERS = [];
+let CLOSEMAIN;
 let SERVER;
 const NODE_NAME = 'HOME1';
 
@@ -127,7 +127,7 @@ describe('End To End Test 👍 ', () => {
       logger.debug(e);
     }
     try {
-      TIMERS.forEach(t => clearTimeout(t));
+      CLOSEMAIN();
     } catch (e) {
     }
     try {
@@ -245,7 +245,7 @@ describe('End To End Test 👍 ', () => {
     const post = res7.body;
     assert(post.id);
 
-    TIMERS = main({ nodeName: NODE_NAME });
+    CLOSEMAIN = main({ nodeName: NODE_NAME });
 
 
     logger.debug('Waiting for device .....');
