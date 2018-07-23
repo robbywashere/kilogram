@@ -105,17 +105,11 @@ const JobMethods = {
     });
   },
   retryTimes({ body, max = 3 }) {
-    if (this.attempts >= max) {
+    if (this.attempts >= max-1) {
       return this.fail(body);
     }
     return this.retry();
   },
-  /*retryThrice(body) {
-    if (this.attempts < 3) {
-      return this.fail(body);
-    }
-    return this.retry();
-  },*/
   retry() {
     return this.update({
       status: 'OPEN',

@@ -53,10 +53,10 @@ describe('engine', () => {
       sandbox.stub(cmds, 'adbDevices').resolves([Device1, Device2, Device3].map(d => d.adbId));
 
       events = EngineEvents();
-      events.on('eventError', ({ error }) => console.error(error));
+      /*events.on('eventError', ({ error }) => console.error(error));
       events.on('job:error', ({
         error, body, jobId, jobName,
-      }) => console.error(error));
+      }) => console.error(error));*/
 
       SprocketArgs = {
         nodeName: 'HOME1',
@@ -79,12 +79,31 @@ describe('engine', () => {
       } catch (e) {}
     });
 
+    describe('EngineEvents', () => {
+      //TODO: Promise.delay is not deterministic and sloppy :(
+      it('should retry failed job 3 times', async () => {
+        const { job } = await createAccountUserPostJob();
+        const jobName = 'PostJob';//job.constructor.name;
+        const jobId = job.id;
+        events.emit('job:error', { body: {}, jobId, jobName });
+        await Promise.delay(250);
+        events.emit('job:error', { body: {}, jobId, jobName });
+        await Promise.delay(250);
+        await job.reload();
+        assert.equal(job.status, 'OPEN');
+        events.emit('job:error', { body: {}, jobId, jobName });
+        await Promise.delay(250);
+        await job.reload();
+        assert.equal(job.status, 'FAILED')
+      });
+    });
+
     describe('VerifyIGSprocket', () => {
       afterEach(() => {});
 
       it('should run task VerifyIG and verify IGAccount', async () => {
         Sprocket = VerifyIGSprocket(SprocketArgs);
-        Sprocket.on('reject', console.error);
+        //Sprocket.on('reject', console.error);
 
         sandbox
           .stub(DeviceAgent.Agent.prototype, 'exec')
@@ -112,7 +131,7 @@ describe('engine', () => {
           .resolves({ success: true, body: { login: true } });
         const minioClient = { pullPhoto: async () => 'localfilename' };
         Sprocket = PostSprocket({ ...SprocketArgs, minioClient });
-        Sprocket.on('reject', console.error);
+        //Sprocket.on('reject', console.error);
 
         const { post, job } = await createAccountUserPostJob();
 

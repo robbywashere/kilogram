@@ -95,7 +95,7 @@ function EventRegister(events) {
   };
 }
 
-function EngineEvents(events = new EventEmitter()) {
+function EngineEvents(events = new EventEmitter(), maxRetry = 3) {
   const eventr = EventRegister(events);
 
   eventr('IGAccount:downloadIGAva', ({ id, uuid }) => IGAccount.avatar(id, uuid));
@@ -110,9 +110,10 @@ function EngineEvents(events = new EventEmitter()) {
 
   eventr('job:complete', ({ jobId, jobName }) => objects[jobName].complete(jobId));
 
-  eventr('job:error', ({
-    error, body, jobId, jobName,
-  }) => objects[jobName].fail(jobId));
+
+  eventr('job:error', async ({
+    error, jobId, jobName, body = {},
+  }) => (await objects[jobName].findById(jobId)).retryTimes({ body: { body, error }, max: maxRetry }));
 
   return events;
 }
@@ -213,7 +214,7 @@ const main = function ({
     InitPostJobsSprocket({ concurrent: 1, nodeName, debounce }),
   ];
 
-  spinz.forEach(z => z.on('reject', (error) => logger.error(error)));
+  spinz.forEach(z => z.on('reject', error => logger.error(error)));
 
   return () => spinz.forEach(z => z.stop());
 };
