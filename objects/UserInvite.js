@@ -1,7 +1,6 @@
 const sequelize = require('sequelize');
-const {
-  STRING
-} = sequelize;
+
+const { STRING } = sequelize;
 const cryptoRandomString = require('crypto-random-string');
 const { isLoggedIn } = require('./_helpers');
 
@@ -28,8 +27,7 @@ module.exports = {
   PolicyAttributes: {},
   PolicyAssert: false, // TODO: haha
   ScopeFunctions: true,
-  Scopes: {
-  },
+  Scopes: {},
   AuthorizeInstance: {
     all(user) {
       try {
@@ -53,12 +51,15 @@ module.exports = {
         const $ = this.sequelize.models;
         let user = await $.User.findOne({ where: { email } });
         if (!user) {
-          user = await $.User.create({
-            email,
-            verified: false,
-            password: cryptoRandomString(32),
-            Accounts: [Account],
-          }, { include: [$.Account] });
+          user = await $.User.create(
+            {
+              email,
+              verified: false,
+              password: cryptoRandomString(32),
+              Accounts: [Account],
+            },
+            { include: [$.Account] },
+          );
         }
         instance.UserId = user.id;
       }
@@ -68,15 +69,11 @@ module.exports = {
     async redeem() {
       const { User } = this.sequelize.models;
       const user = await User.findOne({ where: { id: this.UserId } });
-      await Promise.all([
-        user.addAccount(this.AccountId),
-        this.destroy(),
-      ]);
+      await Promise.all([user.addAccount(this.AccountId), this.destroy()]);
       return user;
     },
   },
-  StaticMethods: {
-  },
+  StaticMethods: {},
 
   Init({ Account, User }) {
     this.belongsTo(User);
@@ -88,4 +85,3 @@ module.exports = {
     });
   },
 };
-

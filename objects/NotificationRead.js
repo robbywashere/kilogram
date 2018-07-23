@@ -1,17 +1,12 @@
 module.exports = {
   Name: 'NotificationRead',
-  Properties: {
-  },
+  Properties: {},
   ScopeFunctions: true,
-  Scopes: {
-  },
+  Scopes: {},
   Init({ Notification, User }) {
     this.belongsTo(Notification, { foreignKey: { allowNull: false } });
     this.belongsTo(User, { foreignKey: { allowNull: false } });
   },
-  Methods: {
-  },
-  StaticMethods: {
-  },
+  Methods: {},
+  StaticMethods: {},
 };
-

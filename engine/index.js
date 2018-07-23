@@ -14,7 +14,6 @@ const Spinner = require('./spinner');
 const DeviceAgent = require('../android/deviceAgent');
 const EventEmitter = require('../lib/eventEmitter');
 
-
 function RunWithDevice({
   task = demand('task'),
   events = demand('events'),
@@ -61,7 +60,6 @@ function Run({
   };
 }
 
-
 function JobRun({
   events = demand('events'),
   job = demand('job'),
@@ -87,7 +85,10 @@ function EventRegister(events) {
         await func(body);
       } catch (e) {
         events.emit('eventError', {
-          name, jobName: body.jobName, jobId: body.jobId, error: e,
+          name,
+          jobName: body.jobName,
+          jobId: body.jobId,
+          error: e,
         });
         // TODO: retry func X times?
       }
@@ -110,14 +111,13 @@ function EngineEvents(events = new EventEmitter(), maxRetry = 3) {
 
   eventr('job:complete', ({ jobId, jobName }) => objects[jobName].complete(jobId));
 
-
   eventr('job:error', async ({
     error, jobId, jobName, body = {},
-  }) => (await objects[jobName].findById(jobId)).retryTimes({ body: { body, error }, max: maxRetry }));
+  }) =>
+    (await objects[jobName].findById(jobId)).retryTimes({ body: { body, error }, max: maxRetry }));
 
   return events;
 }
-
 
 function VerifyIGSprocket({
   nodeName, events, minioClient, concurrent, debounce,
@@ -131,7 +131,6 @@ function VerifyIGSprocket({
   });
   return Spinner.create({ fn, concurrent, debounce });
 }
-
 
 function PostSprocket({
   nodeName, events, minioClient, concurrent, debounce,
@@ -175,16 +174,14 @@ function InitPostJobsSprocket({ concurrent, debounce }) {
   return Spinner.create({ fn, concurrent, debounce });
 }
 
-
 function SyncDeviceSprocket({ concurrent, debounce, nodeName }) {
   const fn = () => Device.syncDevices({ nodeName });
   return Spinner.create({ fn, concurrent, debounce });
 }
 
-
 const main = function ({
   nodeName = config.get('DEVICE_NODE_NAME'),
-  minioClient = (new MClient()),
+  minioClient = new MClient(),
   debounce = 1000,
   events = EngineEvents(),
 } = {}) {
@@ -197,16 +194,32 @@ const main = function ({
 
   const spinz = [
     VerifyIGSprocket({
-      nodeName, events, minioClient, concurrent, debounce,
+      nodeName,
+      events,
+      minioClient,
+      concurrent,
+      debounce,
     }),
     PostSprocket({
-      nodeName, events, minioClient, concurrent, debounce,
+      nodeName,
+      events,
+      minioClient,
+      concurrent,
+      debounce,
     }),
     SendEmailSprocket({
-      nodeName, events, minioClient, concurrent, debounce,
+      nodeName,
+      events,
+      minioClient,
+      concurrent,
+      debounce,
     }),
     DownloadAvaSprocket({
-      nodeName, events, minioClient, concurrent, debounce,
+      nodeName,
+      events,
+      minioClient,
+      concurrent,
+      debounce,
     }),
 
     SyncDeviceSprocket({ concurrent: 1, nodeName, debounce }),

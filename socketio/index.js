@@ -23,47 +23,37 @@ const { CookieSession } = require('../server-lib/auth/session');
 
 */
 
-
 function SocketIOPacket({ data, room, event }) {
   return {
-    data, room, event,
+    data,
+    room,
+    event,
   };
 }
-
 
 function SocketIORoom({ AccountId, topic }) {
   return `${AccountId}#${topic}`;
 }
 
-
 // TODO: will probably have to class this funcition
-async function PGEventSockets({
-  pgTriggers = [],
-  socketApp = demand('socketApp'),
-  debug
-}) {
-
+async function PGEventSockets({ pgTriggers = [], socketApp = demand('socketApp'), debug }) {
   const watcher = new Watcher({ debug });
-  await Promise.all(pgTriggers
-    .map(trigger => watcher
-      .subscribe(trigger, ({ data }) => {
-        try {
-          const { AccountId } = data;
-          const room = SocketIORoom({
-            AccountId, topic: trigger.event,
-          });
-          socketApp.to(room).emit('client:push', data);
-        } catch (e) {
-          logger.error(e);
-        }
-      })
-    ));
-
-
+  await Promise.all(pgTriggers.map(trigger =>
+    watcher.subscribe(trigger, ({ data }) => {
+      try {
+        const { AccountId } = data;
+        const room = SocketIORoom({
+          AccountId,
+          topic: trigger.event,
+        });
+        socketApp.to(room).emit('client:push', data);
+      } catch (e) {
+        logger.error(e);
+      }
+    })));
 
   return watcher;
 }
-
 
 function SocketIOApp({
   socketServer = demand('socketServer'),
@@ -73,7 +63,6 @@ function SocketIOApp({
   socketServer.use((socket, next) => {
     sessionStrategy.sessioner(socket.request, {}, next);
   });
-
 
   socketServer.on('connection', (socket) => {
     try {
@@ -99,7 +88,7 @@ function PGSockets({
   pgTriggers = [],
   sessionStrategy = demand('sessionStrategy'),
   socketServer = demand('socketServer'),
-  debug = ()=>{},
+  debug = () => {},
 }) {
   const topics = pgTriggers.map(t => t.event);
   const socketApp = SocketIOApp({ socketServer, topics, sessionStrategy });
@@ -107,6 +96,9 @@ function PGSockets({
 }
 
 module.exports = {
-  SocketIOApp, SocketIORoom, SocketIOPacket, PGEventSockets, PGSockets,
+  SocketIOApp,
+  SocketIORoom,
+  SocketIOPacket,
+  PGEventSockets,
+  PGSockets,
 };
-

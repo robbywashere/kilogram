@@ -41,7 +41,6 @@ const InitPostJobQuery = `
     )
 `;
 
-
 // TODO: https://blog.2ndquadrant.com/what-is-select-skip-locked-for-in-postgresql-9-5/
 
 const GetJobQuery = tableName => `
@@ -64,7 +63,6 @@ const GetJobQuery = tableName => `
   RETURNING *;
 `;
 
-
 // TODO: add epoch?
 const StatsQuery = tableName => `
   SELECT 
@@ -76,7 +74,6 @@ const StatsQuery = tableName => `
   from "${tableName}"
 `;
 
-
 // sum(case when (status = 'SUCCESS' AND (taskresult != 'NEGATIVE')) then 1 else 0 end) as missions_accomplished,
 
 const JobMethods = {
@@ -84,19 +81,19 @@ const JobMethods = {
     return this.reloadWithAll(); //
   },
   isInProgress() {
-    return (this.status === 'SPINNING');
+    return this.status === 'SPINNING';
   },
   isCompleted() {
-    return (this.status === 'SUCCESS');
+    return this.status === 'SUCCESS';
   },
   isFailed() {
-    return (this.status === 'FAILED');
+    return this.status === 'FAILED';
   },
   isOpen() {
-    return (this.status === 'OPEN');
+    return this.status === 'OPEN';
   },
   isSleeping() {
-    return (this.status === 'SLEEPING');
+    return this.status === 'SLEEPING';
   },
   complete(body) {
     return this.update({
@@ -105,7 +102,7 @@ const JobMethods = {
     });
   },
   retryTimes({ body, max = 3 }) {
-    if (this.attempts >= max-1) {
+    if (this.attempts >= max - 1) {
       return this.fail(body);
     }
     return this.retry();
@@ -126,16 +123,15 @@ const JobMethods = {
     return this.update({ status: 'OPEN' });
   },
   backout(err, sleep = false) {
-    const error = (typeof err !== 'object') ? String(error) : err;
+    const error = typeof err !== 'object' ? String(error) : err;
     return this.update({
-      status: (sleep) ? 'SLEEPING' : 'FAILED',
+      status: sleep ? 'SLEEPING' : 'FAILED',
       body: error,
     });
   },
 };
 
 const JobStaticMethods = {
-
   async stats() {
     return this.$.query(StatsQuery(this.tableName)).spread((r) => {
       const result = JSON.parse(JSON.stringify(get(r, 0)));
@@ -143,19 +139,21 @@ const JobStaticMethods = {
       return result;
     });
   },
-  complete(id){
-    return this.updateById(id,{ status: 'SUCCESS' })
+  complete(id) {
+    return this.updateById(id, { status: 'SUCCESS' });
   },
-  fail(id){
-    return this.updateById(id,{ status: 'FAILED' })
+  fail(id) {
+    return this.updateById(id, { status: 'FAILED' });
   },
-  async popJob() { 
+  async popJob() {
     const qry = GetJobQuery(this.tableName);
-    const [ job ] = await this.sequelize.query(qry, { type: sequelize.QueryTypes.SELECT, model: this });
+    const [job] = await this.sequelize.query(qry, {
+      type: sequelize.QueryTypes.SELECT,
+      model: this,
+    });
     if (job) return job.reloadWithAll();
   },
 };
-
 
 const JobProperties = {
   body: {
@@ -174,7 +172,6 @@ const JobProperties = {
   },
 };
 
-
 const JobScopes = {
   withAll: { include: [{ all: true, nested: true }] },
   outstanding: { where: { status: 'OPEN' } },
@@ -184,14 +181,13 @@ const JobScopes = {
   inProgress: { where: { status: 'SPINNING' } },
 };
 
-
 const GenJobObj = {
   Properties: JobProperties,
   ScopeFunctions: true,
   Scopes: JobScopes,
   Methods: JobMethods,
   StaticMethods: JobStaticMethods,
-}
+};
 
 module.exports = {
   GenJobObj,

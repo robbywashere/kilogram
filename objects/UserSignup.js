@@ -6,7 +6,7 @@ const {
 } = sequelize;
 const cryptoRandomString = require('crypto-random-string');
 
-const createdAt = { [Op.gte]: sequelize.fn('NOW() - INTERVAL \'24 hours\' --') };
+const createdAt = { [Op.gte]: sequelize.fn("NOW() - INTERVAL '24 hours' --") };
 
 module.exports = {
   Name: 'UserSignup',
@@ -18,10 +18,11 @@ module.exports = {
   },
   ScopeFunctions: true,
   Scopes: {
-    forKey(key) { return { where: { key, createdAt }, include: [this.sequelize.models.User] }; },
+    forKey(key) {
+      return { where: { key, createdAt }, include: [this.sequelize.models.User] };
+    },
   },
   Init({ User }) {
     this.belongsTo(User);
   },
 };
-

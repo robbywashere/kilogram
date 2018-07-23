@@ -9,11 +9,13 @@ const { logger } = require('../lib/logger');
 const minioObj = require('../server-lib/minio/minioObject');
 const { isLoggedIn, isSuperAdmin } = require('./_helpers');
 const {
-  ForbiddenError, BadRequestError, NotFoundError, FinaleError,
+  ForbiddenError,
+  BadRequestError,
+  NotFoundError,
+  FinaleError,
 } = require('finale-rest').Errors;
 const { BadRequest } = require('http-errors');
 const Promise = require('bluebird');
-
 
 module.exports = {
   Name: 'Post',
@@ -36,7 +38,7 @@ module.exports = {
     this.belongsTo(Account, { onDelete: 'cascade', foreignKey: { allowNull: false } });
     this.belongsTo(IGAccount, { onDelete: 'cascade', foreignKey: { allowNull: false } });
     this.hasOne(PostJob, { onDelete: 'cascade' });
-    this.belongsTo(Photo, { foreignKey: 'photoUUID', targetKey: 'uuid' } );
+    this.belongsTo(Photo, { foreignKey: 'photoUUID', targetKey: 'uuid' });
 
     /* this.addScope('published', {
       include: [PostJob],
@@ -54,7 +56,7 @@ module.exports = {
         //'$PostJob.status$': { [Op.eq]: 'FAILED' },
         'status': 'FAILED'
       },
-    });*/
+    }); */
 
     this.addScope('withJob', { include: [PostJob] });
     this.addScope('due', {
@@ -66,27 +68,29 @@ module.exports = {
     });
   },
   ScopeFunctions: true,
-  Hooks: {
-  },
+  Hooks: {},
   Scopes: {
     published: { where: { status: 'PUBLISHED' } },
     failed: { where: { status: 'PUBLISHED' } },
     withAll: { include: [{ all: true }] },
     userScoped(user) {
       const { Account, User } = this.sequelize.models;
-      return ({
+      return {
         where: { '$Account.Users.id$': user.id },
-        include: [{
-          model: Account,
-          attributes: [],
-          include: [{
-            model: User,
+        include: [
+          {
+            model: Account,
             attributes: [],
-          }],
-        }],
-      });
+            include: [
+              {
+                model: User,
+                attributes: [],
+              },
+            ],
+          },
+        ],
+      };
     },
-
   },
   Methods: {
     setPublished() {
@@ -98,10 +102,10 @@ module.exports = {
   },
   StaticMethods: {
     setPublished(id) {
-      return this.updateById(id,{ status: 'PUBLISHED' });
+      return this.updateById(id, { status: 'PUBLISHED' });
     },
     setFailed(id) {
-      return this.updateById(id,{ status: 'FAILED' });
+      return this.updateById(id, { status: 'FAILED' });
     },
     async createWithPhoto(opts) {
       return this.create({
@@ -111,4 +115,3 @@ module.exports = {
     },
   },
 };
-

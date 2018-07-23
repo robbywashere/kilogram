@@ -9,29 +9,27 @@ const {
 const Promise = require('bluebird');
 const { isLoggedIn } = require('./_helpers');
 
-
 module.exports = {
   Name: 'Account',
   Properties: {
     name: {
       type: STRING,
-      defaultValue: Haikunator.haikunate.bind(Haikunator)
+      defaultValue: Haikunator.haikunate.bind(Haikunator),
     },
     enabled: {
       type: BOOLEAN,
       defaultValue: true,
     },
   },
-  Hooks: {
-  },
+  Hooks: {},
   ScopeFunctions: true,
   Scopes: {
     userScoped(user) {
       const { User } = this.sequelize.models;
-      return ({
+      return {
         where: { '$Users.UserAccount.UserId$': user.id },
-        include: [ { model: User, through: { attributes: [] } }]
-      })
+        include: [{ model: User, through: { attributes: [] } }],
+      };
     },
   },
   Methods: {
@@ -39,18 +37,20 @@ module.exports = {
       return this.addUser(user, { through: { role } });
     },
     async igAccountIds() {
-      if (!this.IGAccounts) { await this.reloadWithIgAccounts(); }
+      if (!this.IGAccounts) {
+        await this.reloadWithIgAccounts();
+      }
       return this.IGAccounts.map(iga => iga.id);
     },
-
   },
-  StaticMethods: {
-  },
+  StaticMethods: {},
   Init({ User, Account, IGAccount }) {
     this.belongsToMany(User, { through: 'UserAccount' });
-    this.hasMany(IGAccount, { onDelete: 'cascade', foreignKey: { allowNull: false, unique: 'igaccount_account' } });
+    this.hasMany(IGAccount, {
+      onDelete: 'cascade',
+      foreignKey: { allowNull: false, unique: 'igaccount_account' },
+    });
     this.addScope('withIgAccounts', { include: [IGAccount] });
     this.addScope('withUsers', { include: [User] });
   },
 };
-

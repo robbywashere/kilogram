@@ -6,7 +6,6 @@ const {
   InitPostJobQuery,
 } = require('./_JobsBase');
 
-
 module.exports = {
   Name: 'VerifyIGJob',
   Properties: {
@@ -26,4 +25,3 @@ module.exports = {
     ...JobStaticMethods,
   },
 };
-

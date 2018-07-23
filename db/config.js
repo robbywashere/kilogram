@@ -13,7 +13,7 @@ module.exports = {
     database: 'database_test',
     host: '127.0.0.1',
     dialect: 'postgres',
-    //logging: false,
+    // logging: false,
     //     "logging": (sql)=>console.log(sql.replace(/,/g,`\r\n`))
   },
   production: {

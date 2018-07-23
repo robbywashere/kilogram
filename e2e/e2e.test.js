@@ -14,7 +14,7 @@ const Promise = require('bluebird');
 const request = require('request-promise');
 const cmds = require('../android/cmds');
 const {
-  Post, PostJob, Device, Photo, IGAccount, VerifyIGJob
+  Post, PostJob, Device, Photo, IGAccount, VerifyIGJob,
 } = require('../objects');
 
 const DeviceAgent = require('../android/deviceAgent');
@@ -57,15 +57,27 @@ const Req = function ({
   });
 };
 
-Req.post = (path, body, args) => Req({
-  ...args, path, body, method: 'POST',
-});
-Req.put = (path, body, args) => Req({
-  ...args, path, body, method: 'PUT',
-});
-Req.patch = (path, body, args) => Req({
-  ...args, path, body, method: 'PATCH',
-});
+Req.post = (path, body, args) =>
+  Req({
+    ...args,
+    path,
+    body,
+    method: 'POST',
+  });
+Req.put = (path, body, args) =>
+  Req({
+    ...args,
+    path,
+    body,
+    method: 'PUT',
+  });
+Req.patch = (path, body, args) =>
+  Req({
+    ...args,
+    path,
+    body,
+    method: 'PATCH',
+  });
 Req.get = (path, args) => Req({ ...args, path, method: 'GET' });
 
 let FREE_PORT;
@@ -81,7 +93,6 @@ describe('End To End Test 👍 ', () => {
 
     sandbox = sinon.sandbox.create();
 
-
     const fn = async () => {
       try {
         await dbSync(true);
@@ -94,13 +105,14 @@ describe('End To End Test 👍 ', () => {
       return true;
     };
 
-
-    while (!await fn()) {
+    while (!(await fn())) {
       logger.debug(`Retrying dbsync ${retry}...`);
     }
 
     if (!RUN_ON_DEVICE) {
-      sandbox.stub(DeviceAgent.Agent.prototype, 'exec').resolves({ success: true, body: { login: true } });
+      sandbox
+        .stub(DeviceAgent.Agent.prototype, 'exec')
+        .resolves({ success: true, body: { login: true } });
       const d1 = await deviceFactory(1, NODE_NAME);
       const d2 = await deviceFactory(2, NODE_NAME);
       const d3 = await deviceFactory(3, NODE_NAME);
@@ -108,8 +120,8 @@ describe('End To End Test 👍 ', () => {
     }
   });
 
-  afterEach(async function() {
-    this.timeout(10*1000);
+  afterEach(async function () {
+    this.timeout(10 * 1000);
 
     try {
       sandbox.restore();
@@ -128,20 +140,19 @@ describe('End To End Test 👍 ', () => {
     }
     try {
       CLOSEMAIN();
-    } catch (e) {
-    }
+    } catch (e) {}
     try {
-      await new Promise(rs=>rimraf(MINIODATADIR, rs));
+      await new Promise(rs => rimraf(MINIODATADIR, rs));
     } catch (e) {
       logger.debug('Error cleaning MINIODATADIR');
     }
 
     try {
       if (minio) {
-        logger.debug('ATTEMPTING, to kill spawned MINIO proc',minio.pid) 
+        logger.debug('ATTEMPTING, to kill spawned MINIO proc', minio.pid);
         process.kill(minio.pid);
-        await new Promise((rs)=>minio.on('close', rs))
-        logger.debug('END, killing spawned MINIO proc',minio.pid) 
+        await new Promise(rs => minio.on('close', rs));
+        logger.debug('END, killing spawned MINIO proc', minio.pid);
       }
     } catch (e) {
       logger.debug('Error killing spawned MINIO proc', e);
@@ -157,7 +168,6 @@ describe('End To End Test 👍 ', () => {
     const [freePort] = await ffport(3000);
     FREE_PORT = freePort;
 
-
     const jar = request.jar();
 
     await new Promise((R) => {
@@ -168,16 +178,23 @@ describe('End To End Test 👍 ', () => {
     });
     logger.debug('Server Up....');
 
+    const res1 = await Req.post(
+      '/api/user/signup',
+      {
+        email: 'testemail@email.com',
+        password: 'password',
+      },
+      { jar },
+    );
 
-    const res1 = await Req.post('/api/user/signup', {
-      email: 'testemail@email.com',
-      password: 'password',
-    }, { jar });
-
-    const res2 = await Req.post('/auth', {
-      username: 'testemail@email.com',
-      password: 'password',
-    }, { jar });
+    const res2 = await Req.post(
+      '/auth',
+      {
+        username: 'testemail@email.com',
+        password: 'password',
+      },
+      { jar },
+    );
 
     const res3 = await Req.get('/auth', { jar });
 
@@ -204,16 +221,13 @@ describe('End To End Test 👍 ', () => {
       body: spaceCat.data,
     });
 
-
     assert(readdirSync(BUCKETPATH).includes(objectName));
-
 
     let retry = 0;
     while (!(await Photo.findAll()).length && retry++ <= 3) {
       logger.debug(`try ${retry} Photo not in DB retrying in 1 sec....`);
       await Promise.delay(1000);
     }
-
 
     const photoFile = path.join(BUCKETPATH, objectName);
 
@@ -223,30 +237,35 @@ describe('End To End Test 👍 ', () => {
 
     assert.equal(originalFileMd5, uploadFileMd5);
 
-
-    const res6 = await Req.post('/api/igaccount', {
-      AccountId,
-      username: IGUSERNAME,
-      password: IGPASSWORD,
-    }, { jar });
+    const res6 = await Req.post(
+      '/api/igaccount',
+      {
+        AccountId,
+        username: IGUSERNAME,
+        password: IGPASSWORD,
+      },
+      { jar },
+    );
 
     const igaccount = res6.body;
 
     const IGAccountId = res6.body.id;
 
-    const res7 = await Req.post('/api/post', {
-      AccountId,
-      postDate: new Date(),
-      IGAccountId,
-      photoUUID: uuid,
-    }, { jar });
-
+    const res7 = await Req.post(
+      '/api/post',
+      {
+        AccountId,
+        postDate: new Date(),
+        IGAccountId,
+        photoUUID: uuid,
+      },
+      { jar },
+    );
 
     const post = res7.body;
     assert(post.id);
 
     CLOSEMAIN = main({ nodeName: NODE_NAME });
-
 
     logger.debug('Waiting for device .....');
     while (!(await Device.findAll()).length) {
@@ -262,7 +281,6 @@ describe('End To End Test 👍 ', () => {
     }
     logger.debug('IGAccount Verified!');
 
-
     logger.debug('Waiting for Post to complete ...');
     while (!(await PostJob.completed()).length) {
       await Promise.delay(0);
@@ -272,14 +290,12 @@ describe('End To End Test 👍 ', () => {
     logger.debug('Now Additional Checks.....');
     const pjs = await PostJob.findAll();
     assert.equal(pjs.length, 1);
-    assert(pjs[0].isCompleted())
+    assert(pjs[0].isCompleted());
 
     const vij = await VerifyIGJob.findAll();
     assert.equal(vij.length, 1);
     assert(vij[0].isCompleted());
     const pst = await Post.published();
-    assert.equal(pst.length,1)
-
-
+    assert.equal(pst.length, 1);
   });
 });

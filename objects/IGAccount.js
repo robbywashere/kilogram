@@ -28,28 +28,25 @@ module.exports = {
       permit: false,
     },
     status: {
-      type: ENUM(UNVERIFIED,GOOD,FAILED),
+      type: ENUM(UNVERIFIED, GOOD, FAILED),
       defaultValue: UNVERIFIED,
       triggerable: true,
     },
   },
   Hooks: {
     async beforeUpdate(igAccount) {
-      //TODO: rate limit?!
+      // TODO: rate limit?!
       if (igAccount.password !== igAccount._previousDataValues.password) {
         const { VerifyIGJob } = this.sequelize.models;
-        igAccount.set('status',UNVERIFIED);
+        igAccount.set('status', UNVERIFIED);
         await VerifyIGJob.create({ IGAccountId: igAccount.id });
       }
-    }, 
-    //TODO: beforeCreate verify IGAccount exists
+    },
+    // TODO: beforeCreate verify IGAccount exists
     async afterCreate({ id }) {
       const { VerifyIGJob, DownloadIGAvaJob } = this.sequelize.models;
       const igaccount = { IGAccountId: id };
-      return Promise.all([
-        VerifyIGJob.create(igaccount), 
-        DownloadIGAvaJob.create(igaccount)
-      ]);
+      return Promise.all([VerifyIGJob.create(igaccount), DownloadIGAvaJob.create(igaccount)]);
     },
   },
   ScopeFunctions: true,
@@ -57,29 +54,28 @@ module.exports = {
     verified: { where: { status: GOOD } },
   },
   Methods: {
-    good(){
-      return this.update({ status: GOOD })
+    good() {
+      return this.update({ status: GOOD });
     },
-    fail(){
-      return this.update({ status: FAILED })
+    fail() {
+      return this.update({ status: FAILED });
     },
-    unverify(){
-      return this.update({ status: UNVERIFIED })
+    unverify() {
+      return this.update({ status: UNVERIFIED });
     },
   },
   StaticMethods: {
-    avatarUUID(id,avatarUUID){
-      return this.updateById(id,{ avatarUUID })
+    avatarUUID(id, avatarUUID) {
+      return this.updateById(id, { avatarUUID });
     },
     good(id) {
-      return this.updateById(id,{ status: GOOD });
+      return this.updateById(id, { status: GOOD });
     },
     fail(id) {
-      return this.updateById(id,{ status: GOOD });
-    }
+      return this.updateById(id, { status: GOOD });
+    },
   },
   Init({ Photo }) {
-     this.belongsTo(Photo,{ foreignKey: 'avatarUUID', targetKey: 'uuid' });
+    this.belongsTo(Photo, { foreignKey: 'avatarUUID', targetKey: 'uuid' });
   },
 };
-

@@ -5,23 +5,23 @@ const fs = require('fs');
 const { isInteger } = require('lodash');
 const cryptoRandomString = require('crypto-random-string');
 
-
 if (!fs.existsSync(path.join(__dirname, '..', '.env')) && process.env.NODE_ENV === 'development') {
   console.error('**** \n ERROR: Cannot locate .env file! \n ***');
 }
 require('dotenv').config(); // eslint-disable-line import/no-extraneous-dependencies
 
-
 function logLevel(level = 99) {
   const L = parseInt(level);
-  if (!isInteger(L)) throw new TypeError('Unable to parse LOG_LEVEL to integer, check configuration');
+  if (!isInteger(L)) { throw new TypeError('Unable to parse LOG_LEVEL to integer, check configuration'); }
   return L;
 }
 
 function session_exp(minutes = 60) {
   const min = parseInt(minutes);
-  if (!isInteger(min)) throw new TypeError('Unable to parse minutes to integer, check configuration for SESSION_EXPIRE_MINUTES');
-  return Math.floor(Date.now() / 1000) + (min * 60);
+  if (!isInteger(min)) {
+    throw new TypeError('Unable to parse minutes to integer, check configuration for SESSION_EXPIRE_MINUTES');
+  }
+  return Math.floor(Date.now() / 1000) + min * 60;
 }
 
 module.exports = {

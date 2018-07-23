@@ -5,7 +5,6 @@ const Promise = require('bluebird');
 const db = require('./');
 
 module.exports = async function syncDb(force = false) {
-
   try {
     await db.sync({ force });
   } catch (e) {
@@ -17,4 +16,3 @@ module.exports = async function syncDb(force = false) {
     throw e;
   }
 };
-

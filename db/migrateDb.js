@@ -6,7 +6,6 @@ const config = require('config');
 
 const { writeFileSync } = require('fs');
 
-
 const { logger } = require('../lib/logger');
 
 const { slurpDir2, slurpFile, forExt } = require('../lib/slurpDir2');
@@ -17,17 +16,17 @@ const dbname = pgConfig.database.toString();
 
 const path = require('path');
 
-const MigrationDir = path.join(__dirname,'migrations');
+const MigrationDir = path.join(__dirname, 'migrations');
 
-const FunctionDir = path.join(__dirname,'.snapshots');
+const FunctionDir = path.join(__dirname, '.snapshots');
 
 const { getSchemaPath } = require('./schema/pgDumpSchema');
 
 const { TSParser } = require('tsparser');
-  
-  //parse(query: string, dbType: string, delimiter: string)
 
-const slurpFunctions = slurpDir2(FunctionDir, forExt('.function.sql')); 
+// parse(query: string, dbType: string, delimiter: string)
+
+const slurpFunctions = slurpDir2(FunctionDir, forExt('.function.sql'));
 
 const slurpUpSql = slurpDir2(MigrationDir, forExt('.up.sql'));
 
@@ -64,12 +63,11 @@ async function up() {
   }
 }
 
-async function dumpFunctionsReadOnly({ namespace = 'public' } = {}){
-
+async function dumpFunctionsReadOnly({ namespace = 'public' } = {}) {
   const fnquery = `SELECT f.proname, pg_get_functiondef(f.oid)
 FROM pg_catalog.pg_proc f
 INNER JOIN pg_catalog.pg_namespace n ON (f.pronamespace = n.oid)
-WHERE n.nspname = '${namespace}' ORDER BY f.proname;`
+WHERE n.nspname = '${namespace}' ORDER BY f.proname;`;
 
   const client = new Client(pgConfig);
 
@@ -78,17 +76,16 @@ WHERE n.nspname = '${namespace}' ORDER BY f.proname;`
   const response = await client.query(fnquery);
 
   return response.rows;
-
 }
-async function dumpFunctions({ namespace = 'public' } = {}){
-  for (let row of (await dumpFunctionsReadOnly({ namespace }))) {
+async function dumpFunctions({ namespace = 'public' } = {}) {
+  for (const row of await dumpFunctionsReadOnly({ namespace })) {
     const name = row.proname;
-    let src = row.pg_get_functiondef;
-    writeFileSync(path.join(__dirname,'.snapshots', `${name}.function.sql`),src);
+    const src = row.pg_get_functiondef;
+    writeFileSync(path.join(__dirname, '.snapshots', `${name}.function.sql`), src);
   }
 }
 
-async function schemaUp(){
+async function schemaUp() {
   const schemaSql = slurpFile(getSchemaPath());
   let client;
   let res;
@@ -96,14 +93,14 @@ async function schemaUp(){
     client = new Client(pgConfig);
     client.connect();
 
-    for (let sqlStmt of TSParser.parse(schemaSql,'pg',';')) {
+    for (const sqlStmt of TSParser.parse(schemaSql, 'pg', ';')) {
       try {
         await client.query(sqlStmt);
-      } catch(E){
+      } catch (E) {
         logger.error(E.message);
       }
     }
-    logger(`Schema up success!`);
+    logger('Schema up success!');
   } catch (err) {
     logger.error(err.message);
   } finally {
@@ -146,12 +143,18 @@ async function down() {
     } else {
       logger.error(err, res);
     }
-  }
-  finally{
+  } finally {
     client.end();
   }
 }
 
 module.exports = {
-  up, down, migUp, migDown, schemaUp, dumpFunctions, funcUp, dumpFunctionsReadOnly
+  up,
+  down,
+  migUp,
+  migDown,
+  schemaUp,
+  dumpFunctions,
+  funcUp,
+  dumpFunctionsReadOnly,
 };

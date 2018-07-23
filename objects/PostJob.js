@@ -12,14 +12,13 @@ const db = require('../db'); // TODO: possible circular dep?
 module.exports = {
   Name: 'PostJob',
   Properties: {
-    ...JobProperties
+    ...JobProperties,
   },
   ScopeFunctions: true,
   Scopes: {
     ...JobScopes,
   },
-  Hooks: {
-  },
+  Hooks: {},
   Init({
     Post, Photo, IGAccount, Account,
   }) {
@@ -52,7 +51,10 @@ module.exports = {
   StaticMethods: {
     ...JobStaticMethods,
     async initPostJobs() {
-      return db.query(InitPostJobQuery, { type: sequelize.QueryTypes.INSERT, model: db.models.PostJob });
+      return db.query(InitPostJobQuery, {
+        type: sequelize.QueryTypes.INSERT,
+        model: db.models.PostJob,
+      });
     },
   },
 };

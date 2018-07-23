@@ -1,4 +1,3 @@
-
 const SyncDb = require('../db/sync');
 const initController = require('../controllers');
 const DB = require('../db');
@@ -11,7 +10,6 @@ const helmet = require('helmet');
 const { logger } = require('../lib/logger');
 const { MClient } = require('../server-lib/minio');
 const serverErrors = require('./serverErrors');
-
 
 module.exports = async function ({
   minioClient = new MClient(),
@@ -48,7 +46,6 @@ module.exports = async function ({
     logger.debug('Loading error middleware');
 
     app.use(errorMiddleware);
-
 
     logger.debug('Syncing DB and initializing minioClient');
     await syncDb(false);

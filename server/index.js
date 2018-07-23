@@ -5,13 +5,14 @@ const config = require('config');
 const { logger, levels, getLogLevel } = require('../lib/logger');
 require('../lib/handleUnhandledRejections');
 
-
 (async () => {
   const loglevel = config.get('LOG_LEVEL');
   console.log(
     `LOG_LEVEL: ${loglevel}`,
     '~',
-    Object.entries(levels).reduce((p, [k, v]) => ((v > loglevel) ? p : [...p, k]), []).join(', '),
+    Object.entries(levels)
+      .reduce((p, [k, v]) => (v > loglevel ? p : [...p, k]), [])
+      .join(', '),
   );
 
   const app = await baseServer();
@@ -33,4 +34,3 @@ require('../lib/handleUnhandledRejections');
 
   logger.status(`Listening on ${port}\nhttp://127.0.0.1:${port}`);
 })();
-

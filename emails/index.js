@@ -1,4 +1,3 @@
-
 const { get } = require('lodash');
 const { slurpDir2, forExt, slurpFile } = require('../lib/slurpDir2');
 const { join } = require('path');

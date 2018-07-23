@@ -7,4 +7,3 @@ module.exports = {
     this.belongsTo(IGAccount, { onDelete: 'cascade', foreignKey: { allowNull: false } });
   },
 };
-

@@ -40,37 +40,55 @@ async function downloadIGAva({
 
     body.minioUrl = url;
 
-    await new Promise((rs, rx) => reqPipe.get(body.avatar).pipe(reqPipe.put(url)).on('finish', rs).on('error', rx));
+    await new Promise((rs, rx) =>
+      reqPipe
+        .get(body.avatar)
+        .pipe(reqPipe.put(url))
+        .on('finish', rs)
+        .on('error', rx));
 
-    events.emit('IGAccount:downloadIGAva', { id: IGAccount.id, uuid, jobId, jobName });
-    events.emit('job:complete',{ jobId, jobName })
+    events.emit('IGAccount:downloadIGAva', {
+      id: IGAccount.id, uuid, jobId, jobName,
+    });
+    events.emit('job:complete', { jobId, jobName });
   } catch (error) {
-    try { await Photo.destroy({ where: { uuid: body.uuid }}) } catch(e){ /* :shrug: */};
-    events.emit('job:error', { error, body, jobId, jobName });
+    try {
+      await Photo.destroy({ where: { uuid: body.uuid } });
+    } catch (e) {
+      /* :shrug: */
+    }
+    events.emit('job:error', {
+      error, body, jobId, jobName,
+    });
   }
-
 }
 
 async function sendEmail({
   events = demand('events'),
   jobId = demand('jobId'),
   jobName = demand('jobName'),
-  data: { to, from, msg, subject } = demand('data'),
+  data: {
+    to, from, msg, subject,
+  } = demand('data'),
 }) {
   try {
-    const emailer = new Emailer({ });
-    const email = 
-    await emailer.send({
-      to, from, msg, subject,
+    const emailer = new Emailer({});
+    const email = await emailer.send({
+      to,
+      from,
+      msg,
+      subject,
     });
-    events.emit('job:complete',{ jobId, jobName })
+    events.emit('job:complete', { jobId, jobName });
   } catch (error) {
-    events.emit('job:error',{ jobId, jobName, error, body: {} })
+    events.emit('job:error', {
+      jobId, jobName, error, body: {},
+    });
   }
 }
 
-
-async function verifyIG({ // emit
+async function verifyIG({
+  // emit
   events = demand('events'),
   jobId = demand('jobId'),
   jobName = demand('jobName'),
@@ -79,7 +97,6 @@ async function verifyIG({ // emit
 }) {
   let body = {};
   try {
-
     const agentResult = await agent.exec({
       cmd: 'verify_ig_dance',
       args: {
@@ -96,9 +113,11 @@ async function verifyIG({ // emit
     if (body.login === false && body.type === 'creds_error') {
       events.emit('IGAccount:fail', { jobId, jobName, id: IGAccount.id });
     }
-    events.emit('job:complete',{ jobId, jobName })
+    events.emit('job:complete', { jobId, jobName });
   } catch (error) {
-    events.emit('job:error', { error, body, jobId, jobName });
+    events.emit('job:error', {
+      error, body, jobId, jobName,
+    });
   }
 }
 
@@ -115,8 +134,7 @@ async function post({
   let body = {};
 
   try {
-
-    //agent
+    // agent
     const localfile = await minioClient.pullPhoto({ name: Post.Photo.objectName });
     agentResult = await agent.exec({
       cmd: 'full_dance',
@@ -127,25 +145,27 @@ async function post({
         localfile, // TODO: DELETE WHEN FIN
       },
     });
-    //end
+    // end
 
     body = get(agentResult, 'body', {});
 
     if (agentResult.success) {
       events.emit('Post:published', { id: Post.id, jobId, jobName });
-      events.emit('job:complete',{ jobId, jobName })
-    } else if (get(agentResult, 'body.type') === 'creds_error') { 
-      events.emit('job:error',{ jobId, jobName, error: new Error('IGAccount credentials error') })
+      events.emit('job:complete', { jobId, jobName });
+    } else if (get(agentResult, 'body.type') === 'creds_error') {
+      events.emit('job:error', { jobId, jobName, error: new Error('IGAccount credentials error') });
       events.emit('IGAccount:fail', { jobId, jobName, id: IGAccount.id });
     } else {
-      events.emit('job:error', { error: new Error('Unknown'), body, jobId, jobName });
+      events.emit('job:error', {
+        error: new Error('Unknown'), body, jobId, jobName,
+      });
     }
-
   } catch (error) {
-    events.emit('job:error', { error, body, jobId, jobName });
+    events.emit('job:error', {
+      error, body, jobId, jobName,
+    });
   }
 }
-
 
 module.exports = {
   post,

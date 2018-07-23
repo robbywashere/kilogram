@@ -2,8 +2,7 @@ const config = require('config');
 const Promise = require('bluebird');
 const { logger } = require('../lib/logger');
 const PythonShell = require('python-shell');
-//const { EventEmitter } = require('events');
-
+// const { EventEmitter } = require('events');
 
 class PythonBridge {
   constructor(deviceId, log = logger) {
@@ -42,8 +41,8 @@ class PythonBridge {
 
       shell.on('message', (message) => {
         if (typeof message === 'object') {
-          //TODO: instead of a single result, move the data flow
-          //to event an emitter of this class
+          // TODO: instead of a single result, move the data flow
+          // to event an emitter of this class
           this.result = message;
         } else {
           this.logger(` Device ID: ${this.deviceId} - ${message}`);
@@ -60,4 +59,3 @@ class PythonBridge {
 }
 
 module.exports = { PythonBridge };
-

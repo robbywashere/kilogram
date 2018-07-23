@@ -1,4 +1,3 @@
-
 const {
   get, isUndefined, zipObject, startCase, fromPairs, clone, isEqual,
 } = require('lodash');
@@ -6,7 +5,7 @@ const {
 function allJobsStats(stats = {}, freeDevices = []) {
   return {
     ...zipObject(Object.keys(stats).map(startCase), Object.values(stats)),
-    'Free Devices': (freeDevices).length,
+    'Free Devices': freeDevices.length,
   };
 }
 function logDiff(logFn = console.log) {
@@ -19,11 +18,14 @@ function logDiff(logFn = console.log) {
   };
 }
 
-
 function logDeviceSync(result) {
   try {
-    if (Object.entries(result).map(([k, v]) => v).some(v => v && v.length)) {
-      logger.status(fromPairs(Object.entries(result).map(([k, v]) => [startCase(k), (v && v.length) ? v.join(',') : '*'])));
+    if (
+      Object.entries(result)
+        .map(([k, v]) => v)
+        .some(v => v && v.length)
+    ) {
+      logger.status(fromPairs(Object.entries(result).map(([k, v]) => [startCase(k), v && v.length ? v.join(',') : '*'])));
     }
   } catch (e) {
     try {
@@ -38,7 +40,8 @@ function jobStats(job) {
   const associations = Object.keys(job.constructor.associations);
   return {
     ...associations.reduce((p, key) => {
-      p[`${startCase(key)} Id`] = get(job, `${key}Id`); return p;
+      p[`${startCase(key)} Id`] = get(job, `${key}Id`);
+      return p;
     }, {}),
   };
 }

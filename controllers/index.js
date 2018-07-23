@@ -1,4 +1,3 @@
-
 // const { BucketEvents, Device, Job, Post, User, IGAccount, BotchedJob } = require('../objects');
 
 const Objects = require('../objects');
@@ -8,7 +7,6 @@ const finale = require('finale-rest');
 const { isArray, fromPairs } = require('lodash');
 
 const { logger } = require('../lib/logger');
-
 
 const demand = require('../lib/demand');
 
@@ -26,7 +24,6 @@ const DB = require('../db');
 
 const { isSuperAdmin } = require('../objects/_helpers');
 
-
 // TODO: once finale is removed, should be exporting routers vs injecting app
 
 function Init({
@@ -41,7 +38,10 @@ Init.loadPathControllers = loadPathControllers;
 function loadPathControllers({ app, minioClient }) {
   const paths = parsePaths(__dirname);
   load({
-    paths, app, minioClient, prefix: 'api',
+    paths,
+    app,
+    minioClient,
+    prefix: 'api',
   });
 }
 
@@ -73,6 +73,4 @@ function loadObjectControllers({ app, sequelize = DB, objects = Objects }) {
   });
 }
 
-
 module.exports = Init;
-

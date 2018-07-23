@@ -4,7 +4,7 @@ const { isUndefined } = require('lodash');
 
 const triggerProcedureInsert = require('../db/postgres-triggers/trigger-procedure-insert.js');
 
-//const postjob_notification = require('./_PostJobNotification');
+// const postjob_notification = require('./_PostJobNotification');
 
 const {
   STRING, ARRAY, TEXT, JSON: JSONType, INTEGER, VIRTUAL, BOOLEAN, Op, Model,
@@ -12,23 +12,22 @@ const {
 
 module.exports = {
   Name: 'Notification',
-  TableTriggers: [{
-    after: 'INSERT',
-  }],
+  TableTriggers: [
+    {
+      after: 'INSERT',
+    },
+  ],
   Properties: {
     body: {
       type: JSONType,
     },
   },
   ScopeFunctions: true,
-  Scopes: {
-  },
-  Hooks: {
-  },
+  Scopes: {},
+  Hooks: {},
   Init({ Account, NotificationRead }) {
     this.hasMany(NotificationRead);
     this.belongsTo(Account, { onDelete: 'cascade', foreignKey: { allowNull: false } });
-
   },
   Methods: {
     markAsRead(UserId) {
@@ -43,33 +42,36 @@ module.exports = {
     async markAllAsRead(UserId) {
       const { NotificationRead } = this.sequelize.models;
 
-      const allUnread = (await this.unread({ UserId }))
-        .map(({ id: NotificationId }) => ({ UserId, NotificationId }));
+      const allUnread = (await this.unread({ UserId })).map(({ id: NotificationId }) => ({
+        UserId,
+        NotificationId,
+      }));
 
       return NotificationRead.bulkCreate(allUnread, { returning: true });
     },
     unread({ UserId, AccountId }, opts) {
       const { NotificationRead, Account, User } = this.sequelize.models;
 
-      return (!isUndefined(AccountId) ? this.scope({ where: { AccountId } }) : this)
-        .findAll({
-          where: {
-            '$Account.Users.id$': { [Op.eq]: UserId },
-            [Op.or]: [
-              { '$NotificationReads.UserId$': { [Op.ne]: UserId } },
-              { '$NotificationReads.UserId$': null },
-            ],
-          },
-          include: [{ model: Account, include: User }, {
+      return (!isUndefined(AccountId) ? this.scope({ where: { AccountId } }) : this).findAll({
+        where: {
+          '$Account.Users.id$': { [Op.eq]: UserId },
+          [Op.or]: [
+            { '$NotificationReads.UserId$': { [Op.ne]: UserId } },
+            { '$NotificationReads.UserId$': null },
+          ],
+        },
+        include: [
+          { model: Account, include: User },
+          {
             model: NotificationRead,
             required: false,
             where: {
               '$NotificationReads.UserId$': { [Op.eq]: UserId },
             },
-          }],
-          ...opts,
-        });
+          },
+        ],
+        ...opts,
+      });
     },
   },
 };
-

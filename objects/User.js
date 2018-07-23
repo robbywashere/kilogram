@@ -14,12 +14,9 @@ const Promise = require('bluebird');
 const cryptoRandomString = require('crypto-random-string');
 const { genPasswordKey, randomKey } = require('./_helpers');
 
-
-
 module.exports = {
   Name: 'User',
   Properties: {
-    
     email: {
       type: STRING,
       allowNull: false,
@@ -58,13 +55,12 @@ module.exports = {
       defaultValue: false,
       omit: true,
     },
-
   },
   Hooks: {
-    async beforeCreate(user, options)  {
+    async beforeCreate(user, options) {
       try {
         user.password = await passwordHash(user.password);
-      } catch(e) {
+      } catch (e) {
         throw e;
       }
     },
@@ -90,14 +86,18 @@ module.exports = {
       if (!get(user, 'Accounts.length')) {
         throw new Error('User record must include Account');
       }
-      return { include: [{ 
-        model: Account, 
-        ///through: { attributes: [] }, //Exclude UserAccount join table
-        where: { id: { [Op.in]: user.Accounts.map(a => a.id) } } }] };
+      return {
+        include: [
+          {
+            model: Account,
+            // /through: { attributes: [] }, //Exclude UserAccount join table
+            where: { id: { [Op.in]: user.Accounts.map(a => a.id) } },
+          },
+        ],
+      };
     },
   },
   Methods: {
-
     igAccountIds() {
       try {
         const [igAccountIds] = this.Accounts.map(a => a.IGAccounts.map(iga => iga.id));
@@ -114,7 +114,7 @@ module.exports = {
       }
     },
 
-    verifyPassword(password){
+    verifyPassword(password) {
       return passwordVerify(password, this.password);
     },
 
@@ -123,8 +123,8 @@ module.exports = {
         if (!get(this, 'Accounts.length') || isUndefined(this.Accounts[0].UserAccount)) {
           await this.reloadWithAccounts();
         }
-        const vetter = (isArray(role)) ? role.includes.bind(role) : x => (x === role);
-        return this.Accounts.some(acc => (vetter(get(acc, 'UserAccount.role')) && get(acc, 'id') === accountId));
+        const vetter = isArray(role) ? role.includes.bind(role) : x => x === role;
+        return this.Accounts.some(acc => vetter(get(acc, 'UserAccount.role')) && get(acc, 'id') === accountId);
       } catch (e) {
         return false;
       }
@@ -132,18 +132,22 @@ module.exports = {
   },
   StaticMethods: {
     async recover({ email, password, passwordKey }) {
-      return this.update({ 
-        passwordKey: genPasswordKey(), 
-        password: await passwordHash(password) 
-      },{ 
-        where: { passwordKey, email }, 
-        returning: true 
-      })
-        .then(([_, u]) => u[0]);
+      return this.update(
+        {
+          passwordKey: genPasswordKey(),
+          password: await passwordHash(password),
+        },
+        {
+          where: { passwordKey, email },
+          returning: true,
+        },
+      ).then(([_, u]) => u[0]);
     },
     newRecovery(email) {
-      return this.update({ passwordKey: genPasswordKey() }, { where: { email }, returning: true })
-        .then(([_, u]) => u[0]);
+      return this.update(
+        { passwordKey: genPasswordKey() },
+        { where: { email }, returning: true },
+      ).then(([_, u]) => u[0]);
     },
   },
   Init({
@@ -151,7 +155,8 @@ module.exports = {
   }) {
     this.belongsToMany(Account, { through: 'UserAccount' });
     this.addScope('withAccounts', { include: [{ model: Account, include: [IGAccount] }] });
-    this.addScope('withAdminAccounts', { include: [{ model: Account, where: { '$Accounts.UserAccount.role$': 'admin' } }] });
+    this.addScope('withAdminAccounts', {
+      include: [{ model: Account, where: { '$Accounts.UserAccount.role$': 'admin' } }],
+    });
   },
 };
-

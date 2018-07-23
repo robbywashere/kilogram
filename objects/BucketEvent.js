@@ -6,13 +6,14 @@ const {
 } = sequelize;
 const { get } = require('lodash');
 
-
 module.exports = {
   Name: 'BucketEvents',
   TableName: 'bucketevents',
-  TableTriggers: [{
-    after: 'INSERT',
-  }],
+  TableTriggers: [
+    {
+      after: 'INSERT',
+    },
+  ],
   Properties: {
     key: {
       type: STRING,
@@ -31,9 +32,6 @@ module.exports = {
     },
   },
   AuthorizeInstance: {},
-  Init() {
-  },
-  StaticMethods: {
-  },
+  Init() {},
+  StaticMethods: {},
 };
-

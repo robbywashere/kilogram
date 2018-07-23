@@ -61,7 +61,6 @@ const PopNodeDeviceQuery = nodeName => `
   RETURNING *;
 `;
 
-
 module.exports = {
   Name: 'Device',
   Properties: {
@@ -100,27 +99,28 @@ module.exports = {
     free: { where: { idle: true, online: true, enabled: true } },
     dangling: { where: { online: false, idle: false } },
     danglingIds(ids = demand('adbIds')) {
-      return ({ where: { 
-        online: false, 
-        adbId: { [Op.in]: ids },
-        idle: false 
-      } 
-      }) 
-    }, 
+      return {
+        where: {
+          online: false,
+          adbId: { [Op.in]: ids },
+          idle: false,
+        },
+      };
+    },
     inProgress: { where: { online: true, enabled: true, idle: false } },
     zombies: {
       where: {
         online: true,
         idle: false,
         updatedAt: {
-          [Op.lte]: sequelize.fn('NOW() - INTERVAL \'5 minutes\' --'),
+          [Op.lte]: sequelize.fn("NOW() - INTERVAL '5 minutes' --"),
         },
       },
     },
   },
   Methods: {
-    isInProgress(){
-      return (this.online && this.enabled && !this.idle)
+    isInProgress() {
+      return this.online && this.enabled && !this.idle;
     },
     setFree() {
       return this.set('idle', true).save();
@@ -138,15 +138,34 @@ module.exports = {
       await this.freeDanglingByIds(devs);
       return this.syncAll(devs);
     },
-    async popDevice() { return get((await this.sequelize.query(PopDeviceQuery, { type: sequelize.QueryTypes.SELECT, model: this })), 0); },
+    async popDevice() {
+      return get(
+        await this.sequelize.query(PopDeviceQuery, {
+          type: sequelize.QueryTypes.SELECT,
+          model: this,
+        }),
+        0,
+      );
+    },
 
-    async popNodeDevice(nodeName) { return get((await this.sequelize.query(PopNodeDeviceQuery(nodeName), { type: sequelize.QueryTypes.SELECT, model: this })), 0); },
+    async popNodeDevice(nodeName) {
+      return get(
+        await this.sequelize.query(PopNodeDeviceQuery(nodeName), {
+          type: sequelize.QueryTypes.SELECT,
+          model: this,
+        }),
+        0,
+      );
+    },
     setFreeById(adbId) {
-      return this.update({
-        idle: true,
-      }, {
-        where: { adbId },
-      });
+      return this.update(
+        {
+          idle: true,
+        },
+        {
+          where: { adbId },
+        },
+      );
     },
 
     async register(ids = []) {
@@ -170,22 +189,28 @@ module.exports = {
       const returning = true;
       const raw = true;
       const mapAdbIds = ([_, devices]) => devices.map(d => d.adbId);
-      const nowOffline = await this.update({ online: false }, {
-        raw,
-        returning,
-        where: {
-          online: true,
-          adbId: { [Op.notIn]: ids },
+      const nowOffline = await this.update(
+        { online: false },
+        {
+          raw,
+          returning,
+          where: {
+            online: true,
+            adbId: { [Op.notIn]: ids },
+          },
         },
-      }).then(mapAdbIds);
-      const nowOnline = await this.update({ online: true }, {
-        raw,
-        returning,
-        where: {
-          online: false,
-          adbId: { [Op.in]: ids },
+      ).then(mapAdbIds);
+      const nowOnline = await this.update(
+        { online: true },
+        {
+          raw,
+          returning,
+          where: {
+            online: false,
+            adbId: { [Op.in]: ids },
+          },
         },
-      }).then(mapAdbIds);
+      ).then(mapAdbIds);
       return { nowOffline, nowOnline };
     },
 
@@ -198,8 +223,7 @@ module.exports = {
     // TODO: For when a device disconnects in the middle of working/not { idle: true }, then comes back online
     // Remove this? 6/15/2018
     async freeDanglingByIds(ids = demand('adbId<Array>')) {
-      await this.danglingIdsFn(ids).update({ online: true, idle: true })
+      await this.danglingIdsFn(ids).update({ online: true, idle: true });
     },
   },
 };
-
