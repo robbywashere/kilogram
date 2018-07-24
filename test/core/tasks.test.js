@@ -87,8 +87,10 @@ describe('Tasks', () => {
       const accountGood = new Promise(rs => events.on('IGAccount:good', rs));
       const jobComplete = new Promise(rs => events.on('job:complete', rs));
 
+      const reqAsync =  { get:  async () => ({ statusCode: 200 }) }
+
       Tasks.verifyIG({
-        events, jobId: 1, jobName: 'verifyIG', agent, IGAccount,
+        events, jobId: 1, jobName: 'verifyIG', agent, IGAccount, reqAsync
       });
 
       assert.deepEqual(await accountGood, { jobId: 1, jobName: 'verifyIG', id: 1 });
@@ -103,6 +105,25 @@ describe('Tasks', () => {
         },
       });
     });
+    it('should emit IGAccount:fail & job:complete on when http request to http://instagram/<username> returns 404', async () => {
+      const events = new EventEmitter();
+
+      const IGAccount = { id: 1, password, username };
+
+
+      const accountFail = new Promise(rs => events.on('IGAccount:fail', rs));
+      const jobComplete = new Promise(rs => events.on('job:complete', rs));
+
+      const reqAsync =  { get: async () => ({ statusCode: 404 }) }
+
+      Tasks.verifyIG({
+        events, jobId: 1, jobName: 'verifyIG', agent: {}, IGAccount, reqAsync
+      });
+
+      assert.deepEqual(await accountFail, { jobId: 1, jobName: 'verifyIG', id: 1 });
+
+      assert.deepEqual(await jobComplete, { jobId: 1, jobName: 'verifyIG' });
+  });
     it('should emit IGAccount:fail & job:complete on known failed state of deviceAgent login', async () => {
       const events = new EventEmitter();
 
@@ -115,8 +136,10 @@ describe('Tasks', () => {
       const accountFail = new Promise(rs => events.on('IGAccount:fail', rs));
       const jobComplete = new Promise(rs => events.on('job:complete', rs));
 
+      const reqAsync =  { get: async () => ({ statusCode: 200 }) }
+
       Tasks.verifyIG({
-        events, jobId: 1, jobName: 'verifyIG', agent, IGAccount,
+        events, jobId: 1, jobName: 'verifyIG', agent, IGAccount, reqAsync,
       });
 
       assert.deepEqual(await accountFail, { jobId: 1, jobName: 'verifyIG', id: 1 });

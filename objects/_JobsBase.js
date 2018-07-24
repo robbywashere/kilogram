@@ -1,7 +1,7 @@
 const sequelize = require('sequelize');
 const demand = require('../lib/demand');
 const { get } = require('lodash');
-
+const sql = require('sql-template-strings');
 const {
   STRING, ENUM, INTEGER, VIRTUAL, BOOLEAN, Op,
 } = sequelize;
@@ -39,6 +39,21 @@ const InitPostJobQuery = `
       AND 
         "IGAccounts"."status" = 'GOOD'
     )
+`;
+
+//TODO: impliment body !!!
+const RetryTimesFailQuery = ({ tableName, id, max }) => `
+  UPDATE 
+    "${tableName}"
+  SET 
+    attempts=attempts + 1,
+    status=(CASE 
+        WHEN attempts+1 >= ${max} THEN 'FAILED'
+        ELSE 'OPEN'
+      END)::"enum_${tableName}_status"
+  WHERE
+    id = ${id}
+  RETURNING *;
 `;
 
 // TODO: https://blog.2ndquadrant.com/what-is-select-skip-locked-for-in-postgresql-9-5/
@@ -101,11 +116,23 @@ const JobMethods = {
       body,
     });
   },
-  retryTimes({ body, max = 3 }) {
-    if (this.attempts >= max - 1) {
-      return this.fail(body);
-    }
-    return this.retry();
+
+     
+
+  retryTimesQuery({ body = {}, max = 3 } = {}) {
+    return this.sequelize.query(RetryTimesFailQuery({ 
+      tableName: this.constructor.tableName, 
+      id: this.id,
+      body,
+      max 
+    }),{
+      type: sequelize.QueryTypes.SELECT,
+      model: this.constructor,
+    }).spread(x=>x.length?x[0]:x);
+  },
+
+  retryTimes({ body = {}, max = 3 } = {}) {
+    return this.retryTimesQuery({ body, max });
   },
   retry() {
     return this.update({
@@ -133,7 +160,7 @@ const JobMethods = {
 
 const JobStaticMethods = {
   async stats() {
-    return this.$.query(StatsQuery(this.tableName)).spread((r) => {
+    return this.sequelize.query(StatsQuery(this.tableName)).spread((r) => {
       const result = JSON.parse(JSON.stringify(get(r, 0)));
       for (const key of Object.keys(result)) result[key] = parseInt(result[key], 10) || 0;
       return result;

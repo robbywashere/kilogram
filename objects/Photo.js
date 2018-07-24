@@ -42,6 +42,7 @@ module.exports = {
     },
     status: {
       type: ENUM('UNKNOWN', 'UPLOADED', 'DELETED'),
+      triggerable: true,
       defaultValue: 'UNKNOWN',
     },
     url: {

@@ -1154,6 +1154,13 @@ CREATE TRIGGER "photos:after_insert" AFTER INSERT ON public."Photos" FOR EACH RO
 
 
 --
+-- Name: Photos photos:after_update:status; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER "photos:after_update:status" AFTER UPDATE OF status ON public."Photos" FOR EACH ROW EXECUTE PROCEDURE public.trigger_notify_event('photos:after_update:status');
+
+
+--
 -- Name: PostJobs t__postjobs_notifications; Type: TRIGGER; Schema: public; Owner: postgres
 --
 

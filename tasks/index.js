@@ -8,6 +8,7 @@ const request = require('request');
 const Emailer = require('../server-lib/emailer');
 const { Photo, DownloadIGAva, Device } = require('../objects');
 const DeviceAgent = require('../android/deviceAgent');
+const igUrl = require('../lib/igUrl.js');
 
 async function downloadIGAva({
   events = demand('events'),
@@ -21,7 +22,7 @@ async function downloadIGAva({
   const body = {};
 
   try {
-    const html = await reqAsync.get(`https://www.instagram.com/${IGAccount.username}`);
+    const html = await reqAsync.get(igUrl(IGAccount.username));
 
     body.avatar = html.match(/"og:image".+?content="(.+)"/)[1];
 
@@ -87,6 +88,7 @@ async function sendEmail({
   }
 }
 
+//TODO: username may only be @username cannot be email address
 async function verifyIG({
   // emit
   events = demand('events'),
@@ -94,9 +96,18 @@ async function verifyIG({
   jobName = demand('jobName'),
   agent = demand('agent'),
   IGAccount = demand('IGAccount'),
+  reqAsync = requestAsync,
 }) {
   let body = {};
   try {
+    const statusCheck = await reqAsync.get(igUrl(IGAccount.username), { resolveWithFullResponse: true, simple: false });
+
+    if (statusCheck.statusCode === 404) {
+      events.emit('IGAccount:fail', { jobId, jobName, id: IGAccount.id });
+      events.emit('job:complete', { jobId, jobName });
+      return;
+    } 
+
     const agentResult = await agent.exec({
       cmd: 'verify_ig_dance',
       args: {

@@ -185,8 +185,8 @@ const main = function ({
   debounce = 1000,
   events = EngineEvents(),
 } = {}) {
-  events.on('eventError', ({ name, jobName, jobId }) =>
-    logger.critical(`Event handler from name: ${name}, emitted from job: ${jobName}, id ${jobId} failed`));
+  events.on('eventError', ({ name, jobName, jobId, error }) =>
+    logger.critical(`Event handler from name: ${name}, emitted from job: ${jobName}, id ${jobId} failed`, error));
 
   events.on('error', err => logger.critical('uncaught error in engine event loop spinner', err));
 

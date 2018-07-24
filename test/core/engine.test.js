@@ -15,6 +15,7 @@ const {
   deviceFactory,
 } = require('../helpers');
 const sinon = require('sinon');
+const request = require('request-promise');
 const assert = require('assert');
 const cmds = require('../../android/cmds');
 const minio = require('../../server-lib/minio');
@@ -99,7 +100,12 @@ describe('engine', () => {
     });
 
     describe('VerifyIGSprocket', () => {
-      afterEach(() => {});
+
+      beforeEach(()=>{
+        sandbox
+          .stub(request,'get')
+          .resolves({ statusCode: 200 });
+      })
 
       it('should run task VerifyIG and verify IGAccount', async () => {
         Sprocket = VerifyIGSprocket(SprocketArgs);
@@ -108,6 +114,7 @@ describe('engine', () => {
         sandbox
           .stub(DeviceAgent.Agent.prototype, 'exec')
           .resolves({ success: true, body: { login: true } });
+
 
         const { igAccount } = await createAccountUserPostJob();
 

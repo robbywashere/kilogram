@@ -219,8 +219,7 @@ module.exports = class BaseResource {
   }
 
   async create({ body, user }, { opts }) {
-    const instance = this.model.build(body, opts);
-    return instance;
+   return this.model.build(body, opts);
   }
 
   async collectionCreate({ headers, body }, { next }) {

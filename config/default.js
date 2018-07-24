@@ -30,6 +30,7 @@ module.exports = {
   // TEST_IGUSERNAME: process.env.TEST_IGUSERNAME,
   // TEST_IGPASSWORD: process.env.TEST_IGPASSWORD,
   // MINIO_CONFIG: process.env.MINIO_CONFIG,
+  IG_URL: process.env.IG_URL || 'https://www.instagram.com',
   PORT: process.env.PORT,
   LOG_LEVEL: logLevel(process.env.LOG_LEVEL),
   MINIO_SQS_ARN: process.env.MINIO_SQS_ARN,
