@@ -41,17 +41,19 @@ async function downloadIGAva({
 
     body.minioUrl = url;
 
+    //TODO: this needs to be tested
     await new Promise((rs, rx) =>
       reqPipe
         .get(body.avatar)
         .pipe(reqPipe.put(url))
-        .on('finish', rs)
+        .on('end', rs)
         .on('error', rx));
 
     events.emit('IGAccount:downloadIGAva', {
       id: IGAccount.id, uuid, jobId, jobName,
     });
     events.emit('job:complete', { jobId, jobName });
+    return;
   } catch (error) {
     try {
       await Photo.destroy({ where: { uuid: body.uuid } });

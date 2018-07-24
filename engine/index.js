@@ -99,7 +99,7 @@ function EventRegister(events) {
 function EngineEvents(events = new EventEmitter(), maxRetry = 3) {
   const eventr = EventRegister(events);
 
-  eventr('IGAccount:downloadIGAva', ({ id, uuid }) => IGAccount.avatar(id, uuid));
+  eventr('IGAccount:downloadIGAva', ({ id, uuid }) => IGAccount.avatarUUID(id, uuid));
 
   eventr('IGAcccount:fail', ({ id }) => IGAccount.fail(id));
 
@@ -158,7 +158,7 @@ function SendEmailSprocket({
 }
 
 function DownloadAvaSprocket({
-  nodeName, events, minioClient, concurrent, debounce,
+  events, minioClient, concurrent, debounce,
 }) {
   const fn = Run({
     model: DownloadIGAvaJob,

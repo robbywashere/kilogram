@@ -52,6 +52,7 @@ module.exports = {
   ScopeFunctions: true,
   Scopes: {
     verified: { where: { status: GOOD } },
+    withAll: { include: [{ all: true }] },
   },
   Methods: {
     good() {

@@ -17,11 +17,11 @@ const DeviceAgent = require('../../android/deviceAgent');
 const EventEmitter = require('../../lib/eventEmitter');
 
 describe('Tasks', () => {
+  let sandBox;
   const password = '!#@$%',
     username = 'heydude';
 
   describe('downloadIGAva', () => {
-    let sandbox;
 
     beforeEach(async () => {
       sandBox = sinon.sandbox.create();
@@ -54,7 +54,9 @@ describe('Tasks', () => {
         put: sinon.spy(),
       };
 
-      await Tasks.downloadIGAva({
+      const jobComplete = new Promise(rs => events.on('job:complete', rs));
+
+      Tasks.downloadIGAva({
         jobId: 1,
         jobName: 'downloadIGAva',
         events,
@@ -63,6 +65,8 @@ describe('Tasks', () => {
         reqPipe,
         IGAccount,
       });
+
+      await jobComplete;
 
       const photo = await Photo.scope('avatar').findOne();
 
@@ -73,6 +77,10 @@ describe('Tasks', () => {
         reqPipe.get.getCall(0).args[0],
         'https://instagram.fdad1-1.fna.fbcdn.net/vp/fb2f9813830c704783a165569b95a6ff/5BEB2087/t51.2885-19/s150x150/35414722_1833801803589327_7624906533519753216_n.jpg',
       );
+
+      
+
+
     });
   });
 
@@ -123,7 +131,7 @@ describe('Tasks', () => {
       assert.deepEqual(await accountFail, { jobId: 1, jobName: 'verifyIG', id: 1 });
 
       assert.deepEqual(await jobComplete, { jobId: 1, jobName: 'verifyIG' });
-  });
+    });
     it('should emit IGAccount:fail & job:complete on known failed state of deviceAgent login', async () => {
       const events = new EventEmitter();
 

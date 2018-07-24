@@ -14,7 +14,7 @@ const Promise = require('bluebird');
 const request = require('request-promise');
 const cmds = require('../android/cmds');
 const {
-  Post, PostJob, Device, Photo, IGAccount, VerifyIGJob,
+  Post, PostJob, Device, Photo, IGAccount, VerifyIGJob, DownloadIGAvaJob
 } = require('../objects');
 
 const DeviceAgent = require('../android/deviceAgent');
@@ -287,10 +287,17 @@ describe('End To End Test 👍 ', () => {
     }
     logger.debug('Post to completed!');
 
+
+    logger.debug('Waiting for IGAvatarDownload to complete ...');
+    while (!(await DownloadIGAvaJob.findAll({ where: { status: "SUCCESS" } })).length) {
+      await Promise.delay(0);
+    }
+
     logger.debug('Now Additional Checks.....');
     const pjs = await PostJob.findAll();
     assert.equal(pjs.length, 1);
     assert(pjs[0].isCompleted());
+
 
     const vij = await VerifyIGJob.findAll();
     assert.equal(vij.length, 1);
