@@ -135,6 +135,19 @@ const JobInit = function JobInit({ Post, Account, IGAccount }){
 }
 
 const JobStaticMethods = {
+
+  retryTimes({ id, body = {}, max = 3 } = {}) {
+    return this.sequelize.query(RetryTimesFailQuery({ 
+      tableName: this.tableName, 
+      id,
+      body,
+      max 
+    }),{
+      type: sequelize.QueryTypes.SELECT,
+      model: this,
+    }).spread(x=>x.length?x[0]:x);
+  },
+
   async stats() {
     return this.sequelize.query(StatsQuery(this.tableName)).spread((r) => {
       const result = JSON.parse(JSON.stringify(get(r, 0)));

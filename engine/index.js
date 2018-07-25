@@ -90,7 +90,6 @@ function EventRegister(events) {
           jobId: body.jobId,
           error: e,
         });
-        // TODO: retry func X times?
       }
     });
   };
@@ -111,10 +110,9 @@ function EngineEvents(events = new EventEmitter(), maxRetry = 3) {
 
   eventr('job:complete', ({ jobId, jobName }) => objects[jobName].complete(jobId));
 
-  eventr('job:error', async ({
-    error, jobId, jobName, body = {},
-  }) =>
-    (await objects[jobName].findById(jobId)).retryTimes({ body: { body, error }, max: maxRetry }));
+  eventr('job:error', ({ error, jobId, jobName, body = {} }) => objects[jobName]
+    .retryTimes({ id: jobId, body: { body, error }, max: maxRetry })
+  );
 
   return events;
 }
@@ -185,7 +183,9 @@ const main = function ({
   debounce = 1000,
   events = EngineEvents(),
 } = {}) {
-  events.on('eventError', ({ name, jobName, jobId, error }) =>
+  events.on('eventError', ({
+    name, jobName, jobId, error,
+  }) =>
     logger.critical(`Event handler from name: ${name}, emitted from job: ${jobName}, id ${jobId} failed`, error));
 
   events.on('error', err => logger.critical('uncaught error in engine event loop spinner', err));
@@ -193,6 +193,26 @@ const main = function ({
   const concurrent = 3;
 
   const spinz = [
+
+    InitPostJobsSprocket({ concurrent: 1, debounce }),
+
+    SendEmailSprocket({
+      events,
+      minioClient,
+      concurrent,
+      debounce,
+    }),
+    DownloadAvaSprocket({
+      events,
+      minioClient,
+      concurrent,
+      debounce,
+    }),
+
+    // Runs on device node
+    SyncDeviceSprocket({ concurrent: 1, nodeName, debounce }),
+
+    // Runs on device node
     VerifyIGSprocket({
       nodeName,
       events,
@@ -200,6 +220,8 @@ const main = function ({
       concurrent,
       debounce,
     }),
+
+    // Runs on device node
     PostSprocket({
       nodeName,
       events,
@@ -207,24 +229,7 @@ const main = function ({
       concurrent,
       debounce,
     }),
-    SendEmailSprocket({
-      nodeName,
-      events,
-      minioClient,
-      concurrent,
-      debounce,
-    }),
-    DownloadAvaSprocket({
-      nodeName,
-      events,
-      minioClient,
-      concurrent,
-      debounce,
-    }),
 
-    SyncDeviceSprocket({ concurrent: 1, nodeName, debounce }),
-
-    InitPostJobsSprocket({ concurrent: 1, nodeName, debounce }),
   ];
 
   spinz.forEach(z => z.on('reject', error => logger.error(error)));

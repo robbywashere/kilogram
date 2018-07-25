@@ -2,7 +2,7 @@ const sequelize = require('sequelize');
 const crypto = require('crypto');
 
 const {
-  STRING, JSON, INTEGER, VIRTUAL, BOOLEAN, Op,
+  STRING, Op,
 } = sequelize;
 const cryptoRandomString = require('crypto-random-string');
 

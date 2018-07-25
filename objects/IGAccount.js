@@ -6,8 +6,7 @@ const {
 } = sequelize;
 const { isLoggedIn } = require('./_helpers');
 
-// TODO unique true composite key constraint { AccountId, username }
-//
+// TODO: unique true composite key constraint { AccountId, username }
 
 const GOOD = 'GOOD',
   FAILED = 'FAILED',
@@ -35,14 +34,13 @@ module.exports = {
   },
   Hooks: {
     async beforeUpdate(igAccount) {
-      // TODO: rate limit?!
+      // TODO: rate limit, debounce, verify unique ? check if job already spinning?
       if (igAccount.password !== igAccount._previousDataValues.password) {
         const { VerifyIGJob } = this.sequelize.models;
         igAccount.set('status', UNVERIFIED);
         await VerifyIGJob.create({ IGAccountId: igAccount.id });
       }
     },
-    // TODO: beforeCreate verify IGAccount exists
     async afterCreate({ id }) {
       const { VerifyIGJob, DownloadIGAvaJob } = this.sequelize.models;
       const igaccount = { IGAccountId: id };

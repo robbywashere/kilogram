@@ -24,10 +24,6 @@ module.exports = {
   Authorize: {
     all: isLoggedIn,
   },
-  PolicyAttributes: {},
-  PolicyAssert: false, // TODO: haha
-  ScopeFunctions: true,
-  Scopes: {},
   AuthorizeInstance: {
     all(user) {
       try {
@@ -38,27 +34,20 @@ module.exports = {
     },
   },
   Hooks: {
-    /* afterUpdate: async function(instance){
-      const { password, email } = instance;
-      const { User } = this.sequelize.models;
-      const user = await User.find({ where: { email }});
-      await user.update({ verified: true, password })
-      return instance.destroy();
-    }, */
     async beforeCreate(instance) {
       if (!instance.User) {
         const { email, Account } = instance;
-        const $ = this.sequelize.models;
-        let user = await $.User.findOne({ where: { email } });
+        const models = this.sequelize.models;
+        let user = await models.User.findOne({ where: { email } });
         if (!user) {
-          user = await $.User.create(
+          user = await models.User.create(
             {
               email,
               verified: false,
               password: cryptoRandomString(32),
               Accounts: [Account],
             },
-            { include: [$.Account] },
+            { include: [ models.Account ] },
           );
         }
         instance.UserId = user.id;
