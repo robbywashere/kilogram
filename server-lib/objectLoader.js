@@ -35,6 +35,7 @@ function triggerFn(table, columns) {
 
 function loadObject(object, registry) {
   if (object.Init) registry.inits[object.Name] = object.Init;
+  object.Properties = object.Properties || {};
 
   const model = DB.define(object.Name, Object.assign({}, object.Properties), {
     tableName: object.TableName,
