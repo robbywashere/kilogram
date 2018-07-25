@@ -23,6 +23,8 @@ const { CookieSession } = require('../server-lib/auth/session');
 
 */
 
+//TODO: Make AccountId more vague, change to ForeignKeyId
+
 function SocketIOPacket({ data, room, event }) {
   return {
     data,
@@ -41,12 +43,16 @@ async function PGEventSockets({ pgTriggers = [], socketApp = demand('socketApp')
   await Promise.all(pgTriggers.map(trigger =>
     watcher.subscribe(trigger, ({ data }) => {
       try {
+
+        //when migrating to mqtt
         const { AccountId } = data;
         const room = SocketIORoom({
           AccountId,
           topic: trigger.event,
         });
         socketApp.to(room).emit('client:push', data);
+        //end
+
       } catch (e) {
         logger.error(e);
       }
