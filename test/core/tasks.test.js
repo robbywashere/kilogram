@@ -22,7 +22,6 @@ describe('Tasks', () => {
     username = 'heydude';
 
   describe('downloadIGAva', () => {
-
     beforeEach(async () => {
       sandBox = sinon.sandbox.create();
       await syncDb(true);
@@ -77,10 +76,6 @@ describe('Tasks', () => {
         reqPipe.get.getCall(0).args[0],
         'https://instagram.fdad1-1.fna.fbcdn.net/vp/fb2f9813830c704783a165569b95a6ff/5BEB2087/t51.2885-19/s150x150/35414722_1833801803589327_7624906533519753216_n.jpg',
       );
-
-      
-
-
     });
   });
 
@@ -95,10 +90,15 @@ describe('Tasks', () => {
       const accountGood = new Promise(rs => events.on('IGAccount:good', rs));
       const jobComplete = new Promise(rs => events.on('job:complete', rs));
 
-      const reqAsync =  { get:  async () => ({ statusCode: 200 }) }
+      const reqAsync = { get: async () => ({ statusCode: 200 }) };
 
       Tasks.verifyIG({
-        events, jobId: 1, jobName: 'verifyIG', agent, IGAccount, reqAsync
+        events,
+        jobId: 1,
+        jobName: 'verifyIG',
+        agent,
+        IGAccount,
+        reqAsync,
       });
 
       assert.deepEqual(await accountGood, { jobId: 1, jobName: 'verifyIG', id: 1 });
@@ -118,14 +118,18 @@ describe('Tasks', () => {
 
       const IGAccount = { id: 1, password, username };
 
-
       const accountFail = new Promise(rs => events.on('IGAccount:fail', rs));
       const jobComplete = new Promise(rs => events.on('job:complete', rs));
 
-      const reqAsync =  { get: async () => ({ statusCode: 404 }) }
+      const reqAsync = { get: async () => ({ statusCode: 404 }) };
 
       Tasks.verifyIG({
-        events, jobId: 1, jobName: 'verifyIG', agent: {}, IGAccount, reqAsync
+        events,
+        jobId: 1,
+        jobName: 'verifyIG',
+        agent: {},
+        IGAccount,
+        reqAsync,
       });
 
       assert.deepEqual(await accountFail, { jobId: 1, jobName: 'verifyIG', id: 1 });
@@ -144,10 +148,15 @@ describe('Tasks', () => {
       const accountFail = new Promise(rs => events.on('IGAccount:fail', rs));
       const jobComplete = new Promise(rs => events.on('job:complete', rs));
 
-      const reqAsync =  { get: async () => ({ statusCode: 200 }) }
+      const reqAsync = { get: async () => ({ statusCode: 200 }) };
 
       Tasks.verifyIG({
-        events, jobId: 1, jobName: 'verifyIG', agent, IGAccount, reqAsync,
+        events,
+        jobId: 1,
+        jobName: 'verifyIG',
+        agent,
+        IGAccount,
+        reqAsync,
       });
 
       assert.deepEqual(await accountFail, { jobId: 1, jobName: 'verifyIG', id: 1 });
@@ -161,11 +170,17 @@ describe('Tasks', () => {
       const events = new EventEmitter();
 
       const data = {
-        to: 'a@a.com', from: 'b@b.com', msg: 'hi', subject: 'hi',
+        to: 'a@a.com',
+        from: 'b@b.com',
+        msg: 'hi',
+        subject: 'hi',
       };
 
       Tasks.sendEmail({
-        events, jobId: 1, jobName: 'email', data,
+        events,
+        jobId: 1,
+        jobName: 'email',
+        data,
       });
 
       const jobComplete = new Promise(rs => events.on('job:complete', rs));
@@ -191,7 +206,13 @@ describe('Tasks', () => {
       const postPublished = new Promise(rs => events.on('Post:published', rs));
 
       Tasks.post({
-        events, jobId: 1, jobName: 'post', agent, IGAccount, Post, minioClient,
+        events,
+        jobId: 1,
+        jobName: 'post',
+        agent,
+        IGAccount,
+        Post,
+        minioClient,
       });
 
       assert.deepEqual(minioClient.pullPhoto.getCall(0).args[0], { name: 'objectName' });
@@ -235,7 +256,13 @@ describe('Tasks', () => {
       const jobFail = new Promise(rs => events.on('job:error', rs));
 
       Tasks.post({
-        events, jobId: 1, jobName: 'post', agent, IGAccount, Post, minioClient,
+        events,
+        jobId: 1,
+        jobName: 'post',
+        agent,
+        IGAccount,
+        Post,
+        minioClient,
       });
 
       const jf = await jobFail;
@@ -270,7 +297,13 @@ describe('Tasks', () => {
       const jobFail = new Promise(rs => events.on('job:error', rs));
 
       Tasks.post({
-        events, jobId: 1, jobName: 'post', agent, IGAccount, Post, minioClient,
+        events,
+        jobId: 1,
+        jobName: 'post',
+        agent,
+        IGAccount,
+        Post,
+        minioClient,
       });
 
       const jf = await jobFail;

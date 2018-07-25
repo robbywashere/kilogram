@@ -101,7 +101,7 @@ describe('objects/PostJob', () => {
     assert.equal(notif[0].body.data.PostJob.status, 'SUCCESS');
   });
 
-  //Deprecated, replaced with reloadWithAll
+  // Deprecated, replaced with reloadWithAll
   it.skip('should respond to withPost and withPostForId with a .Post object with a .Photo object', async () => {
     const { post } = await createAccountUserPostJob();
 

@@ -61,5 +61,8 @@ async function pgSchemaDumpCompare({
 }
 
 module.exports = {
-  pgSchemaDump, pgSchemaDumpCompare, pgSchemaDumpFile, getSchemaPath,
+  pgSchemaDump,
+  pgSchemaDumpCompare,
+  pgSchemaDumpFile,
+  getSchemaPath,
 };

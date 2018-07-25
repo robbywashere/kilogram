@@ -13,7 +13,6 @@ const { chunk } = require('lodash');
 const minioObj = require('./minioObject');
 const demand = require('../../lib/demand');
 
-// const { EventEmitter } = require('events');
 const EventEmitter = require('../../lib/eventEmitter');
 
 const { removeObject, listObjects, signedURL } = require('./middlewares');
@@ -111,14 +110,6 @@ class MClient {
     listener.on('notification', events);
     return listener;
   }
-
-  /* listenAny({
-    adapter,
-    events = MClient.PhotoEvents()
-  }) {
-    adapter.on('notification', events);
-  }
-  */
 
   async listenPGWatcherAdapter({
     sqsArn = this.sqsArn,
@@ -252,9 +243,9 @@ class MClient {
 
   async init() {
     await this.createBucket();
+    return this.listenPersist({ events: MClient.PhotoEvents() });
     // await this.createBucketNotifications();
     // await this.listen({ events: MClient.PhotoEvents() });
-    return this.listenPersist({ events: MClient.PhotoEvents() });
   }
   static getSQSARNS(configPath) {
     return Object.entries(JSON.parse(fs.readFileSync(configPath, 'utf-8').toString())).reduce(

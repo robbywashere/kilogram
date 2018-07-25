@@ -73,7 +73,9 @@ module.exports = class BaseResource {
     sortParams.forEach((sortParam) => {
       const type = sortParam.indexOf('-') === 0 ? 'DESC' : 'ASC';
       const name = sortParam.replace(/^-/, '');
-      if (!columns.includes(name)) { throw new BadRequest(`column '${name}' is not sortable/does not exist`); }
+      if (!columns.includes(name)) {
+        throw new BadRequest(`column '${name}' is not sortable/does not exist`);
+      }
       order.push([name, type]);
     });
     return order;
@@ -107,7 +109,9 @@ module.exports = class BaseResource {
     delete opts.index; // TODO: delete is dumb
 
     const instanceFn = this[name];
-    if (typeof instanceFn !== 'function') { throw new TypeError(`Controller action '${name}' is not a function`); }
+    if (typeof instanceFn !== 'function') {
+      throw new TypeError(`Controller action '${name}' is not a function`);
+    }
 
     return async (req, res, next) => {
       try {
@@ -178,7 +182,9 @@ module.exports = class BaseResource {
   }
 
   static collectionWhere({ ids, opts }) {
-    if (!ids || !ids.length) { throw new BadRequest('No IDs provided, assumed collection: \n But missing array of ids'); }
+    if (!ids || !ids.length) {
+      throw new BadRequest('No IDs provided, assumed collection: \n But missing array of ids');
+    }
     //  const ids = header.split(',').map(id=>parseInt(id.trim()))
     return { ...opts.where, id: { [Op.in]: ids } };
   }
@@ -219,7 +225,7 @@ module.exports = class BaseResource {
   }
 
   async create({ body, user }, { opts }) {
-   return this.model.build(body, opts);
+    return this.model.build(body, opts);
   }
 
   async collectionCreate({ headers, body }, { next }) {

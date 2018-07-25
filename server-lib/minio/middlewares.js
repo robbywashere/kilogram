@@ -38,7 +38,9 @@ function signedURL({ minioClient = demand('minioClient'), type = 'POST' }) {
       if (
         typeof get(req, 'user.accountIds') !== 'function' ||
         !req.user.accountIds().includes(AccountId)
-      ) { throw new Unauthorized('User not authorized for given AccountId'); }
+      ) {
+        throw new Unauthorized('User not authorized for given AccountId');
+      }
 
       const { uuid, url, objectName } = await minioClient.newPhoto({ AccountId, type });
 
