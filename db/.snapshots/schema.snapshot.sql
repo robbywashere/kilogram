@@ -292,12 +292,15 @@ ALTER SEQUENCE public."Devices_id_seq" OWNED BY public."Devices".id;
 CREATE TABLE public."DownloadIGAvaJobs" (
     id integer NOT NULL,
     body json,
+    relations json,
     data json,
     attempts integer DEFAULT 0,
     status public."enum_DownloadIGAvaJobs_status" DEFAULT 'OPEN'::public."enum_DownloadIGAvaJobs_status",
     "createdAt" timestamp with time zone NOT NULL,
     "updatedAt" timestamp with time zone NOT NULL,
-    "IGAccountId" integer NOT NULL
+    "PostId" integer,
+    "AccountId" integer,
+    "IGAccountId" integer
 );
 
 
@@ -490,14 +493,15 @@ ALTER SEQUENCE public."Photos_id_seq" OWNED BY public."Photos".id;
 CREATE TABLE public."PostJobs" (
     id integer NOT NULL,
     body json,
+    relations json,
     data json,
     attempts integer DEFAULT 0,
     status public."enum_PostJobs_status" DEFAULT 'OPEN'::public."enum_PostJobs_status",
     "createdAt" timestamp with time zone NOT NULL,
     "updatedAt" timestamp with time zone NOT NULL,
     "PostId" integer,
-    "AccountId" integer NOT NULL,
-    "IGAccountId" integer NOT NULL
+    "AccountId" integer,
+    "IGAccountId" integer
 );
 
 
@@ -573,11 +577,15 @@ ALTER SEQUENCE public."Posts_id_seq" OWNED BY public."Posts".id;
 CREATE TABLE public."SendEmailJobs" (
     id integer NOT NULL,
     body json,
+    relations json,
     data json,
     attempts integer DEFAULT 0,
     status public."enum_SendEmailJobs_status" DEFAULT 'OPEN'::public."enum_SendEmailJobs_status",
     "createdAt" timestamp with time zone NOT NULL,
-    "updatedAt" timestamp with time zone NOT NULL
+    "updatedAt" timestamp with time zone NOT NULL,
+    "PostId" integer,
+    "AccountId" integer,
+    "IGAccountId" integer
 );
 
 
@@ -745,12 +753,15 @@ ALTER SEQUENCE public."Users_id_seq" OWNED BY public."Users".id;
 CREATE TABLE public."VerifyIGJobs" (
     id integer NOT NULL,
     body json,
+    relations json,
     data json,
     attempts integer DEFAULT 0,
     status public."enum_VerifyIGJobs_status" DEFAULT 'OPEN'::public."enum_VerifyIGJobs_status",
     "createdAt" timestamp with time zone NOT NULL,
     "updatedAt" timestamp with time zone NOT NULL,
-    "IGAccountId" integer NOT NULL
+    "PostId" integer,
+    "AccountId" integer,
+    "IGAccountId" integer
 );
 
 
@@ -958,6 +969,14 @@ ALTER TABLE ONLY public."Devices"
 
 
 --
+-- Name: DownloadIGAvaJobs DownloadIGAvaJobs_PostId_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."DownloadIGAvaJobs"
+    ADD CONSTRAINT "DownloadIGAvaJobs_PostId_key" UNIQUE ("PostId");
+
+
+--
 -- Name: DownloadIGAvaJobs DownloadIGAvaJobs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1038,6 +1057,14 @@ ALTER TABLE ONLY public."Posts"
 
 
 --
+-- Name: SendEmailJobs SendEmailJobs_PostId_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."SendEmailJobs"
+    ADD CONSTRAINT "SendEmailJobs_PostId_key" UNIQUE ("PostId");
+
+
+--
 -- Name: SendEmailJobs SendEmailJobs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1091,6 +1118,14 @@ ALTER TABLE ONLY public."Users"
 
 ALTER TABLE ONLY public."Users"
     ADD CONSTRAINT "Users_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: VerifyIGJobs VerifyIGJobs_PostId_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."VerifyIGJobs"
+    ADD CONSTRAINT "VerifyIGJobs_PostId_key" UNIQUE ("PostId");
 
 
 --
@@ -1168,11 +1203,27 @@ CREATE TRIGGER t__postjobs_notifications AFTER UPDATE OF status ON public."PostJ
 
 
 --
+-- Name: DownloadIGAvaJobs DownloadIGAvaJobs_AccountId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."DownloadIGAvaJobs"
+    ADD CONSTRAINT "DownloadIGAvaJobs_AccountId_fkey" FOREIGN KEY ("AccountId") REFERENCES public."Accounts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
 -- Name: DownloadIGAvaJobs DownloadIGAvaJobs_IGAccountId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public."DownloadIGAvaJobs"
-    ADD CONSTRAINT "DownloadIGAvaJobs_IGAccountId_fkey" FOREIGN KEY ("IGAccountId") REFERENCES public."IGAccounts"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT "DownloadIGAvaJobs_IGAccountId_fkey" FOREIGN KEY ("IGAccountId") REFERENCES public."IGAccounts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: DownloadIGAvaJobs DownloadIGAvaJobs_PostId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."DownloadIGAvaJobs"
+    ADD CONSTRAINT "DownloadIGAvaJobs_PostId_fkey" FOREIGN KEY ("PostId") REFERENCES public."Posts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -1228,7 +1279,7 @@ ALTER TABLE ONLY public."Photos"
 --
 
 ALTER TABLE ONLY public."PostJobs"
-    ADD CONSTRAINT "PostJobs_AccountId_fkey" FOREIGN KEY ("AccountId") REFERENCES public."Accounts"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT "PostJobs_AccountId_fkey" FOREIGN KEY ("AccountId") REFERENCES public."Accounts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -1236,7 +1287,7 @@ ALTER TABLE ONLY public."PostJobs"
 --
 
 ALTER TABLE ONLY public."PostJobs"
-    ADD CONSTRAINT "PostJobs_IGAccountId_fkey" FOREIGN KEY ("IGAccountId") REFERENCES public."IGAccounts"(id) ON UPDATE CASCADE;
+    ADD CONSTRAINT "PostJobs_IGAccountId_fkey" FOREIGN KEY ("IGAccountId") REFERENCES public."IGAccounts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -1269,6 +1320,30 @@ ALTER TABLE ONLY public."Posts"
 
 ALTER TABLE ONLY public."Posts"
     ADD CONSTRAINT "Posts_photoUUID_fkey" FOREIGN KEY ("photoUUID") REFERENCES public."Photos"(uuid) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: SendEmailJobs SendEmailJobs_AccountId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."SendEmailJobs"
+    ADD CONSTRAINT "SendEmailJobs_AccountId_fkey" FOREIGN KEY ("AccountId") REFERENCES public."Accounts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: SendEmailJobs SendEmailJobs_IGAccountId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."SendEmailJobs"
+    ADD CONSTRAINT "SendEmailJobs_IGAccountId_fkey" FOREIGN KEY ("IGAccountId") REFERENCES public."IGAccounts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: SendEmailJobs SendEmailJobs_PostId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."SendEmailJobs"
+    ADD CONSTRAINT "SendEmailJobs_PostId_fkey" FOREIGN KEY ("PostId") REFERENCES public."Posts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
@@ -1312,11 +1387,27 @@ ALTER TABLE ONLY public."UserSignups"
 
 
 --
+-- Name: VerifyIGJobs VerifyIGJobs_AccountId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."VerifyIGJobs"
+    ADD CONSTRAINT "VerifyIGJobs_AccountId_fkey" FOREIGN KEY ("AccountId") REFERENCES public."Accounts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
 -- Name: VerifyIGJobs VerifyIGJobs_IGAccountId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public."VerifyIGJobs"
-    ADD CONSTRAINT "VerifyIGJobs_IGAccountId_fkey" FOREIGN KEY ("IGAccountId") REFERENCES public."IGAccounts"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT "VerifyIGJobs_IGAccountId_fkey" FOREIGN KEY ("IGAccountId") REFERENCES public."IGAccounts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: VerifyIGJobs VerifyIGJobs_PostId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."VerifyIGJobs"
+    ADD CONSTRAINT "VerifyIGJobs_PostId_fkey" FOREIGN KEY ("PostId") REFERENCES public."Posts"(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --

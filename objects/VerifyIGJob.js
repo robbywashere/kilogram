@@ -1,27 +1,8 @@
 const {
-  JobProperties,
-  JobScopes,
-  JobMethods,
-  JobStaticMethods,
-  InitPostJobQuery,
+  GenJobObj,
 } = require('./_JobsBase');
 
 module.exports = {
+  ...GenJobObj,
   Name: 'VerifyIGJob',
-  Properties: {
-    ...JobProperties,
-  },
-  ScopeFunctions: true,
-  Scopes: {
-    ...JobScopes,
-  },
-  Init({ IGAccount }) {
-    this.belongsTo(IGAccount, { onDelete: 'cascade', foreignKey: { allowNull: false } });
-  },
-  Methods: {
-    ...JobMethods,
-  },
-  StaticMethods: {
-    ...JobStaticMethods,
-  },
 };

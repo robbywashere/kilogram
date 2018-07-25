@@ -1,7 +1,7 @@
 module.exports = function LoadMinioConfig(minio_file_path) {
   const minioConfig = {};
   try {
-    if (!minio_file_path) throw Error();
+    if (!minio_file_path) throw Error(`Could not locate ${minio_file_path}`);
     const mc = require(minio_file_path);
     minioConfig.S3_ACCESS_KEY = mc.credential.accessKey;
     minioConfig.S3_SECRET_KEY = mc.credential.secretKey;

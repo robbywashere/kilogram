@@ -1,11 +1,8 @@
 const { GenJobObj } = require('./_JobsBase');
 
 module.exports = {
+  Name: 'SendEmailJob',
   ...GenJobObj,
-  Methods: {
-    ...GenJobObj.Methods,
-    async denormalize() {}, // do nothing :)
-  },
   StaticMethods: {
     ...GenJobObj.StaticMethods,
     new({
@@ -13,10 +10,9 @@ module.exports = {
     }) {
       return this.sequelize.models.SendEmailJob.create({
         data: {
-          to, from, msg: body, subject,
+          to, from, msg, subject,
         },
       });
     },
   },
-  Name: 'SendEmailJob',
 };

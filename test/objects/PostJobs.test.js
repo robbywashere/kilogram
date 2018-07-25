@@ -101,7 +101,8 @@ describe('objects/PostJob', () => {
     assert.equal(notif[0].body.data.PostJob.status, 'SUCCESS');
   });
 
-  it('should respond to withPost and withPostForId with a .Post object with a .Photo object', async () => {
+  //Deprecated, replaced with reloadWithAll
+  it.skip('should respond to withPost and withPostForId with a .Post object with a .Photo object', async () => {
     const { post } = await createAccountUserPostJob();
 
     const job1 = await PostJob.withPost({ where: { id: post.PostJob.id } });
@@ -113,7 +114,7 @@ describe('objects/PostJob', () => {
     const { post } = await createAccountUserPostJob();
 
     const job = await PostJob.findById(post.PostJob.id);
-    const j = await job.reloadWithPost();
+    const j = await job.reloadWithAll();
     assert(j.Post.Photo);
   });
 

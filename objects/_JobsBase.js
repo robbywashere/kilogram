@@ -10,36 +10,6 @@ const {
 // this exists since we are essentially #bulkCreate'ing from a subselect
 // not currently possibly or feasible or optimizied to do in sequelize ;)
 //
-const InitPostJobQuery = `
-  INSERT INTO
-    "PostJobs"
-    ("PostId", "IGAccountId", "AccountId", "createdAt", "updatedAt") (
-      SELECT 
-      "Posts"."id",
-        "Posts"."IGAccountId",
-        "Posts"."AccountId",
-        NOW() "createdAt",
-        NOW() "updatedAt"
-      FROM
-        "Posts"
-      LEFT JOIN
-        "PostJobs"
-      ON 
-        "PostJobs"."PostId" = "Posts"."id"
-      LEFT JOIN
-        "IGAccounts"
-      ON
-        "Posts"."IGAccountId" = "IGAccounts"."id"
-      WHERE
-        "Posts"."postDate" <= NOW()
-      AND
-        "PostJobs"."PostId" IS NULL 
-      AND 
-        "Posts"."status" = 'PUBLISH'
-      AND 
-        "IGAccounts"."status" = 'GOOD'
-    )
-`;
 
 //TODO: impliment body !!!
 const RetryTimesFailQuery = ({ tableName, id, max }) => `
@@ -158,6 +128,12 @@ const JobMethods = {
   },
 };
 
+const JobInit = function JobInit({ Post, Account, IGAccount }){
+    this.belongsTo(Post, { foreignKey: { unique: true,  onDelete: 'cascade '} });
+    this.belongsTo(Account, { foreignKey: { onDelete: 'cascade' } });
+    this.belongsTo(IGAccount, { foreignKey: { onDelete: 'cascade' } });
+}
+
 const JobStaticMethods = {
   async stats() {
     return this.sequelize.query(StatsQuery(this.tableName)).spread((r) => {
@@ -186,6 +162,9 @@ const JobProperties = {
   body: {
     type: sequelize.JSON,
   },
+  relations: {
+    type: sequelize.JSON,
+  },
   data: {
     type: sequelize.JSON,
   },
@@ -212,6 +191,7 @@ const GenJobObj = {
   Properties: JobProperties,
   ScopeFunctions: true,
   Scopes: JobScopes,
+  Init: JobInit,
   Methods: JobMethods,
   StaticMethods: JobStaticMethods,
 };
@@ -219,10 +199,10 @@ const GenJobObj = {
 module.exports = {
   GenJobObj,
   JobScopes,
+  JobInit,
   JobMethods,
   JobStaticMethods,
   JobProperties,
-  InitPostJobQuery,
   GetJobQuery,
   StatsQuery,
   JobObj: {
