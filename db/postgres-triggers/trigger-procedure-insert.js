@@ -32,7 +32,7 @@ const TriggerProcedureInsert = ({
 
   let foreignKeyFields;
   let foreignKeyValues;
-  if (foreignKeys) {
+  if (foreignKeys && foreignKeys.length) {
     foreignKeyFields = foreignKeys.map(k => `"${k}"`).join(',');
     foreignKeyValues = foreignKeys.map(k => `NEW."${k}"`).join(',');
   }

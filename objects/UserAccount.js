@@ -9,9 +9,6 @@ module.exports = {
       type: ENUM('member', 'admin'),
       allowNull: false,
       defaultValue: 'member',
-      /* validate: {
-          isIn: [['member', 'admin']]
-      } */
     },
   },
 };

@@ -31,7 +31,4 @@ module.exports = {
       defaultValue: sequelize.literal('NOW()'),
     },
   },
-  AuthorizeInstance: {},
-  Init() {},
-  StaticMethods: {},
 };

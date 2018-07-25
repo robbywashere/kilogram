@@ -46,28 +46,16 @@ const InitPostJobQuery = `
 module.exports = {
   ...GenJobObj,
   Name: 'PostJob',
-  Init(modelDefs) {
-
-    GenJobObj.Init.bind(this)(modelDefs);
-
-    // TODO: pull this out into something reusable by other objects
-    // TODO: this logic should should be hooked into the ./engine's job:complete emmitter
-    this.sequelize.addHook('afterBulkSync', () => {
-      const assocs = Object.keys(this.associations).map(a => `${a}Id`);
-      const watchColumn = 'status';
-      const trigProcSQL = triggerProcedureInsert({
-        watchTable: this.tableName,
-        watchColumn,
-        meta: { type: 'PostJob:status', resource: this.name },
-        //meta: { type: `${this.name}:${watchColumn}`, resource: this.name },
-        insertTable: 'Notifications',
-        jsonField: 'body',
-        prefix: ['data', this.name],
-        recordKeys: [].concat(assocs, watchColumn, 'id'),
-        foreignKeys: ['AccountId'],
-      });
-      return this.sequelize.query(trigProcSQL);
-    });
+  Properties: {
+    ...GenJobObj.Properties,
+    status: {
+    ...GenJobObj.Properties.status,
+      notifiable: {
+        notifyTable: 'Notifications',
+        field: 'body',
+        foreignKeys: ['AccountId']
+      }
+    }
   },
   StaticMethods: {
     ...JobStaticMethods,

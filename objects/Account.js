@@ -21,7 +21,6 @@ module.exports = {
       defaultValue: true,
     },
   },
-  Hooks: {},
   ScopeFunctions: true,
   Scopes: {
     userScoped(user) {
@@ -43,7 +42,6 @@ module.exports = {
       return this.IGAccounts.map(iga => iga.id);
     },
   },
-  StaticMethods: {},
   Init({ User, Account, IGAccount }) {
     this.belongsToMany(User, { through: 'UserAccount' });
     this.hasMany(IGAccount, {

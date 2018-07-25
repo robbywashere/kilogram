@@ -11,6 +11,7 @@ const { Model } = require('sequelize');
 const { logger } = require('../lib/logger');
 const { Trigger } = require('../db/postgres-triggers/triggers');
 const TriggerSqlFn = require('../db/postgres-triggers/trigger-event-sql-fn');
+const triggerProcedureInsert = require('../db/postgres-triggers/trigger-procedure-insert');
 
 const sequelize = require('sequelize');
 const slurpDir = require('../lib/slurpDir');
@@ -88,6 +89,45 @@ function loadObject(object, registry) {
   model.omitted = mapItted('omit');
 
   model.permitted = mapItted('permit');
+
+  // Notifiable
+  //
+
+  function notifies({
+    name = model.name,      //'PostJob'
+    tableName= model.tableName, //'PostJobs' //name.plural?
+    associations = model.associations, //this.associations
+    watchColumn, //'status'
+    foreignKeys, //['AccountId'] 
+    field, //body
+    notifyTable, //Notifications
+  }) {
+    model.afterSync(function () {
+      const assocs = Object.keys(associations).map(a => `${a}Id`);
+      const trigProcSQL = triggerProcedureInsert({
+        watchTable: tableName,
+        watchColumn,
+        meta: { type: `${name}:${watchColumn}`, resource: name },
+        insertTable: notifyTable,
+        jsonField: field,
+        prefix: ['data', name],
+        recordKeys: [].concat(assocs, watchColumn, 'id'),
+        foreignKeys,
+      });
+      return this.sequelize.query(trigProcSQL);
+    });
+  }
+
+  function mapNotifiables() {
+    return Object.entries(object.Properties).reduce((p, [k, v]) => {
+      if (v.notifiable) p.push({ ...v.notifiable, watchColumn: k });
+      return p;
+    }, []);
+  }
+
+  for (const notifier of mapNotifiables() || []) {
+    notifies(notifier);
+  }
 
   // Triggerables
   //
