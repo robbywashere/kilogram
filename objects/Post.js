@@ -40,24 +40,6 @@ module.exports = {
     this.hasOne(PostJob, { onDelete: 'cascade' });
     this.belongsTo(Photo, { foreignKey: 'photoUUID', targetKey: 'uuid' });
 
-    /* this.addScope('published', {
-      include: [PostJob],
-      where: {
-        [Op.or]: {
-          //  '$PostJob.status$': 'SUCCESS',
-          'status': 'PUBLISHED'
-        }
-      },
-    });
-
-    this.addScope('failed', {
-      include: [PostJob],
-      where: {
-        //'$PostJob.status$': { [Op.eq]: 'FAILED' },
-        'status': 'FAILED'
-      },
-    }); */
-
     this.addScope('withJob', { include: [PostJob] });
     this.addScope('due', {
       include: [PostJob],
@@ -115,3 +97,23 @@ module.exports = {
     },
   },
 };
+
+
+
+    /* this.addScope('published', {
+      include: [PostJob],
+      where: {
+        [Op.or]: {
+          //  '$PostJob.status$': 'SUCCESS',
+          'status': 'PUBLISHED'
+        }
+      },
+    });
+
+    this.addScope('failed', {
+      include: [PostJob],
+      where: {
+        //'$PostJob.status$': { [Op.eq]: 'FAILED' },
+        'status': 'FAILED'
+      },
+    }); */

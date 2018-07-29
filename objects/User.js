@@ -141,7 +141,7 @@ module.exports = {
           where: { passwordKey, email },
           returning: true,
         },
-      ).then(([_, u]) => u[0]);
+      ).then(([_, [ u ]]) => u);
     },
     newRecovery(email) {
       return this.update(

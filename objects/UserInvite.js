@@ -20,19 +20,6 @@ module.exports = {
       },
     },
   },
-  PolicyScopes: {},
-  Authorize: {
-    all: isLoggedIn,
-  },
-  AuthorizeInstance: {
-    all(user) {
-      try {
-        return user.Accounts.map(a => a.id).includes(this.accountId);
-      } catch (e) {
-        return false;
-      }
-    },
-  },
   Hooks: {
     async beforeCreate(instance) {
       if (!instance.User) {
@@ -62,8 +49,6 @@ module.exports = {
       return user;
     },
   },
-  StaticMethods: {},
-
   Init({ Account, User }) {
     this.belongsTo(User);
     this.belongsTo(Account, {
