@@ -54,9 +54,10 @@ function loadObject(object, registry) {
   model._scopeFns = !!object.ScopeFunctions;
   // Scopes into instance Static functions
 
-  // experimental authorize and set policy
-  //
 
+
+  // experimental authorize and set policy
+  // TODO: remove me, not used ....
   model.prototype.policy = function policy(policy) {
     this._policy = policy;
   };

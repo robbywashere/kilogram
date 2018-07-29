@@ -25,7 +25,7 @@ const {
   PGSockets,
 } = require('../../socketio');
 
-describe('Socket Server pushes from postgres updates', () => {
+describe('Socket socketio server pushes from postgres updates', () => {
   let watcher;
 
   beforeEach(() => dbSync(true));
@@ -195,5 +195,5 @@ describe('Socket Server pushes from postgres updates', () => {
     const user1pj = await user1sockpj;
 
     assert.equal(user1pj.body.data.PostJob.status, 'SUCCESS');
-  });
+  }).timeout(5000);
 });
