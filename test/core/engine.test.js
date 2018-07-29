@@ -19,7 +19,7 @@ const request = require('request-promise');
 const assert = require('assert');
 const cmds = require('../../android/cmds');
 const minio = require('../../server-lib/minio');
-const OBJECTS = require('../../objects');
+const OBJECTS = require('../../models');
 
 const {
   Account, IGAccount, Device, Post, PostJob, VerifyIGJob,

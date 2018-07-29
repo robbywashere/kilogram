@@ -1,4 +1,4 @@
-const { Account, User, UserInvite } = require('../../objects');
+const { Account, User, UserInvite } = require('../../models');
 const assert = require('assert');
 const { ezUser, exprezz, appLogger } = require('../helpers');
 const dbSync = require('../../db/sync');

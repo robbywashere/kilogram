@@ -16,7 +16,7 @@ const request = require('supertest');
 
 const {
   User, Photo, IGAccount, Account, Post,
-} = require('../../objects');
+} = require('../../models');
 
 const minioObj = require('../../server-lib/minio/minioObject');
 

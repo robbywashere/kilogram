@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { Photo } = require('../../objects');
+const { Photo } = require('../../models');
 const minioObj = require('../../server-lib/minio/minioObject');
 const DBSync = require('../../db/sync');
 const { Op } = require('sequelize');

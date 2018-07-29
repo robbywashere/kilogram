@@ -12,7 +12,7 @@ const helpers = require('../helpers');
 const userFactory = helpers.createUserAccountIGAccountPhotoPost;
 const { initJob } = helpers;
 
-const { Notification } = require('../../objects');
+const { Notification } = require('../../models');
 const io = require('socket.io');
 const { CookieSessionClass, PGSessionClass } = require('../../server-lib/auth/session');
 const Auth = require('../../server-lib/auth');

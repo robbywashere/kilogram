@@ -1,7 +1,7 @@
 const session = require('express-session');
 const cookieSession = require('cookie-session');
 const { logger } = require('../../lib/logger');
-const { User } = require('../../objects');
+const { User } = require('../../models');
 const demand = require('../../lib/demand');
 const pgSession = require('connect-pg-simple')(session);
 const config = require('config');

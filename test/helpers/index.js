@@ -4,7 +4,7 @@ const { Readable } = require('stream');
 const { logger } = require('../../lib/logger');
 const {
   User, PostJob, Photo, Account, IGAccount, Post, Device,
-} = require('../../objects');
+} = require('../../models');
 const rimraf = require('rimraf');
 const minioObj = require('../../server-lib/minio/minioObject');
 const { get } = require('lodash');

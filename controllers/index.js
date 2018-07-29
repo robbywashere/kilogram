@@ -1,6 +1,6 @@
 // const { BucketEvents, Device, Job, Post, User, IGAccount, BotchedJob } = require('../objects');
 
-const Objects = require('../objects');
+const Objects = require('../models');
 
 const finale = require('finale-rest');
 
@@ -22,7 +22,7 @@ const Promise = require('bluebird');
 
 const DB = require('../db');
 
-const { isSuperAdmin } = require('../objects/_helpers');
+const { isSuperAdmin } = require('../models/_helpers');
 
 // TODO: once finale is removed, should be exporting routers vs injecting app
 

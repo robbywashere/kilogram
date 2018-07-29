@@ -15,7 +15,7 @@ const serverErrors = require('../../server/serverErrors');
 
 const IGAccountController = require('../../controllers/igaccount');
 
-const { User, IGAccount, Account } = require('../../objects');
+const { User, IGAccount, Account } = require('../../models');
 
 describe('IGAccount Controller', () => {
   beforeEach(() => dbSync(true));

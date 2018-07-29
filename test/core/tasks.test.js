@@ -4,7 +4,7 @@ const cmds = require('../../android/cmds');
 const minio = require('../../server-lib/minio');
 
 const { MClient } = minio;
-const OBJECTS = require('../../objects');
+const OBJECTS = require('../../models');
 
 const {
   Photo, Account, IGAccount, Device, Post, PostJob, VerifyIGJob,

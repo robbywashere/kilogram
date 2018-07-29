@@ -10,7 +10,7 @@ const dbSync = require('../../db/sync');
 
 const request = require('supertest');
 
-const { User, Account } = require('../../objects');
+const { User, Account } = require('../../models');
 
 describe('User Controller', () => {
   before(() => dbSync(true));

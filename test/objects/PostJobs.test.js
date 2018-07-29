@@ -1,6 +1,6 @@
 const {
   Notification, IGAccount, Account, PostJob, Post, Photo, User,
-} = require('../../objects');
+} = require('../../models');
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../../db/sync');

@@ -1,4 +1,4 @@
-const { User, Account } = require('../../objects');
+const { User, Account } = require('../../models');
 
 module.exports = {
   up: async ($, Sequelize) => {

@@ -1,4 +1,4 @@
-const { Post } = require('../../objects');
+const { Post } = require('../../models');
 const Resource = require('../lib/baseResource');
 const AuthPolicy = require('../lib/authPolicy');
 const { Router } = require('express');

@@ -2,7 +2,7 @@ const jwt = require('express-jwt');
 const Router = require('express').Router;
 const config = require('config');
 const jwtToken = require('jsonwebtoken');
-const { Account, User } = require('../../objects');
+const { Account, User } = require('../../models');
 const handler = require('../../lib/handler');
 const { Unauthorized } = require('http-errors');
 

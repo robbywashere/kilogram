@@ -6,7 +6,7 @@ const {
   Notification,
   PostJob,
   Post,
-} = require('../../objects');
+} = require('../../models');
 const dbSync = require('../../db/sync');
 const { delay } = require('bluebird');
 const assert = require('assert');

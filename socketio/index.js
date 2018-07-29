@@ -7,7 +7,7 @@ const Watcher = require('../db/postgres-triggers/watch');
 //const Watcher = require('../server-lib/pg-listen');
 const { Unauthorized } = require('http-errors');
 const config = require('config');
-const { IGAccount, Notification } = require('../objects');
+const { IGAccount, Notification } = require('../models');
 
 const { CookieSession } = require('../server-lib/auth/session');
 

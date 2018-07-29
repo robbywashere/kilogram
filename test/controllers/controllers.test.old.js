@@ -12,7 +12,7 @@ const { exprezz, ezUser } = require('../helpers');
 const { STRING, INTEGER } = require('sequelize');
 const {
   Account, IGAccount, UserInvite, User, UserRecovery, Post,
-} = require('../../objects');
+} = require('../../models');
 const assert = require('assert');
 const { logger } = require('../../lib/logger');
 const DB = require('../../db');

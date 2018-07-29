@@ -1,8 +1,8 @@
 const {
   Account, IGAccount, PostJob, Post, Photo, User,
-} = require('../../objects');
+} = require('../../models');
 
-const ObjectRegistry = require('../../objects');
+const ObjectRegistry = require('../../models');
 
 const sinon = require('sinon');
 const assert = require('assert');

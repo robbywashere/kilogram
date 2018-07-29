@@ -1,6 +1,6 @@
 const { PythonBridge } = require('./bridge');
 const demand = require('../lib/demand');
-const { Device } = require('../objects');
+const { Device } = require('../models');
 
 class Agent {
   constructor({ deviceId = demand('deviceId') }) {

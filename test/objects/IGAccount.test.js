@@ -6,7 +6,7 @@ const {
   User,
   UserAccount,
   DownloadIGAvaJob,
-} = require('../../objects');
+} = require('../../models');
 const { ezUser } = require('../helpers');
 const DBSync = require('../../db/sync');
 const assert = require('assert');

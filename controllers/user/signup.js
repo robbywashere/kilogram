@@ -2,7 +2,7 @@ const { Router } = require('express');
 
 const { NotFound, BadRequest } = require('http-errors');
 
-const { User } = require('../../objects');
+const { User } = require('../../models');
 
 const emailer = require('../../server-lib/emailer');
 
@@ -14,7 +14,7 @@ const { userVerifyEmail } = require('../../emails');
 
 const ourUrl = require('../../lib/ourUrl');
 
-const { genPasswordKey } = require('../../objects/_helpers');
+const { genPasswordKey } = require('../../models/_helpers');
 
 const querystring = require('querystring');
 

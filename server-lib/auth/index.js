@@ -2,7 +2,7 @@ const passport = require('passport');
 
 const { Strategy } = require('passport-local');
 
-const { User, Account, IGAccount } = require('../../objects');
+const { User, Account, IGAccount } = require('../../models');
 
 const config = require('config');
 

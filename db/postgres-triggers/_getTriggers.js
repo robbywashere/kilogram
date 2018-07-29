@@ -1,5 +1,5 @@
 const dbSync = require('../sync');
-const objs = require('../../objects');
+const objs = require('../../models');
 
 (async () => {
   await dbSync(false);

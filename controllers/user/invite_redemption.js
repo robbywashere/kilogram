@@ -2,7 +2,7 @@ const { Router } = require('express');
 
 const { NotFound, BadRequest } = require('http-errors');
 
-const { UserRecovery, UserInvite, User } = require('../../objects');
+const { UserRecovery, UserInvite, User } = require('../../models');
 
 const emailer = require('../../server-lib/emailer');
 

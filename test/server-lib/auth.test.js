@@ -3,7 +3,7 @@ const Auth = require('../../server-lib/auth');
 const express = require('express');
 const assert = require('assert');
 const supertest = require('supertest');
-const { Account, User } = require('../../objects');
+const { Account, User } = require('../../models');
 const { appLogger } = require('../helpers');
 const DBSync = require('../../db/sync');
 

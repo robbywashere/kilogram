@@ -6,7 +6,7 @@ const { logger } = require('../lib/logger');
 const requestAsync = require('request-promise');
 const request = require('request');
 const Emailer = require('../server-lib/emailer');
-const { Photo, DownloadIGAva, Device } = require('../objects');
+const { Photo, DownloadIGAva, Device } = require('../models');
 const DeviceAgent = require('../android/deviceAgent');
 const igUrl = require('../lib/igUrl.js');
 

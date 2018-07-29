@@ -8,7 +8,7 @@ const { exprezz } = require('../helpers');
 const bucket = 'testbucket';
 const sinon = require('sinon');
 const syncDB = require('../../db/sync');
-const { Photo } = require('../../objects');
+const { Photo } = require('../../models');
 
 describe('server', () => {
   beforeEach(syncDB);

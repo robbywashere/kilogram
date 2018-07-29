@@ -1,7 +1,7 @@
 const sinon = require('sinon');
 const assert = require('assert');
 const sync = require('../../db/sync');
-const { Device } = require('../../objects');
+const { Device } = require('../../models');
 
 describe('Devices', () => {
   beforeEach(async () => sync(true));

@@ -1,4 +1,4 @@
-const { Post, User, Device } = require('../../objects');
+const { Post, User, Device } = require('../../models');
 const { Router } = require('express');
 const express = require('express');
 const bodyParser = require('body-parser');

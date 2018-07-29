@@ -1,6 +1,6 @@
 const {
   NotificationRead, Account, User, Notification,
-} = require('../../objects');
+} = require('../../models');
 const sequelize = require('sequelize');
 
 const { Op, fn, literal } = sequelize;

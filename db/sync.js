@@ -1,4 +1,4 @@
-require('../objects');
+require('../models');
 const config = require('config');
 const { logger } = require('../lib/logger');
 const Promise = require('bluebird');

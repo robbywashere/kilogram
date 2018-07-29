@@ -1,4 +1,4 @@
-const objects = require('../objects');
+const objects = require('../models');
 
 const {
   Post, IGAccount, PostJob, VerifyIGJob, Device, SendEmailJob, DownloadIGAvaJob,

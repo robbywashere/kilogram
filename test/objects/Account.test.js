@@ -1,6 +1,6 @@
 const {
   Account, IGAccount, User, UserAccount,
-} = require('../../objects');
+} = require('../../models');
 const { ezUser, newIGAccount, ezUserAccount } = require('../helpers');
 const DBSync = require('../../db/sync');
 const assert = require('assert');

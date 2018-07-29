@@ -1,4 +1,4 @@
-const { Account, UserAccount, User } = require('../../objects');
+const { Account, UserAccount, User } = require('../../models');
 const Resource = require('../lib/baseResource');
 const BasePolicy = require('../lib/basePolicy');
 const { NotFound } = require('http-errors');

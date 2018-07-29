@@ -34,7 +34,7 @@ const uuidv4 = require('uuid/v4');
 
 const uuid = require('uuid');
 
-const objects = require('../../objects');
+const objects = require('../../models');
 
 const { Account, Photo } = objects;
 

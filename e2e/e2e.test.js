@@ -15,7 +15,7 @@ const request = require('request-promise');
 const cmds = require('../android/cmds');
 const {
   Post, PostJob, Device, Photo, IGAccount, VerifyIGJob, DownloadIGAvaJob
-} = require('../objects');
+} = require('../models');
 
 const DeviceAgent = require('../android/deviceAgent');
 

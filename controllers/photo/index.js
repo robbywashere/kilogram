@@ -1,4 +1,4 @@
-const { Photo } = require('../../objects');
+const { Photo } = require('../../models');
 const Resource = require('../lib/baseResource');
 const AuthPolicy = require('../lib/authPolicy');
 const { Router } = require('express');
