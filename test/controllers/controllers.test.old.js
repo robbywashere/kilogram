@@ -1,7 +1,7 @@
 const initController = require('../../controllers');
 const { MClient } = require('../../server-lib/minio');
 const { loadObjectControllers } = require('../../controllers');
-const { loadObject, initObjects, newRegistry } = require('../../server-lib/objectLoader');
+const { loadObject, initObjects, newRegistry } = require('../../models/_modelLoader');
 
 const hashify = require('../../server-lib/auth/hashify');
 const request = require('supertest');

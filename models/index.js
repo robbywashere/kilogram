@@ -1,3 +1,3 @@
-const { wholeShebang } = require('../server-lib/objectLoader');
+const { wholeShebang } = require('./_modelLoader');
 
 module.exports = wholeShebang(__dirname);

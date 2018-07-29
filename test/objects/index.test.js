@@ -1,4 +1,4 @@
-const { loadObject, initObjects, newRegistry } = require('../../server-lib/objectLoader');
+const { loadObject, initObjects, newRegistry } = require('../../models/_modelLoader');
 
 const { STRING, INTEGER, Model } = require('sequelize');
 const DBSync = require('../../db/sync');

@@ -6,7 +6,7 @@ const { exprezz, appLogger } = require('../helpers');
 const request = require('supertest');
 const { times } = require('lodash');
 const DBSync = require('../../db/sync');
-const { loadObject, initObjects, newRegistry } = require('../../server-lib/objectLoader');
+const { loadObject, initObjects, newRegistry } = require('../../models/_modelLoader');
 const { Op, STRING, INTEGER } = require('sequelize');
 const assert = require('assert');
 
