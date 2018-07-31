@@ -69,7 +69,9 @@ describe('User actions', () => {
     assert(await user.verifyPassword(newPass));
   });
 
-  it("User not created by person, but is created by invite - should respond do PUT '/' user invite of specified key creating a User with a password Key if one does not exist", async () => {
+  it(`should be created by invite when not created by person
+    - should respond do PUT '/' user invite of specified key creating a User with a password Key if one does not exist`, async () => {
+
     const email = 'myWackyEmail@example.com';
     const password = 'myWackyNewPassword';
 
