@@ -12,6 +12,8 @@ const { userRecoveryEmail } = require('../../emails');
 
 const { genPasswordKey } = require('../../models/_helpers');
 
+const ourUrl = require('../../lib/ourUrl');
+
 module.exports = function UserRecoveryController() {
   const router = new Router();
   router.post('/:email', async (req, res, next) => {
@@ -20,8 +22,10 @@ module.exports = function UserRecoveryController() {
       const user = await User.newRecovery(email);
       if (!user) throw new NotFound(); // TODO: return res.sendStatus(200) more secure?
       const recoveryEmail = new emailer();
+      const key = user.passwordKey;
+      const url = ourUrl('account_recovery',key); //url is arbitrary to back-end, front-end will use it to construct put request below
       await recoveryEmail.send({
-        msg: userRecoveryEmail({ key: user.passwordKey }),
+        msg: userRecoveryEmail({ url, key }),
         to: user.email,
       });
       res.sendStatus(200);
