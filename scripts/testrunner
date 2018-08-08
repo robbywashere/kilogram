@@ -1,0 +1,1 @@
+mocha --full-trace --require ./test/setup.js  --recursive "./test/**/*.test.js" "${@}"
