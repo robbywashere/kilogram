@@ -242,8 +242,8 @@ async function createUserAccountIGAccount(opts) {
   return { user, account, igAccount };
 }
 
-function request(app) {
-  return supertestUse(supertest(app))
+function request(app, supert = supertest) {
+  return supertestUse(supert(app))
   .use(captureError((error, test) => {
     // modify error message to suit our needs:
     error.message += ` at ${test.url}\n` +

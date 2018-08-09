@@ -4,6 +4,7 @@ const express = require('express');
 const assert = require('assert');
 const { Account, User } = require('../../models');
 const { request } = require('../helpers');
+const supertest = require('supertest');
 const DBSync = require('../../db/sync');
 
 const { CookieSessionClass, PGSessionClass } = require('../../server-lib/auth/session');
@@ -63,7 +64,7 @@ describe('server-lib/auth', () => {
     });
 
 
-    const agent = request.agent(app);
+    const agent = request(app,supertest.agent);
 
     const res1 = await agent
       .post('/auth')
@@ -111,7 +112,7 @@ describe('server-lib/auth', () => {
     });
 
 
-    const agent = request.agent(app);
+    const agent = request(app,supertest.agent);
 
     const res1 = await agent
       .post('/auth')
