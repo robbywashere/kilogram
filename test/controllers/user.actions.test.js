@@ -1,8 +1,7 @@
 const { Account, User, UserInvite } = require('../../models');
 const assert = require('assert');
-const { ezUser, exprezz, appLogger } = require('../helpers');
+const { ezUser, exprezz, request, } = require('../helpers');
 const dbSync = require('../../db/sync');
-const request = require('supertest');
 const inviteRedemption = require('../../controllers/user/invite_redemption');
 const signup = require('../../controllers/user/signup');
 
@@ -87,8 +86,6 @@ describe('User actions', () => {
 
     app.use('/recovery', recovery());
 
-    appLogger(app);
-
     const res = await request(app)
       .put('/invite')
       .send({
@@ -125,8 +122,6 @@ describe('User actions', () => {
     const app = exprezz();
 
     app.use(inviteRedemption());
-
-    appLogger(app);
 
     assert(existingUser.verified);
 

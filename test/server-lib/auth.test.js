@@ -2,9 +2,8 @@ const Jwt = require('../../server-lib/auth/jwt');
 const Auth = require('../../server-lib/auth');
 const express = require('express');
 const assert = require('assert');
-const supertest = require('supertest');
 const { Account, User } = require('../../models');
-const { appLogger } = require('../helpers');
+const { request } = require('../helpers');
 const DBSync = require('../../db/sync');
 
 const { CookieSessionClass, PGSessionClass } = require('../../server-lib/auth/session');
@@ -20,18 +19,16 @@ describe('server-lib/auth', () => {
 
     const app = new express();
 
-    appLogger(app);
-
     app.use(Jwt(app));
 
-    const res1 = await supertest(app)
+    const res1 = await request(app)
       .post('/auth')
       .send({ username: 'test@test.com', password: 'blah' })
       .expect(200);
 
     const { token } = res1.body;
 
-    const res2 = await supertest(app)
+    const res2 = await request(app)
       .get('/auth')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
@@ -40,7 +37,7 @@ describe('server-lib/auth', () => {
     assert(res2.body.Accounts[0]);
     assert.equal(res2.body.Accounts[0].id, user.Accounts[0].id);
 
-    const res3 = await supertest(app)
+    const res3 = await request(app)
       .get('/auth')
       .expect(401);
   });
@@ -65,9 +62,8 @@ describe('server-lib/auth', () => {
       res.send(req.user);
     });
 
-    appLogger(app);
 
-    const agent = supertest.agent(app);
+    const agent = request.agent(app);
 
     const res1 = await agent
       .post('/auth')
@@ -84,7 +80,7 @@ describe('server-lib/auth', () => {
 
     assert.equal(userdata.Accounts[0].id, 1);
 
-    const res2 = await supertest(app)
+    const res2 = await request(app)
       .post('/auth')
       .send({ username: 'test@test.com', password: 'wrong' })
       .expect(401);
@@ -114,9 +110,8 @@ describe('server-lib/auth', () => {
       res.send(req.user);
     });
 
-    appLogger(app);
 
-    const agent = supertest.agent(app);
+    const agent = request.agent(app);
 
     const res1 = await agent
       .post('/auth')
@@ -133,7 +128,7 @@ describe('server-lib/auth', () => {
 
     assert.equal(userdata.Accounts[0].id, 1);
 
-    const res2 = await supertest(app)
+    const res2 = await request(app)
       .post('/auth')
       .send({ username: 'test@test.com', password: 'wrong' })
       .expect(401);

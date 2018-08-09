@@ -4,11 +4,9 @@ const { loadObjectControllers } = require('../../controllers');
 
 const DB = require('../../db');
 
-const { exprezz, appLogger, ezUser } = require('../helpers');
+const { exprezz,  ezUser, request } = require('../helpers');
 
 const dbSync = require('../../db/sync');
-
-const request = require('supertest');
 
 const { User, Account } = require('../../models');
 

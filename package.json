@@ -105,7 +105,6 @@
     "db:mig:down": "node ./db/_migdown.js",
     "db:schema:up": "node ./db/_schemaup.js",
     "db:mig:up": "node ./db/_migup.js",
-
     "test:clr": "./scripts/testrunner --reporter mocha-clearscreen-reporter --watch",
     "test:clr:verbose": "./scripts/testrunner --reporter mocha-clearscreen-reporter --watch",
     "test:watch": "mocha  --require ./test/setup.js  --recursive \"./test/**/*.test.js\"  --watch",
@@ -113,7 +112,6 @@
     "test:nyc": " nyc ./scripts/testrunner --watch",
     "test:e2e": "mocha ./e2e/e2e.test.js",
     "test:e2e:device": "export RUN_E2E_ON_DEVICE=true && mocha ./e2e/e2e.test.js",
-
     "pg:session:up": "psql postgres < ./node_modules/connect-pg-simple/table.sql",
     "moo": "cowsay moo",
     "pwd": "pwd",
@@ -140,6 +138,8 @@
     "mock-socket": "^7.1.0",
     "nyc": "^11.4.1",
     "sinon": "^4.1.3",
-    "stream-array": "^1.1.2"
+    "stream-array": "^1.1.2",
+    "superagent-use": "^0.1.0",
+    "supertest-capture-error": "^1.0.0"
   }
 }

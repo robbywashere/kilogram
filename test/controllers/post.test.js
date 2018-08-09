@@ -7,12 +7,10 @@ const PostController = require('../../controllers/post');
 const DB = require('../../db');
 
 const {
-  exprezz, ezUser, appLogger, newIGAccount,
+  exprezz, request, ezUser,  newIGAccount,
 } = require('../helpers');
 
 const dbSync = require('../../db/sync');
-
-const request = require('supertest');
 
 const {
   User, Photo, IGAccount, Account, Post,

@@ -8,6 +8,9 @@ const {
 const rimraf = require('rimraf');
 const minioObj = require('../../server-lib/minio/minioObject');
 const { get } = require('lodash');
+const supertest = require('supertest');
+const supertestUse = require('superagent-use'); 
+const captureError = require('supertest-capture-error');
 
 function loadFixture(name) {
   return readFileSync(`${__dirname}/../fixtures/${name}`).toString();
@@ -20,13 +23,6 @@ function fixtures() {
   return o;
 }
 
-function appLogger(app) {
-  app.use((err, req, res, next) => {
-    console.error('>>> express logger', err);
-    res.status(err.statusCode || 500).send(err.msg || err.toString());
-    throw err;
-  });
-}
 
 function fakeReadStream(string = 'fakeReadStream()') {
   const s = new Readable();
@@ -246,7 +242,18 @@ async function createUserAccountIGAccount(opts) {
   return { user, account, igAccount };
 }
 
+function request(app) {
+  return supertestUse(supertest(app))
+  .use(captureError((error, test) => {
+    // modify error message to suit our needs:
+    error.message += ` at ${test.url}\n` +
+      `Response Body:\n${test.res.text}`;
+    error.stack = ''; // this is useless anyway
+  }));
+}
+
 module.exports = {
+  request,
   createUserAccountIGAccountPhotoPost,
   initJob,
   runMinio,
@@ -259,7 +266,6 @@ module.exports = {
   createUserPostJob,
   createAccountUserPost,
   exprezz,
-  appLogger,
   fakeReadStream,
   deviceFactory,
 };

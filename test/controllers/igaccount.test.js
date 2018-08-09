@@ -4,13 +4,12 @@ const { loadObjectControllers } = require('../../controllers');
 
 const DB = require('../../db');
 
-const { exprezz, appLogger, ezUser } = require('../helpers');
+const { exprezz, request,  ezUser } = require('../helpers');
 
 const express = require('express');
 
 const dbSync = require('../../db/sync');
 
-const request = require('supertest');
 const serverErrors = require('../../server/serverErrors');
 
 const IGAccountController = require('../../controllers/igaccount');

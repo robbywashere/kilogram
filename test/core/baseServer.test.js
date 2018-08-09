@@ -1,5 +1,5 @@
 const baseServer = require('../../server/baseServer');
-const request = require('supertest');
+const { request } = require('../helpers');
 
 describe('baseServer', () => {
   it('should respond Unauthorized to /api/user', async () => {

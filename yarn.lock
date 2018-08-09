@@ -8674,6 +8674,13 @@ style-loader@0.19.0:
     loader-utils "^1.0.2"
     schema-utils "^0.3.0"
 
+superagent-use@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/superagent-use/-/superagent-use-0.1.0.tgz#d28dbbbf573ba980329b4645897608bc99501cff"
+  dependencies:
+    extend "^3.0.0"
+    methods "~1.1.2"
+
 superagent@^3.0.0:
   version "3.8.2"
   resolved "https://registry.yarnpkg.com/superagent/-/superagent-3.8.2.tgz#e4a11b9d047f7d3efeb3bbe536d9ec0021d16403"
@@ -8688,6 +8695,10 @@ superagent@^3.0.0:
     mime "^1.4.1"
     qs "^6.5.1"
     readable-stream "^2.0.5"
+
+supertest-capture-error@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/supertest-capture-error/-/supertest-capture-error-1.0.0.tgz#f0586b2fca49c8bad4df9cb53d93a7f90d94f1d9"
 
 supertest@^3.0.0:
   version "3.0.0"

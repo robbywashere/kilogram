@@ -1,9 +1,9 @@
-const request = require('supertest');
+
 const assert = require('assert');
 const streamify = require('stream-array');
 const { MClient } = require('../../server-lib/minio');
 const Routes = require('../../controllers/minio');
-const { exprezz } = require('../helpers');
+const { exprezz, request } = require('../helpers');
 
 const bucket = 'testbucket';
 const sinon = require('sinon');

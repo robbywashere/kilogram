@@ -4,10 +4,9 @@ const { loadObjectControllers } = require('../../controllers');
 const { loadObject, initObjects, newRegistry } = require('../../models/_modelLoader');
 
 const hashify = require('../../server-lib/auth/hashify');
-const request = require('supertest');
 const sync = require('../../db/sync');
 const express = require('express');
-const { exprezz, ezUser } = require('../helpers');
+const { request, exprezz, ezUser } = require('../helpers');
 
 const { STRING, INTEGER } = require('sequelize');
 const {

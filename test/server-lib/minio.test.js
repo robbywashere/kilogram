@@ -22,9 +22,7 @@ const assert = require('assert');
 
 const DBSync = require('../../db/sync');
 
-const { ezUser, exprezz, appLogger } = require('../helpers');
-
-const request = require('supertest');
+const { ezUser, request, exprezz,  } = require('../helpers');
 
 const dbsync = require('../../db/sync');
 
