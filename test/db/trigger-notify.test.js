@@ -61,7 +61,7 @@ describe('trigger notify functionality', () => {
     });
   });
 
-  it('TODO: should be able to listen for Notification triggers created by PostJob status change', async () => {
+  it('should be able to listen for Notification triggers created by PostJob status change', async () => {
     const {
       user, account, igAccount, photo, post,
     } = await createUserAccountIGAccountPhotoPost();
