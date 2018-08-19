@@ -4,7 +4,7 @@ const { STRING, INTEGER, Model } = require('sequelize');
 const DBSync = require('../../db/sync');
 const assert = require('assert');
 
-describe('objectLoader', () => {
+describe('modelLoader', () => {
   let InitObjs = {};
   beforeEach(() => DBSync(true));
 

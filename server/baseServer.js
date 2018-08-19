@@ -27,10 +27,6 @@ module.exports = async function ({
 
     app.use(require('serve-static')(`${__dirname}/public`));
 
-    app.get('/upload-static', (req, res) => {
-      res.sendFile(`${__dirname}/index.html`);
-    });
-
     logger.debug('Loading auth');
 
     app.use(auth(app, { sessionStrategy }));
@@ -48,11 +44,10 @@ module.exports = async function ({
     app.use(errorMiddleware);
 
     logger.debug('Syncing DB and initializing minioClient');
+
     await syncDb(false);
-    //   await minioClient.createBucket();
-    //   await minioClient.listenPersist();
-    //
-    app.minioEventListener = await minioClient.init();
+
+    app.set('minio event listener',(await minioClient.init()));
 
     return app;
   } catch (e) {

@@ -39,10 +39,10 @@ const spaceCat = {
   size: statSync(path.join(__dirname, 'spacecat.jpg')).size,
 };
 
-let APP;
-let CLOSEMAIN;
-let SERVER;
-const NODE_NAME = 'HOME1';
+let app;
+let closeMain;
+let server;
+const nodeName = 'HOME1';
 
 const Req = function ({
   path = '/', method, body = {}, ...args
@@ -113,9 +113,9 @@ describe('End To End Test 👍 ', () => {
       sandbox
         .stub(DeviceAgent.Agent.prototype, 'exec')
         .resolves({ success: true, body: { login: true } });
-      const d1 = await deviceFactory(1, NODE_NAME);
-      const d2 = await deviceFactory(2, NODE_NAME);
-      const d3 = await deviceFactory(3, NODE_NAME);
+      const d1 = await deviceFactory(1, nodeName);
+      const d2 = await deviceFactory(2, nodeName);
+      const d3 = await deviceFactory(3, nodeName);
       sandbox.stub(cmds, 'adbDevices').resolves([d1, d2, d3].map(d => d.adbId));
     }
   });
@@ -129,17 +129,17 @@ describe('End To End Test 👍 ', () => {
       //
     }
     try {
-      APP.minioEventListener.terminate();
+      app.get('minio event listener').terminate();
     } catch (e) {
       logger.debug(e);
     }
     try {
-      SERVER.close();
+      server.close();
     } catch (e) {
       logger.debug(e);
     }
     try {
-      CLOSEMAIN();
+      closeMain();
     } catch (e) {}
     try {
       await new Promise(rs => rimraf(MINIODATADIR, rs));
@@ -164,14 +164,14 @@ describe('End To End Test 👍 ', () => {
 
     minio = runMinio();
 
-    APP = await baseServer();
+    app = await baseServer();
     const [freePort] = await ffport(3000);
     FREE_PORT = freePort;
 
     const jar = request.jar();
 
     await new Promise((R) => {
-      SERVER = APP.listen(FREE_PORT, () => {
+      server = app.listen(FREE_PORT, () => {
         logger.debug(`Server listening on : ${FREE_PORT}`);
         R();
       });
@@ -265,7 +265,7 @@ describe('End To End Test 👍 ', () => {
     const post = res7.body;
     assert(post.id);
 
-    CLOSEMAIN = main({ nodeName: NODE_NAME });
+    closeMain = main({ nodeName });
 
     logger.debug('Waiting for device .....');
     while (!(await Device.findAll()).length) {
