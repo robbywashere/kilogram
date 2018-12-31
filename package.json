@@ -109,7 +109,7 @@
     "test:clr:verbose": "./scripts/testrunner --reporter mocha-clearscreen-reporter --watch",
     "test:watch": "mocha  --require ./test/setup.js  --recursive \"./test/**/*.test.js\"  --watch",
     "test": "./scripts/testrunner",
-    "test:nyc": " nyc ./scripts/testrunner --watch",
+    "test:nyc": " nyc ./scripts/testrunner",
     "test:e2e": "mocha ./e2e/e2e.test.js",
     "test:e2e:device": "export RUN_E2E_ON_DEVICE=true && mocha ./e2e/e2e.test.js",
     "pg:session:up": "psql postgres < ./node_modules/connect-pg-simple/table.sql",

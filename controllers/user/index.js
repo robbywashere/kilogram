@@ -10,7 +10,7 @@ class UserPolicy extends AuthPolicy {
   }
 
   edit() {
-    return this.instance.id === user.id;
+    return this.instance.id === this.user.id;
   }
 
   destroy() {

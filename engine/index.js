@@ -24,9 +24,10 @@ function RunWithDevice({
   return async () => {
     let device;
     let job;
+    //TODO: Would a transaction mechanism be better suited? Or would locking occur?
+    //http://docs.sequelizejs.com/manual/tutorial/transactions.html#unmanaged-transaction-then-callback-
     if ((device = await Device.popNodeDevice(nodeName)) && (job = await model.popJob())) {
       const agent = new DeviceAgent.Agent({ deviceId: device.adbId });
-
       await task({
         ...job,
         jobName: model.name,
@@ -234,6 +235,7 @@ const main = function ({
 
   spinz.forEach(z => z.on('reject', error => logger.error(error)));
 
+  //TODO: add cb when drain is complete
   return () => spinz.forEach(z => z.stop());
 };
 

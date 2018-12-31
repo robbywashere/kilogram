@@ -15,11 +15,17 @@ const db = require('../db');
     await db.authenticate();
   } catch(e) {
     console.error(e);
-    console.error(chalk.red(`Could not authenticate with DB, insure DB instance is running`));
+    console.error(chalk.red(`Could not authenticate with DB, ensure DB instance is running`));
     process.exit(1);
   }
 })()
-require('child_process').execFileSync('npm', ['run', 'e:test', 'db:schema:up'], {
-  stdio: 'ignore',
-});
+try {
+  require('child_process').execFileSync('npm', ['run', 'e:test', 'db:schema:up'], {
+    stdio: 'ignore',
+  });
+} catch(e){
+  console.error(e);
+  console.error(chalk.red(`Could not run 'db:schema:up', ensure DB instance is running`));
+  process.exit(1);
+}
 

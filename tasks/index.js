@@ -31,7 +31,7 @@ async function downloadIGAva({
       throw new Error('could not locate IG Avatar in body html');
     }
 
-    const { url, objectName, uuid } = await minioClient.newPhoto({
+    const { url, uuid } = await minioClient.newPhoto({
       AccountId: IGAccount.AccountId,
       IGAccountId: IGAccount.id,
       type: 'IGAVATAR',
@@ -76,7 +76,7 @@ async function sendEmail({
 }) {
   try {
     const emailer = new Emailer({});
-    const email = await emailer.send({
+    await emailer.send({
       to,
       from,
       msg,
@@ -90,7 +90,8 @@ async function sendEmail({
   }
 }
 
-//TODO: username may only be @username cannot be email address
+// TODO: username may only be @username cannot be email address
+
 async function verifyIG({
   // emit
   events = demand('events'),

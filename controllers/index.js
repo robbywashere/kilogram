@@ -12,13 +12,7 @@ const demand = require('../lib/demand');
 
 const { load, parsePaths } = require('./_load');
 
-const { pick, get } = require('lodash');
-
-const config = require('config');
-
-const { ForbiddenError, FinaleError } = require('finale-rest').Errors;
-
-const Promise = require('bluebird');
+const { ForbiddenError } = require('finale-rest').Errors;
 
 const DB = require('../db');
 
@@ -67,7 +61,7 @@ function loadObjectControllers({ app, sequelize = DB, objects = Objects }) {
       resource[action].error = function (req, res, error) {
         logger.error(error);
         res.status(error.status);
-        res.send(err);
+        res.send(error);
       };
     });
   });
