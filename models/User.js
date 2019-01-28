@@ -91,7 +91,7 @@ module.exports = {
           {
             model: Account,
             // /through: { attributes: [] }, //Exclude UserAccount join table
-            where: { id: { [Op.in]: user.Accounts.map(a => a.id) } },
+            where: { id: { [Op.in]: user.Accounts.map(a => a.id) } }, //TODO: this should use a join so accountsScoped(user) can be an id not an instance
           },
         ],
       };
