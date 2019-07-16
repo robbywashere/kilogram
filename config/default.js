@@ -47,5 +47,5 @@ module.exports = {
   S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
   S3_SECRET_KEY: process.env.S3_SECRET_KEY,
   NODE_ENV: process.env.NODE_ENV || 'development',
-  PYTHON_PATH: process.env.PYTHON_PATH || '/usr/bin/local/python',
+  PYTHON_PATH: process.env.PYTHON_PATH || '/usr/local/bin/python',
 };
