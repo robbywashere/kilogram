@@ -13,7 +13,7 @@
     "bcrypt": "^2.0.1",
     "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
-    "bson": "^1.0.4",
+    "bson": "^1.1.4",
     "chalk": "^2.3.0",
     "child-process-promise": "^2.2.1",
     "columnify": "^1.5.4",
